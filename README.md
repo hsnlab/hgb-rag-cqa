@@ -4,12 +4,17 @@
 
 - [Introduction](#introduction)
 - [Installation](#installation)
-- [Baseline](#baseline)
 - [Hierarchical Graph Creation](#hierarchical-graph-creation)
-- [Comment Generation](#comment-generation)
+- [Docstring Generation](#docstring-generation)
+  - [Baseline](#baseline)
   - [Pure GNN Pipeline](#pure-gnn-pipeline)
   - [Multimodal Pipeline](#multimodal-pipeline)
 - [Retrieval-Augmented Generation (RAG)](#retrieval-augmented-generation-rag)
+  - [Function Clustering (Supernodes)](#function-clustering-supernodes)
+  - [Retrieval Process](#retrieval-process)
+  - [Answer Generation](#answer-generation)
+  - [Repository Support & Data Preparation](#repository-support--data-preparation)
+  - [Example: Running the RAG Pipeline](#example-running-the-rag-pipeline)
 
 ---
 
