@@ -1,0 +1,155 @@
+digraph {
+	0 [label="0: def clear_updaters(self, recur"]
+	1 [label="1: def clear_updaters(self, recur"]
+	2 [label="2: def"]
+	3 [label="3: clear_updaters"]
+	4 [label="4: (self, recursive: bool=True)"]
+	5 [label="5: ("]
+	6 [label="6: self"]
+	7 [label="7: ,"]
+	8 [label="8: recursive: bool=True"]
+	9 [label="9: recursive"]
+	10 [label="10: :"]
+	11 [label="11: bool"]
+	12 [label="12: bool"]
+	13 [label="13: ="]
+	14 [label="14: True"]
+	15 [label="15: )"]
+	16 [label="16: ->"]
+	17 [label="17: Self"]
+	18 [label="18: Self"]
+	19 [label="19: :"]
+	20 [label="20: self.updaters = []
+    if recu"]
+	21 [label="21: self.updaters = []"]
+	22 [label="22: self.updaters = []"]
+	23 [label="23: self.updaters"]
+	24 [label="24: self"]
+	25 [label="25: ."]
+	26 [label="26: updaters"]
+	27 [label="27: ="]
+	28 [label="28: []"]
+	29 [label="29: ["]
+	30 [label="30: ]"]
+	31 [label="31: if recursive:
+        for subm"]
+	32 [label="32: if"]
+	33 [label="33: recursive"]
+	34 [label="34: :"]
+	35 [label="35: for submob in self.submobjects"]
+	36 [label="36: for submob in self.submobjects"]
+	37 [label="37: for"]
+	38 [label="38: submob"]
+	39 [label="39: in"]
+	40 [label="40: self.submobjects"]
+	41 [label="41: self"]
+	42 [label="42: ."]
+	43 [label="43: submobjects"]
+	44 [label="44: :"]
+	45 [label="45: submob.clear_updaters()"]
+	46 [label="46: submob.clear_updaters()"]
+	47 [label="47: submob.clear_updaters()"]
+	48 [label="48: submob.clear_updaters"]
+	49 [label="49: submob"]
+	50 [label="50: ."]
+	51 [label="51: clear_updaters"]
+	52 [label="52: ()"]
+	53 [label="53: ("]
+	54 [label="54: )"]
+	55 [label="55: return self"]
+	56 [label="56: return"]
+	57 [label="57: self"]
+	0 -> 1
+	1 -> 2
+	1 -> 3
+	1 -> 4
+	4 -> 5
+	4 -> 6
+	4 -> 7
+	4 -> 8
+	8 -> 9
+	8 -> 10
+	8 -> 11
+	11 -> 12
+	8 -> 13
+	8 -> 14
+	4 -> 15
+	1 -> 16
+	1 -> 17
+	17 -> 18
+	1 -> 19
+	1 -> 20
+	20 -> 21
+	21 -> 22
+	22 -> 23
+	23 -> 24
+	23 -> 25
+	23 -> 26
+	22 -> 27
+	22 -> 28
+	28 -> 29
+	28 -> 30
+	20 -> 31
+	31 -> 32
+	31 -> 33
+	31 -> 34
+	31 -> 35
+	35 -> 36
+	36 -> 37
+	36 -> 38
+	36 -> 39
+	36 -> 40
+	40 -> 41
+	40 -> 42
+	40 -> 43
+	36 -> 44
+	36 -> 45
+	45 -> 46
+	46 -> 47
+	47 -> 48
+	48 -> 49
+	48 -> 50
+	48 -> 51
+	47 -> 52
+	52 -> 53
+	52 -> 54
+	20 -> 55
+	55 -> 56
+	55 -> 57
+	2 -> 3
+	3 -> 5
+	5 -> 6
+	6 -> 7
+	7 -> 9
+	9 -> 10
+	10 -> 12
+	12 -> 13
+	13 -> 14
+	14 -> 15
+	15 -> 16
+	16 -> 18
+	18 -> 19
+	19 -> 24
+	24 -> 25
+	25 -> 26
+	26 -> 27
+	27 -> 29
+	29 -> 30
+	30 -> 32
+	32 -> 33
+	33 -> 34
+	34 -> 37
+	37 -> 38
+	38 -> 39
+	39 -> 41
+	41 -> 42
+	42 -> 43
+	43 -> 44
+	44 -> 49
+	49 -> 50
+	50 -> 51
+	51 -> 53
+	53 -> 54
+	54 -> 56
+	56 -> 57
+}

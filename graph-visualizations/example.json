@@ -1,0 +1,5566 @@
+{
+  "name": "cluster1example",
+  "directed": true,
+  "strict": false,
+  "_draw_": 
+  [
+    {
+      "op": "c",
+      "grad": "none",
+      "color": "#fffffe00"
+    },
+    {
+      "op": "C",
+      "grad": "none",
+      "color": "#ffffff"
+    },
+    {
+      "op": "P",
+      "points": [[0.000,0.000],[0.000,1336.500],[2401.500,1336.500],[2401.500,0.000]]
+    }
+  ],
+  "_ldraw_": 
+  [
+    {
+      "op": "F",
+      "size": 14.000,
+      "face": "DejaVu Sans Mono"
+    },
+    {
+      "op": "c",
+      "grad": "none",
+      "color": "#000000"
+    },
+    {
+      "op": "T",
+      "pt": [1200.750,7.950],
+      "align": "c",
+      "width": 51.750,
+      "text": "example"
+    }
+  ],
+  "bb": "0,0,2401.5,1336.5",
+  "compound": "True",
+  "fontname": "DejaVu Sans Mono",
+  "label": "example",
+  "lheight": "0.24",
+  "lp": "1200.8,12.625",
+  "lwidth": "0.72",
+  "pack": "False",
+  "rankdir": "TB",
+  "ranksep": "0.02",
+  "xdotversion": "1.7",
+  "_subgraph_cnt": 9,
+  "objects": [
+    {
+      "name": "cluster1evaluate_tags",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "p",
+          "points": [[369.500,33.250],[369.500,1328.500],[2051.500,1328.500],[2051.500,33.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1210.500,1311.200],
+          "align": "c",
+          "width": 84.750,
+          "text": "evaluate_tags"
+        }
+      ],
+      "bb": "369.5,33.25,2051.5,1328.5",
+      "compound": "True",
+      "fontname": "DejaVu Sans Mono",
+      "label": "evaluate_tags",
+      "lheight": "0.24",
+      "lp": "1210.5,1315.9",
+      "lwidth": "1.18",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "_gvid": 0,
+      "subgraphs": [
+        1,
+2,
+3,
+4,
+5,
+6,
+7
+      ],
+      "nodes": [
+        10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44
+      ],
+      "edges": [
+        3,4,8,11,13,26,24,25,22,27,30,28,33,32,31,29,23,20,21,19,17,34,37,35,40,39,38,36,18,16,14,15,12,9,42,41,10,6,44,43,7,5,1,45,2,0
+      ]
+    },
+    {
+      "name": "cluster_5",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1332.500,1034.000],[1332.500,1086.000],[1550.500,1086.000],[1550.500,1034.000]]
+        }
+      ],
+      "bb": "1332.5,1034,1550.5,1086",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 1,
+      "nodes": [
+        13,14
+      ]
+    },
+    {
+      "name": "cluster_11",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1589.500,879.500],[1589.500,931.500],[1673.500,931.500],[1673.500,879.500]]
+        }
+      ],
+      "bb": "1589.5,879.5,1673.5,931.5",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 2,
+      "nodes": [
+        17
+      ]
+    },
+    {
+      "name": "cluster_16",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1308.500,717.000],[1308.500,846.250],[1394.500,846.250],[1394.500,717.000]]
+        }
+      ],
+      "bb": "1308.5,717,1394.5,846.25",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 3,
+      "nodes": [
+        19,20
+      ],
+      "edges": [
+        13
+      ]
+    },
+    {
+      "name": "cluster_38",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[971.500,163.500],[971.500,215.500],[1103.500,215.500],[1103.500,163.500]]
+        }
+      ],
+      "bb": "971.5,163.5,1103.5,215.5",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 4,
+      "nodes": [
+        31
+      ]
+    },
+    {
+      "name": "cluster_27",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1280.500,509.500],[1280.500,561.500],[1412.500,561.500],[1412.500,509.500]]
+        }
+      ],
+      "bb": "1280.5,509.5,1412.5,561.5",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 5,
+      "nodes": [
+        36
+      ]
+    },
+    {
+      "name": "cluster_18",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1480.500,794.250],[1480.500,846.250],[1550.500,846.250],[1550.500,794.250]]
+        }
+      ],
+      "bb": "1480.5,794.25,1550.5,846.25",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 6,
+      "nodes": [
+        41
+      ]
+    },
+    {
+      "name": "cluster_13",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#a020f0"
+        },
+        {
+          "op": "P",
+          "points": [[1681.500,879.500],[1681.500,931.500],[1815.500,931.500],[1815.500,879.500]]
+        }
+      ],
+      "bb": "1681.5,879.5,1815.5,931.5",
+      "color": "purple",
+      "compound": "true",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "shape": "tab",
+      "style": "filled",
+      "_gvid": 7,
+      "nodes": [
+        43
+      ]
+    },
+    {
+      "name": "cluster_KEY",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "p",
+          "points": [[2059.500,1119.250],[2059.500,1325.250],[2393.500,1325.250],[2393.500,1119.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2226.500,1307.950],
+          "align": "c",
+          "width": 24.000,
+          "text": "KEY"
+        }
+      ],
+      "bb": "2059.5,1119.2,2393.5,1325.2",
+      "compound": "True",
+      "fontname": "DejaVu Sans Mono",
+      "label": "KEY",
+      "lheight": "0.24",
+      "lp": "2226.5,1312.6",
+      "lwidth": "0.33",
+      "pack": "False",
+      "rankdir": "TB",
+      "ranksep": "0.02",
+      "_gvid": 8,
+      "nodes": [
+        45,46,47,48,49,50,51,52,53
+      ],
+      "edges": [
+        47,46,48,49,50
+      ]
+    },
+    {
+      "_gvid": 9,
+      "name": "1",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[361.000,1292.000],[0.000,1292.000],[0.000,1256.000],[361.000,1256.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [8.000,1269.330],
+          "align": "l",
+          "width": 345.000,
+          "text": "def evaluate_tags(self, only_tags, skip_tags, all_vars):..."
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "def evaluate_tags(self, only_tags, skip_tags, all_vars):...\\l",
+      "pos": "180.5,1274",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "5.0139"
+    },
+    {
+      "_gvid": 10,
+      "name": "3",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1735.880,1295.250],[1563.120,1295.250],[1563.120,1252.750],[1735.880,1252.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1571.120,1277.950],
+          "align": "l",
+          "width": 156.750,
+          "text": "\"\"\" this checks if the ...\"\"\""
+        },
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1571.120,1260.700],
+          "align": "l",
+          "width": 113.250,
+          "text": "should_run = True"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.59028",
+      "label": "\"\"\" this checks if the ...\"\"\"\\lshould_run = True\\l",
+      "pos": "1649.5,1274",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "2.3993"
+    },
+    {
+      "_gvid": 11,
+      "name": "4",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1649.500,1235.750],[1567.410,1217.750],[1649.500,1199.750],[1731.590,1217.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1598.990,1213.080],
+          "align": "l",
+          "width": 66.750,
+          "text": "if self.tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if self.tags:\\l",
+      "pos": "1649.5,1217.8",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "2.2803"
+    },
+    {
+      "_gvid": 12,
+      "name": "5",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1763.620,1166.500],[1385.380,1166.500],[1385.380,1124.000],[1763.620,1124.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1393.380,1149.200],
+          "align": "l",
+          "width": 362.250,
+          "text": "templar = Templar(loader=self._loader, variables=all_vars)"
+        },
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1393.380,1131.950],
+          "align": "l",
+          "width": 207.750,
+          "text": "tags = templar.template(self.tags)"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.59028",
+      "label": "templar = Templar(loader=self._loader, variables=all_vars)\\ltags = templar.template(self.tags)\\l",
+      "pos": "1574.5,1145.2",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "5.2535"
+    },
+    {
+      "_gvid": 13,
+      "name": "8",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1542.250,1078.000],[1488.750,1078.000],[1488.750,1082.000],[1476.750,1082.000],[1476.750,1042.000],[1542.250,1042.000]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1476.750,1078.000],[1488.750,1078.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1509.500,1055.330],
+          "align": "c",
+          "width": 49.500,
+          "text": "Templar"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "Templar",
+      "pos": "1509.5,1060",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.90972"
+    },
+    {
+      "_gvid": 14,
+      "name": "9",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1458.880,1078.000],[1352.120,1078.000],[1352.120,1082.000],[1340.120,1082.000],[1340.120,1042.000],[1458.880,1042.000]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1340.120,1078.000],[1352.120,1078.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1399.500,1055.330],
+          "align": "c",
+          "width": 102.750,
+          "text": "templar.template"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "templar.template",
+      "pos": "1399.5,1060",
+      "shape": "tab",
+      "style": "filled",
+      "width": "1.6493"
+    },
+    {
+      "_gvid": 15,
+      "name": "10",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1736.500,1078.000],[1559.920,1060.000],[1736.500,1042.000],[1913.080,1060.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1618.630,1055.330],
+          "align": "l",
+          "width": 162.000,
+          "text": "if not isinstance(tags, list):"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if not isinstance(tags, list):\\l",
+      "pos": "1736.5,1060",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "4.9051"
+    },
+    {
+      "_gvid": 16,
+      "name": "11",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1474.500,1000.750],[1332.140,982.750],[1474.500,964.750],[1616.860,982.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1381.030,978.080],
+          "align": "l",
+          "width": 127.500,
+          "text": "if tags.find(',') != -1:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if tags.find(',') != -1:\\l",
+      "pos": "1474.5,982.75",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "3.9544"
+    },
+    {
+      "_gvid": 17,
+      "name": "15",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1665.750,923.500],[1609.250,923.500],[1609.250,927.500],[1597.250,927.500],[1597.250,887.500],[1665.750,887.500]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1597.250,923.500],[1609.250,923.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1631.500,900.830],
+          "align": "c",
+          "width": 52.500,
+          "text": "tags.find"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags.find",
+      "pos": "1631.5,905.5",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.95139"
+    },
+    {
+      "_gvid": 18,
+      "name": "16",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1433.750,923.500],[1269.250,923.500],[1269.250,887.500],[1433.750,887.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1277.250,900.830],
+          "align": "l",
+          "width": 148.500,
+          "text": "tags = set(tags.split(','))"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags = set(tags.split(','))\\l",
+      "pos": "1351.5,905.5",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "2.2847"
+    },
+    {
+      "_gvid": 19,
+      "name": "20",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1378.500,838.250],[1336.500,838.250],[1336.500,842.250],[1324.500,842.250],[1324.500,802.250],[1378.500,802.250]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1324.500,838.250],[1336.500,838.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1351.500,815.580],
+          "align": "c",
+          "width": 18.000,
+          "text": "set"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "set",
+      "pos": "1351.5,820.25",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.75"
+    },
+    {
+      "_gvid": 20,
+      "name": "21",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1386.500,761.000],[1328.500,761.000],[1328.500,765.000],[1316.500,765.000],[1316.500,725.000],[1386.500,725.000]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1316.500,761.000],[1328.500,761.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1351.500,738.330],
+          "align": "c",
+          "width": 54.000,
+          "text": "tags.split"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags.split",
+      "pos": "1351.5,743",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.97222"
+    },
+    {
+      "_gvid": 21,
+      "name": "6",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1763.500,838.250],[1673.220,820.250],[1763.500,802.250],[1853.780,820.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1707.150,815.580],
+          "align": "l",
+          "width": 75.000,
+          "text": "if only_tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if only_tags:\\l",
+      "pos": "1763.5,820.25",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "2.5077"
+    },
+    {
+      "_gvid": 22,
+      "name": "22",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1757.620,761.000],[1625.380,761.000],[1625.380,725.000],[1757.620,725.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1633.380,738.330],
+          "align": "l",
+          "width": 116.250,
+          "text": "should_run = False"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = False\\l",
+      "pos": "1691.5,743",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.8368"
+    },
+    {
+      "_gvid": 23,
+      "name": "24",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1559.500,700.000],[1317.440,682.000],[1559.500,664.000],[1801.560,682.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1394.970,677.330],
+          "align": "l",
+          "width": 228.000,
+          "text": "if 'always' in tags or 'all' in only_tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if 'always' in tags or 'all' in only_tags:\\l",
+      "pos": "1559.5,682",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "6.7238"
+    },
+    {
+      "_gvid": 24,
+      "name": "25",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1672.120,630.750],[1542.880,630.750],[1542.880,594.750],[1672.120,594.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1550.880,608.080],
+          "align": "l",
+          "width": 113.250,
+          "text": "should_run = True"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = True\\l",
+      "pos": "1607.5,612.75",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.7951"
+    },
+    {
+      "_gvid": 25,
+      "name": "23",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1587.500,423.250],[1401.240,405.250],[1587.500,387.250],[1773.760,405.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1462.740,400.570],
+          "align": "l",
+          "width": 171.750,
+          "text": "if should_run and skip_tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if should_run and skip_tags:\\l",
+      "pos": "1587.5,405.25",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "5.1738"
+    },
+    {
+      "_gvid": 26,
+      "name": "34",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1179.500,354.000],[1052.020,336.000],[1179.500,318.000],[1306.980,336.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1096.640,331.320],
+          "align": "l",
+          "width": 112.500,
+          "text": "if 'all' in skip_tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if 'all' in skip_tags:\\l",
+      "pos": "1179.5,336",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "3.541"
+    },
+    {
+      "_gvid": 27,
+      "name": "36",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[669.500,207.500],[377.590,189.500],[669.500,171.500],[961.410,189.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [469.430,184.820],
+          "align": "l",
+          "width": 278.250,
+          "text": "if 'always' not in tags or 'always' in skip_tags:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if 'always' not in tags or 'always' in skip_tags:\\l",
+      "pos": "669.5,189.5",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "8.1086"
+    },
+    {
+      "_gvid": 28,
+      "name": "45",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1147.620,130.250],[1015.380,130.250],[1015.380,94.250],[1147.620,94.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1023.380,107.580],
+          "align": "l",
+          "width": 116.250,
+          "text": "should_run = False"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = False\\l",
+      "pos": "1081.5,112.25",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.8368"
+    },
+    {
+      "_gvid": 29,
+      "name": "35",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#98fb98"
+        },
+        {
+          "op": "P",
+          "points": [[1322.810,77.250],[1118.700,77.250],[1066.190,41.250],[1270.300,41.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1114.290,54.580],
+          "align": "l",
+          "width": 108.750,
+          "text": "return should_run"
+        }
+      ],
+      "fillcolor": "#98fb98",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "return should_run\\l",
+      "pos": "1194.5,59.25",
+      "shape": "parallelogram",
+      "style": "filled,solid",
+      "width": "3.564"
+    },
+    {
+      "_gvid": 30,
+      "name": "38",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1179.500,284.750],[980.600,266.750],[1179.500,248.750],[1378.400,266.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1045.730,262.070],
+          "align": "l",
+          "width": 184.500,
+          "text": "if tags.intersection(skip_tags):"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if tags.intersection(skip_tags):\\l",
+      "pos": "1179.5,266.75",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "5.5251"
+    },
+    {
+      "_gvid": 31,
+      "name": "39",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1095.750,207.500],[991.250,207.500],[991.250,211.500],[979.250,211.500],[979.250,171.500],[1095.750,171.500]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[979.250,207.500],[991.250,207.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1037.500,184.820],
+          "align": "c",
+          "width": 100.500,
+          "text": "tags.intersection"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags.intersection",
+      "pos": "1037.5,189.5",
+      "shape": "tab",
+      "style": "filled",
+      "width": "1.6181"
+    },
+    {
+      "_gvid": 32,
+      "name": "40",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1245.620,207.500],[1113.380,207.500],[1113.380,171.500],[1245.620,171.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1121.380,184.820],
+          "align": "l",
+          "width": 116.250,
+          "text": "should_run = False"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = False\\l",
+      "pos": "1179.5,189.5",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.8368"
+    },
+    {
+      "_gvid": 33,
+      "name": "42",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1643.500,207.500],[1263.800,189.500],[1643.500,171.500],[2023.200,189.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1380.850,184.820],
+          "align": "l",
+          "width": 366.750,
+          "text": "if 'tagged' in skip_tags and tags != self.__class__.untagged:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if 'tagged' in skip_tags and tags != self.__class__.untagged:\\l",
+      "pos": "1643.5,189.5",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "10.547"
+    },
+    {
+      "_gvid": 34,
+      "name": "43",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1757.620,130.250],[1625.380,130.250],[1625.380,94.250],[1757.620,94.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1633.380,107.580],
+          "align": "l",
+          "width": 116.250,
+          "text": "should_run = False"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = False\\l",
+      "pos": "1691.5,112.25",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.8368"
+    },
+    {
+      "_gvid": 35,
+      "name": "27",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[1324.500,630.750],[1124.110,612.750],[1324.500,594.750],[1524.890,612.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1189.660,608.080],
+          "align": "l",
+          "width": 186.000,
+          "text": "if tags.intersection(only_tags):"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if tags.intersection(only_tags):\\l",
+      "pos": "1324.5,612.75",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "5.5665"
+    },
+    {
+      "_gvid": 36,
+      "name": "28",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1404.750,553.500],[1300.250,553.500],[1300.250,557.500],[1288.250,557.500],[1288.250,517.500],[1404.750,517.500]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1288.250,553.500],[1300.250,553.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1346.500,530.830],
+          "align": "c",
+          "width": 100.500,
+          "text": "tags.intersection"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags.intersection",
+      "pos": "1346.5,535.5",
+      "shape": "tab",
+      "style": "filled",
+      "width": "1.6181"
+    },
+    {
+      "_gvid": 37,
+      "name": "29",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1559.120,553.500],[1429.880,553.500],[1429.880,517.500],[1559.120,517.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1437.880,530.830],
+          "align": "l",
+          "width": 113.250,
+          "text": "should_run = True"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = True\\l",
+      "pos": "1494.5,535.5",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.7951"
+    },
+    {
+      "_gvid": 38,
+      "name": "31",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[889.500,553.500],[508.310,535.500],[889.500,517.500],[1270.690,535.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [625.790,530.830],
+          "align": "l",
+          "width": 368.250,
+          "text": "if 'tagged' in only_tags and tags != self.__class__.untagged:"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "if 'tagged' in only_tags and tags != self.__class__.untagged:\\l",
+      "pos": "889.5,535.5",
+      "shape": "diamond",
+      "style": "filled,solid",
+      "width": "10.589"
+    },
+    {
+      "_gvid": 39,
+      "name": "32",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1008.120,476.250],[878.880,476.250],[878.880,440.250],[1008.120,440.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [886.880,453.570],
+          "align": "l",
+          "width": 113.250,
+          "text": "should_run = True"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "should_run = True\\l",
+      "pos": "943.5,458.25",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.7951"
+    },
+    {
+      "_gvid": 40,
+      "name": "18",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1578.250,923.500],[1452.750,923.500],[1452.750,887.500],[1578.250,887.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1460.750,900.830],
+          "align": "l",
+          "width": 109.500,
+          "text": "tags = set([tags])"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags = set([tags])\\l",
+      "pos": "1515.5,905.5",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "1.7431"
+    },
+    {
+      "_gvid": 41,
+      "name": "19",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1542.500,838.250],[1500.500,838.250],[1500.500,842.250],[1488.500,842.250],[1488.500,802.250],[1542.500,802.250]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1488.500,838.250],[1500.500,838.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1515.500,815.580],
+          "align": "c",
+          "width": 18.000,
+          "text": "set"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "set",
+      "pos": "1515.5,820.25",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.75"
+    },
+    {
+      "_gvid": 42,
+      "name": "13",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[1913.750,1000.750],[1635.250,1000.750],[1635.250,964.750],[1913.750,964.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1643.250,978.080],
+          "align": "l",
+          "width": 262.500,
+          "text": "tags = [i for i, _ in itertools.groupby(tags)]"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags = [i for i, _ in itertools.groupby(tags)]\\l",
+      "pos": "1774.5,982.75",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "3.8681"
+    },
+    {
+      "_gvid": 43,
+      "name": "14",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[1807.880,923.500],[1701.120,923.500],[1701.120,927.500],[1689.120,927.500],[1689.120,887.500],[1807.880,887.500]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "L",
+          "points": [[1689.120,923.500],[1701.120,923.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1748.500,900.830],
+          "align": "c",
+          "width": 102.750,
+          "text": "itertools.groupby"
+        }
+      ],
+      "color": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "itertools.groupby",
+      "pos": "1748.5,905.5",
+      "shape": "tab",
+      "style": "filled",
+      "width": "1.6493"
+    },
+    {
+      "_gvid": 44,
+      "name": "7",
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[2003.380,1163.250],[1797.620,1163.250],[1797.620,1127.250],[2003.380,1127.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1805.620,1140.580],
+          "align": "l",
+          "width": 189.750,
+          "text": "tags = self.__class__.untagged"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "tags = self.__class__.untagged\\l",
+      "pos": "1900.5,1145.2",
+      "shape": "rectangle",
+      "style": "filled,solid",
+      "width": "2.8576"
+    },
+    {
+      "_gvid": 45,
+      "name": "input",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#afeeee"
+        },
+        {
+          "op": "P",
+          "points": [[2161.810,1235.750],[2086.550,1235.750],[2067.190,1199.750],[2142.450,1199.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2114.500,1213.080],
+          "align": "c",
+          "width": 30.000,
+          "text": "input"
+        }
+      ],
+      "fillcolor": "#afeeee",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2114.5,1217.8",
+      "shape": "parallelogram",
+      "style": "filled",
+      "width": "1.3142"
+    },
+    {
+      "_gvid": 46,
+      "name": "default",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#fffb81"
+        },
+        {
+          "op": "P",
+          "points": [[2263.500,1163.250],[2205.500,1163.250],[2205.500,1127.250],[2263.500,1127.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2234.500,1140.580],
+          "align": "c",
+          "width": 42.000,
+          "text": "default"
+        }
+      ],
+      "fillcolor": "#FFFB81",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2234.5,1145.2",
+      "shape": "rectangle",
+      "style": "filled",
+      "width": "0.80556"
+    },
+    {
+      "_gvid": 47,
+      "name": "if",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff6752"
+        },
+        {
+          "op": "P",
+          "points": [[2109.500,1292.000],[2082.500,1274.000],[2109.500,1256.000],[2136.500,1274.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2109.500,1269.330],
+          "align": "c",
+          "width": 7.500,
+          "text": "if"
+        }
+      ],
+      "fillcolor": "#FF6752",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2109.5,1274",
+      "shape": "diamond",
+      "style": "filled",
+      "width": "0.75"
+    },
+    {
+      "_gvid": 48,
+      "name": "for",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ffbe52"
+        },
+        {
+          "op": "P",
+          "points": [[2208.500,1274.000],[2195.000,1292.000],[2168.000,1292.000],[2154.500,1274.000],[2168.000,1256.000],[2195.000,1256.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2181.500,1269.330],
+          "align": "c",
+          "width": 17.250,
+          "text": "for"
+        }
+      ],
+      "fillcolor": "#FFBE52",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2181.5,1274",
+      "shape": "hexagon",
+      "style": "filled",
+      "width": "0.75"
+    },
+    {
+      "_gvid": 49,
+      "name": "while",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ffbe52"
+        },
+        {
+          "op": "P",
+          "points": [[2302.970,1274.000],[2283.740,1292.000],[2245.260,1292.000],[2226.030,1274.000],[2245.260,1256.000],[2283.740,1256.000]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2264.500,1269.330],
+          "align": "c",
+          "width": 31.500,
+          "text": "while"
+        }
+      ],
+      "fillcolor": "#FFBE52",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2264.5,1274",
+      "shape": "hexagon",
+      "style": "filled",
+      "width": "1.0687"
+    },
+    {
+      "_gvid": 50,
+      "name": "call",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#e552ff"
+        },
+        {
+          "op": "P",
+          "points": [[2141.500,1163.250],[2099.500,1163.250],[2099.500,1167.250],[2087.500,1167.250],[2087.500,1127.250],[2141.500,1127.250]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "L",
+          "points": [[2087.500,1163.250],[2099.500,1163.250]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2114.500,1140.580],
+          "align": "c",
+          "width": 20.250,
+          "text": "call"
+        }
+      ],
+      "fillcolor": "#E552FF",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2114.5,1145.2",
+      "shape": "tab",
+      "style": "filled",
+      "width": "0.75"
+    },
+    {
+      "_gvid": 51,
+      "name": "return",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#98fb98"
+        },
+        {
+          "op": "P",
+          "points": [[2289.520,1235.750],[2201.990,1235.750],[2179.480,1199.750],[2267.010,1199.750]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2234.500,1213.080],
+          "align": "c",
+          "width": 37.500,
+          "text": "return"
+        }
+      ],
+      "fillcolor": "#98fb98",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2234.5,1217.8",
+      "shape": "parallelogram",
+      "style": "filled",
+      "width": "1.5285"
+    },
+    {
+      "_gvid": 52,
+      "name": "try",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ffa500"
+        },
+        {
+          "op": "P",
+          "points": [[2353.500,1292.000],[2321.260,1274.000],[2353.500,1256.000],[2385.740,1274.000]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "L",
+          "points": [[2331.740,1279.850],[2331.740,1268.150]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "L",
+          "points": [[2343.020,1261.850],[2363.980,1261.850]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "L",
+          "points": [[2375.260,1268.150],[2375.260,1279.850]]
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "L",
+          "points": [[2363.980,1286.150],[2343.020,1286.150]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2353.500,1269.330],
+          "align": "c",
+          "width": 16.500,
+          "text": "try"
+        }
+      ],
+      "fillcolor": "orange",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2353.5,1274",
+      "shape": "Mdiamond",
+      "style": "filled",
+      "width": "0.89559"
+    },
+    {
+      "_gvid": 53,
+      "name": "raise",
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#98fb98"
+        },
+        {
+          "op": "P",
+          "points": [[2385.740,1223.310],[2346.500,1235.750],[2307.260,1223.310],[2307.300,1203.190],[2385.700,1203.190]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2346.500,1213.080],
+          "align": "c",
+          "width": 29.250,
+          "text": "raise"
+        }
+      ],
+      "fillcolor": "#98fb98",
+      "fontname": "DejaVu Sans Mono",
+      "height": "0.5",
+      "label": "\\N",
+      "pos": "2346.5,1217.8",
+      "shape": "house",
+      "style": "filled",
+      "width": "1.0899"
+    }
+  ],
+  "edges": [
+    {
+      "_gvid": 3,
+      "tail": 12,
+      "head": 13,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1558.430,1123.670],[1549.830,1112.650],[1539.140,1098.970],[1529.950,1087.200]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1532.820,1085.180],[1523.900,1079.450],[1527.300,1089.480]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1560.950,1097.950],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1560.9,1102.6",
+      "pos": "e,1523,1078.3 1558.4,1123.7 1549.8,1112.7 1539.1,1099 1530,1087.2",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 4,
+      "tail": 12,
+      "head": 14,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1531.240,1123.670],[1505.420,1111.390],[1472.620,1095.780],[1446.210,1083.220]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1447.960,1080.180],[1437.420,1079.040],[1444.950,1086.500]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1515.800,1097.950],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1515.8,1102.6",
+      "pos": "e,1436.1,1078.4 1531.2,1123.7 1505.4,1111.4 1472.6,1095.8 1446.2,1083.2",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 8,
+      "tail": 16,
+      "head": 17,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1551.490,974.000],[1576.750,970.120],[1600.830,964.550],[1610.500,956.750],[1617.380,951.200],[1622.040,943.000],[1625.180,934.830]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1628.480,935.990],[1628.130,925.400],[1621.800,933.900]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1635.850,943.450],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1635.8,948.12",
+      "pos": "e,1628.6,923.95 1551.5,974 1576.7,970.12 1600.8,964.55 1610.5,956.75 1617.4,951.2 1622,943 1625.2,934.83",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 11,
+      "tail": 18,
+      "head": 19,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1351.500,887.250],[1351.500,876.420],[1351.500,862.200],[1351.500,849.730]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1355.000,849.990],[1351.500,839.990],[1348.000,849.990]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1364.620,858.200],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1364.6,862.88",
+      "pos": "e,1351.5,838.48 1351.5,887.25 1351.5,876.42 1351.5,862.2 1351.5,849.73",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 13,
+      "tail": 19,
+      "head": 20,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1351.500,801.800],[1351.500,793.150],[1351.500,782.500],[1351.500,772.690]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1355.000,772.870],[1351.500,762.870],[1348.000,772.870]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1351.5,761.36 1351.5,801.8 1351.5,793.15 1351.5,782.5 1351.5,772.69"
+    },
+    {
+      "_gvid": 26,
+      "tail": 28,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1120.070,93.840],[1128.340,90.110],[1137.190,86.120],[1145.790,82.230]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1147.050,85.510],[1154.720,78.200],[1144.170,79.130]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1156.1,77.58 1120.1,93.841 1128.3,90.108 1137.2,86.116 1145.8,82.235"
+    },
+    {
+      "_gvid": 24,
+      "tail": 27,
+      "head": 28,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[727.400,174.680],[775.820,163.530],[846.840,148.130],[909.500,138.250],[942.610,133.030],[951.300,134.920],[984.500,130.250],[990.840,129.360],[997.410,128.360],[1004.000,127.310]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1004.270,130.810],[1013.570,125.750],[1003.140,123.900]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1040.000,142.200],
+          "align": "c",
+          "width": 261.000,
+          "text": "'always' not in tags or 'always' in skip_tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "'always' not in tags or 'always' in skip_tags",
+      "lp": "1040,146.88",
+      "pos": "e,1015.1,125.5 727.4,174.68 775.82,163.53 846.84,148.13 909.5,138.25 942.61,133.03 951.3,134.92 984.5,130.25 990.84,129.36 997.41,128.36 1004,127.31"
+    },
+    {
+      "_gvid": 25,
+      "tail": 27,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[669.720,171.350],[671.020,149.580],[676.840,112.650],[700.500,94.250],[729.980,71.330],[946.980,63.860],[1083.390,61.430]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1083.250,64.930],[1093.190,61.260],[1083.130,57.930]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [853.500,107.580],
+          "align": "c",
+          "width": 306.000,
+          "text": "(not ('always' not in tags or 'always' in skip_tags))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not ('always' not in tags or 'always' in skip_tags))",
+      "lp": "853.5,112.25",
+      "pos": "e,1094.7,61.233 669.72,171.35 671.02,149.58 676.84,112.65 700.5,94.25 729.98,71.331 946.98,63.86 1083.4,61.426"
+    },
+    {
+      "_gvid": 22,
+      "tail": 26,
+      "head": 27,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1104.400,328.120],[1042.260,321.120],[952.180,307.900],[876.250,284.750],[814.980,266.070],[748.270,233.170],[707.660,211.610]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[709.470,208.600],[699.000,206.960],[706.160,214.770]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [923.880,262.070],
+          "align": "c",
+          "width": 95.250,
+          "text": "'all' in skip_tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "'all' in skip_tags",
+      "lp": "923.88,266.75",
+      "pos": "e,697.66,206.25 1104.4,328.12 1042.3,321.12 952.18,307.9 876.25,284.75 814.98,266.07 748.27,233.17 707.66,211.61"
+    },
+    {
+      "_gvid": 27,
+      "tail": 30,
+      "head": 31,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1151.450,250.880],[1131.170,240.140],[1103.400,225.420],[1080.360,213.210]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1082.290,210.280],[1071.820,208.690],[1079.010,216.460]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1142.640,227.450],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1142.6,232.12",
+      "pos": "e,1070.5,207.98 1151.4,250.88 1131.2,240.14 1103.4,225.42 1080.4,213.21",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 30,
+      "tail": 32,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1181.520,171.130],[1183.730,152.220],[1187.360,121.080],[1190.500,94.250],[1190.710,92.470],[1190.920,90.630],[1191.140,88.780]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1194.590,89.390],[1192.290,79.050],[1187.640,88.570]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1192.5,77.546 1181.5,171.13 1183.7,152.22 1187.4,121.08 1190.5,94.25 1190.7,92.468 1190.9,90.633 1191.1,88.784"
+    },
+    {
+      "_gvid": 28,
+      "tail": 30,
+      "head": 32,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1179.500,248.300],[1179.500,239.650],[1179.500,229.000],[1179.500,219.190]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1183.000,219.370],[1179.500,209.370],[1176.000,219.370]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1263.120,227.450],
+          "align": "c",
+          "width": 167.250,
+          "text": "tags.intersection(skip_tags)"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "tags.intersection(skip_tags)",
+      "lp": "1263.1,232.12",
+      "pos": "e,1179.5,207.86 1179.5,248.3 1179.5,239.65 1179.5,229 1179.5,219.19"
+    },
+    {
+      "_gvid": 33,
+      "tail": 34,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1625.260,96.490],[1620.620,95.670],[1616.000,94.910],[1611.500,94.250],[1513.240,79.860],[1401.000,71.150],[1317.740,66.150]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1318.140,62.660],[1307.950,65.570],[1317.730,69.650]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1306.4,65.48 1625.3,96.492 1620.6,95.667 1616,94.908 1611.5,94.25 1513.2,79.865 1401,71.147 1317.7,66.147"
+    },
+    {
+      "_gvid": 32,
+      "tail": 33,
+      "head": 34,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1654.150,171.800],[1660.060,162.550],[1667.540,150.820],[1674.250,140.290]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1677.140,142.280],[1679.560,131.960],[1671.230,138.510]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1849.350,142.200],
+          "align": "c",
+          "width": 349.500,
+          "text": "'tagged' in skip_tags and tags != self.__class__.untagged"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "'tagged' in skip_tags and tags != self.__class__.untagged",
+      "lp": "1849.4,146.88",
+      "pos": "e,1680.4,130.69 1654.2,171.8 1660.1,162.55 1667.5,150.82 1674.3,140.29"
+    },
+    {
+      "_gvid": 31,
+      "tail": 33,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1447.610,180.290],[1355.190,172.720],[1257.480,158.180],[1222.000,130.250],[1209.210,120.180],[1202.350,103.320],[1198.690,88.670]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1202.150,88.120],[1196.690,79.040],[1195.300,89.550]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1419.250,107.580],
+          "align": "c",
+          "width": 394.500,
+          "text": "(not ('tagged' in skip_tags and tags != self.__class__.untagged))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not ('tagged' in skip_tags and tags != self.__class__.untagged))",
+      "lp": "1419.2,112.25",
+      "pos": "e,1196.4,77.561 1447.6,180.29 1355.2,172.72 1257.5,158.18 1222,130.25 1209.2,120.18 1202.4,103.32 1198.7,88.665"
+    },
+    {
+      "_gvid": 29,
+      "tail": 30,
+      "head": 33,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1254.900,255.140],[1284.700,250.830],[1319.240,245.720],[1350.500,240.750],[1419.340,229.820],[1497.080,216.440],[1555.180,206.230]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1555.430,209.740],[1564.670,204.560],[1554.220,202.850]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1548.170,227.450],
+          "align": "c",
+          "width": 201.750,
+          "text": "(not tags.intersection(skip_tags))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not tags.intersection(skip_tags))",
+      "lp": "1548.2,232.12",
+      "pos": "e,1566.2,204.3 1254.9,255.14 1284.7,250.83 1319.2,245.72 1350.5,240.75 1419.3,229.82 1497.1,216.44 1555.2,206.23"
+    },
+    {
+      "_gvid": 23,
+      "tail": 26,
+      "head": 30,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1179.500,317.680],[1179.500,311.300],[1179.500,303.880],[1179.500,296.750]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1183.000,296.760],[1179.500,286.760],[1176.000,296.760]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1244.380,296.700],
+          "align": "c",
+          "width": 129.750,
+          "text": "('all' not in skip_tags)"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "('all' not in skip_tags)",
+      "lp": "1244.4,301.38",
+      "pos": "e,1179.5,285.24 1179.5,317.68 1179.5,311.3 1179.5,303.88 1179.5,296.75"
+    },
+    {
+      "_gvid": 20,
+      "tail": 25,
+      "head": 26,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1520.580,393.220],[1445.320,380.820],[1323.730,360.770],[1247.880,348.270]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1248.500,344.830],[1238.060,346.650],[1247.360,351.730]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1509.290,365.950],
+          "align": "c",
+          "width": 154.500,
+          "text": "should_run and skip_tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "should_run and skip_tags",
+      "lp": "1509.3,370.62",
+      "pos": "e,1236.6,346.41 1520.6,393.22 1445.3,380.82 1323.7,360.77 1247.9,348.27"
+    },
+    {
+      "_gvid": 21,
+      "tail": 25,
+      "head": 29,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1647.040,392.580],[1794.910,361.260],[2157.900,268.860],[2028.500,138.250],[1979.230,88.520],[1532.240,69.470],[1313.710,63.080]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1313.810,59.590],[1303.710,62.800],[1313.610,66.580]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [2146.670,227.450],
+          "align": "c",
+          "width": 199.500,
+          "text": "(not (should_run and skip_tags))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not (should_run and skip_tags))",
+      "lp": "2146.7,232.12",
+      "pos": "e,1302.2,62.754 1647,392.58 1794.9,361.26 2157.9,268.86 2028.5,138.25 1979.2,88.52 1532.2,69.472 1313.7,63.084"
+    },
+    {
+      "_gvid": 19,
+      "tail": 24,
+      "head": 25,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1606.360,594.280],[1604.290,563.770],[1599.470,498.540],[1591.780,434.530]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1595.290,434.440],[1590.600,424.940],[1588.350,435.300]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1590.4,423.44 1606.4,594.28 1604.3,563.77 1599.5,498.54 1591.8,434.53"
+    },
+    {
+      "_gvid": 17,
+      "tail": 23,
+      "head": 24,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1574.580,664.650],[1576.980,661.830],[1579.370,658.880],[1581.500,656.000],[1585.060,651.190],[1588.600,645.880],[1591.870,640.690]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1594.750,642.690],[1596.970,632.330],[1588.780,639.040]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1698.270,642.700],
+          "align": "c",
+          "width": 210.750,
+          "text": "'always' in tags or 'all' in only_tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "'always' in tags or 'all' in only_tags",
+      "lp": "1698.3,647.38",
+      "pos": "e,1597.8,631.04 1574.6,664.65 1577,661.83 1579.4,658.88 1581.5,656 1585.1,651.19 1588.6,645.88 1591.9,640.69"
+    },
+    {
+      "_gvid": 34,
+      "tail": 35,
+      "head": 36,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1329.380,595.050],[1331.980,586.180],[1335.240,575.030],[1338.210,564.850]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1341.530,565.970],[1340.980,555.390],[1334.810,564.010]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1349.940,573.450],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1349.9,578.12",
+      "pos": "e,1341.4,553.94 1329.4,595.05 1332,586.18 1335.2,575.03 1338.2,564.85",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 37,
+      "tail": 37,
+      "head": 25,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1527.880,517.100],[1543.730,507.190],[1561.550,493.320],[1572.500,476.250],[1580.390,463.950],[1584.190,448.190],[1586.000,434.730]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1589.450,435.460],[1586.980,425.150],[1582.480,434.750]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1587.1,423.65 1527.9,517.1 1543.7,507.19 1561.6,493.32 1572.5,476.25 1580.4,463.95 1584.2,448.19 1586,434.73"
+    },
+    {
+      "_gvid": 35,
+      "tail": 35,
+      "head": 37,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1357.280,597.240],[1382.090,586.260],[1416.590,570.990],[1444.790,558.500]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1446.150,561.730],[1453.870,554.480],[1443.310,555.330]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1504.050,573.450],
+          "align": "c",
+          "width": 168.750,
+          "text": "tags.intersection(only_tags)"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "tags.intersection(only_tags)",
+      "lp": "1504.1,578.12",
+      "pos": "e,1455.3,553.87 1357.3,597.24 1382.1,586.26 1416.6,570.99 1444.8,558.5"
+    },
+    {
+      "_gvid": 40,
+      "tail": 39,
+      "head": 25,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1008.580,448.720],[1053.230,443.110],[1113.870,435.950],[1167.500,431.250],[1262.540,422.910],[1369.920,416.580],[1452.320,412.370]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1452.450,415.860],[1462.260,411.860],[1452.100,408.870]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1463.8,411.79 1008.6,448.72 1053.2,443.11 1113.9,435.95 1167.5,431.25 1262.5,422.91 1369.9,416.58 1452.3,412.37"
+    },
+    {
+      "_gvid": 39,
+      "tail": 38,
+      "head": 39,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[840.640,519.530],[820.600,510.840],[804.580,498.750],[816.500,484.250],[823.610,475.600],[844.450,469.890],[867.230,466.150]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[867.650,469.630],[877.030,464.690],[866.620,462.710]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [992.000,488.200],
+          "align": "c",
+          "width": 351.000,
+          "text": "'tagged' in only_tags and tags != self.__class__.untagged"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "'tagged' in only_tags and tags != self.__class__.untagged",
+      "lp": "992,492.88",
+      "pos": "e,878.52,464.47 840.64,519.53 820.6,510.84 804.58,498.75 816.5,484.25 823.61,475.6 844.45,469.89 867.23,466.15"
+    },
+    {
+      "_gvid": 38,
+      "tail": 38,
+      "head": 25,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1044.290,524.330],[1102.930,518.940],[1157.990,511.360],[1167.500,501.500],[1186.460,481.840],[1153.190,459.570],[1172.500,440.250],[1190.720,422.030],[1317.370,413.560],[1426.030,409.630]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1426.100,413.130],[1435.980,409.280],[1425.860,406.130]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1370.500,453.570],
+          "align": "c",
+          "width": 396.000,
+          "text": "(not ('tagged' in only_tags and tags != self.__class__.untagged))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not ('tagged' in only_tags and tags != self.__class__.untagged))",
+      "lp": "1370.5,458.25",
+      "pos": "e,1437.5,409.23 1044.3,524.33 1102.9,518.94 1158,511.36 1167.5,501.5 1186.5,481.84 1153.2,459.57 1172.5,440.25 1190.7,422.03 1317.4,413.56 1426,409.63"
+    },
+    {
+      "_gvid": 36,
+      "tail": 35,
+      "head": 38,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1235.990,602.280],[1201.350,598.150],[1161.340,592.850],[1125.250,586.750],[1070.170,577.440],[1008.430,564.180],[961.950,553.610]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[962.780,550.210],[952.250,551.400],[961.220,557.040]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1226.880,573.450],
+          "align": "c",
+          "width": 203.250,
+          "text": "(not tags.intersection(only_tags))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not tags.intersection(only_tags))",
+      "lp": "1226.9,578.12",
+      "pos": "e,950.78,551.06 1236,602.28 1201.3,598.15 1161.3,592.85 1125.2,586.75 1070.2,577.44 1008.4,564.18 961.95,553.61"
+    },
+    {
+      "_gvid": 18,
+      "tail": 23,
+      "head": 35,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1419.850,673.890],[1372.330,670.030],[1329.210,664.290],[1321.750,656.000],[1318.220,652.080],[1316.890,647.050],[1316.790,641.830]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1320.260,642.320],[1318.010,631.960],[1313.310,641.460]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1449.620,642.700],
+          "align": "c",
+          "width": 255.750,
+          "text": "(not ('always' in tags or 'all' in only_tags))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not ('always' in tags or 'all' in only_tags))",
+      "lp": "1449.6,647.38",
+      "pos": "e,1318.2,630.46 1419.8,673.89 1372.3,670.03 1329.2,664.29 1321.8,656 1318.2,652.08 1316.9,647.05 1316.8,641.83"
+    },
+    {
+      "_gvid": 16,
+      "tail": 22,
+      "head": 23,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1652.610,724.620],[1637.010,717.650],[1618.970,709.580],[1602.950,702.420]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1604.700,699.370],[1594.140,698.480],[1601.840,705.760]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1592.8,697.86 1652.6,724.62 1637,717.65 1619,709.58 1602.9,702.42"
+    },
+    {
+      "_gvid": 14,
+      "tail": 21,
+      "head": 22,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1749.620,804.740],[1740.080,794.770],[1727.170,781.280],[1715.930,769.530]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1718.610,767.270],[1709.170,762.460],[1713.550,772.110]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1760.690,772.950],
+          "align": "c",
+          "width": 57.750,
+          "text": "only_tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "only_tags",
+      "lp": "1760.7,777.62",
+      "pos": "e,1708.1,761.37 1749.6,804.74 1740.1,794.77 1727.2,781.28 1715.9,769.53"
+    },
+    {
+      "_gvid": 15,
+      "tail": 21,
+      "head": 25,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1782.480,805.740],[1799.060,792.200],[1820.500,769.730],[1820.500,744.000],[1820.500,744.000],[1820.500,744.000],[1820.500,457.250],[1820.500,432.890],[1771.300,420.150],[1718.120,413.500]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1718.570,410.020],[1708.230,412.340],[1717.760,416.980]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1866.620,608.080],
+          "align": "c",
+          "width": 92.250,
+          "text": "(not only_tags)"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not only_tags)",
+      "lp": "1866.6,612.75",
+      "pos": "e,1706.7,412.17 1782.5,805.74 1799.1,792.2 1820.5,769.73 1820.5,744 1820.5,744 1820.5,744 1820.5,457.25 1820.5,432.89 1771.3,420.15 1718.1,413.5"
+    },
+    {
+      "_gvid": 12,
+      "tail": 18,
+      "head": 21,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1399.220,887.110],[1430.720,876.230],[1473.120,862.720],[1511.500,854.250],[1545.520,846.740],[1633.460,835.940],[1695.860,828.760]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1696.150,832.250],[1705.690,827.640],[1695.350,825.300]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1707.2,827.47 1399.2,887.11 1430.7,876.23 1473.1,862.72 1511.5,854.25 1545.5,846.74 1633.5,835.94 1695.9,828.76"
+    },
+    {
+      "_gvid": 9,
+      "tail": 16,
+      "head": 18,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1407.550,972.740],[1388.060,968.840],[1370.140,963.580],[1363.250,956.750],[1357.440,950.990],[1354.280,942.940],[1352.620,934.960]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1356.090,934.580],[1351.320,925.120],[1349.150,935.490]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1418.380,943.450],
+          "align": "c",
+          "width": 110.250,
+          "text": "tags.find(',') != -1"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "tags.find(',') != -1",
+      "lp": "1418.4,948.12",
+      "pos": "e,1351.1,923.62 1407.5,972.74 1388.1,968.84 1370.1,963.58 1363.2,956.75 1357.4,950.99 1354.3,942.94 1352.6,934.96"
+    },
+    {
+      "_gvid": 42,
+      "tail": 40,
+      "head": 41,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1515.500,887.250],[1515.500,876.420],[1515.500,862.200],[1515.500,849.730]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1519.000,849.990],[1515.500,839.990],[1512.000,849.990]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1528.620,858.200],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1528.6,862.88",
+      "pos": "e,1515.5,838.48 1515.5,887.25 1515.5,876.42 1515.5,862.2 1515.5,849.73",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 41,
+      "tail": 40,
+      "head": 21,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1563.640,887.120],[1570.950,884.530],[1578.420,881.920],[1585.500,879.500],[1630.950,863.950],[1683.210,846.950],[1719.290,835.350]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1720.050,838.790],[1728.510,832.400],[1717.920,832.120]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1729.9,831.93 1563.6,887.12 1571,884.53 1578.4,881.92 1585.5,879.5 1630.9,863.95 1683.2,846.95 1719.3,835.35"
+    },
+    {
+      "_gvid": 10,
+      "tail": 16,
+      "head": 40,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1476.090,964.560],[1477.360,956.580],[1479.640,947.180],[1483.750,939.500],[1485.060,937.050],[1486.610,934.650],[1488.300,932.330]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1490.660,934.970],[1494.390,925.050],[1485.290,930.470]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1547.120,943.450],
+          "align": "c",
+          "width": 126.750,
+          "text": "(tags.find(',') == -1)"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(tags.find(',') == -1)",
+      "lp": "1547.1,948.12",
+      "pos": "e,1495.4,923.89 1476.1,964.56 1477.4,956.58 1479.6,947.18 1483.8,939.5 1485.1,937.05 1486.6,934.65 1488.3,932.33"
+    },
+    {
+      "_gvid": 6,
+      "tail": 15,
+      "head": 16,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1679.090,1047.440],[1652.620,1041.700],[1620.890,1034.230],[1592.750,1026.000],[1567.960,1018.750],[1540.780,1009.160],[1518.750,1000.950]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1520.060,997.710],[1509.470,997.460],[1517.590,1004.260]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1665.120,1012.700],
+          "align": "c",
+          "width": 144.750,
+          "text": "not isinstance(tags, list)"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "not isinstance(tags, list)",
+      "lp": "1665.1,1017.4",
+      "pos": "e,1508.1,996.93 1679.1,1047.4 1652.6,1041.7 1620.9,1034.2 1592.8,1026 1568,1018.8 1540.8,1009.2 1518.7,1001"
+    },
+    {
+      "_gvid": 44,
+      "tail": 42,
+      "head": 43,
+      "_draw_": 
+      [
+        {
+          "op": "S",
+          "style": "dashed"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1768.470,964.300],[1765.420,955.460],[1761.640,944.530],[1758.190,934.550]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1761.570,933.600],[1754.990,925.290],[1754.950,935.880]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1778.470,943.450],
+          "align": "c",
+          "width": 26.250,
+          "text": "calls"
+        }
+      ],
+      "fontname": "DejaVu Sans Mono",
+      "label": "calls",
+      "lp": "1778.5,948.12",
+      "pos": "e,1754.5,923.86 1768.5,964.3 1765.4,955.46 1761.6,944.53 1758.2,934.55",
+      "style": "dashed"
+    },
+    {
+      "_gvid": 43,
+      "tail": 42,
+      "head": 21,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1795.800,964.490],[1804.950,955.700],[1814.650,944.190],[1819.500,931.500],[1827.750,909.910],[1828.130,900.940],[1819.500,879.500],[1813.670,865.020],[1802.330,852.130],[1791.370,842.170]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1793.810,839.650],[1783.930,835.830],[1789.270,844.980]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1782.8,834.85 1795.8,964.49 1805,955.7 1814.6,944.19 1819.5,931.5 1827.8,909.91 1828.1,900.94 1819.5,879.5 1813.7,865.02 1802.3,852.13 1791.4,842.17"
+    },
+    {
+      "_gvid": 7,
+      "tail": 15,
+      "head": 42,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1738.030,1041.810],[1739.230,1033.640],[1741.370,1023.760],[1748.120,1010.880]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1751.130,1012.670],[1753.140,1002.260],[1745.080,1009.140]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1837.880,1012.700],
+          "align": "c",
+          "width": 179.250,
+          "text": "(not not isinstance(tags, list))"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not not isinstance(tags, list))",
+      "lp": "1837.9,1017.4",
+      "pos": "e,1753.9,1001 1738,1041.8 1739.2,1033.6 1741.4,1023.8 1748.1,1010.9"
+    },
+    {
+      "_gvid": 5,
+      "tail": 12,
+      "head": 15,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1614.540,1123.670],[1640.070,1110.550],[1672.970,1093.650],[1698.160,1080.700]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1699.450,1083.970],[1706.750,1076.290],[1696.250,1077.750]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1708.1,1075.6 1614.5,1123.7 1640.1,1110.6 1673,1093.6 1698.2,1080.7"
+    },
+    {
+      "_gvid": 1,
+      "tail": 11,
+      "head": 12,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "b",
+          "points": [[1634.680,1202.820],[1626.060,1194.720],[1614.870,1184.200],[1604.490,1174.440]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#00ff00"
+        },
+        {
+          "op": "P",
+          "points": [[1607.180,1172.170],[1597.500,1167.870],[1602.390,1177.270]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1645.670,1178.450],
+          "align": "c",
+          "width": 49.500,
+          "text": "self.tags"
+        }
+      ],
+      "color": "green",
+      "fontname": "DejaVu Sans Mono",
+      "label": "self.tags",
+      "lp": "1645.7,1183.1",
+      "pos": "e,1596.4,1166.8 1634.7,1202.8 1626.1,1194.7 1614.9,1184.2 1604.5,1174.4"
+    },
+    {
+      "_gvid": 45,
+      "tail": 44,
+      "head": 21,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1911.510,1126.810],[1920.770,1110.460],[1932.500,1085.000],[1932.500,1061.000],[1932.500,1061.000],[1932.500,1061.000],[1932.500,904.500],[1932.500,858.420],[1881.320,837.850],[1835.290,828.660]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1835.990,825.230],[1825.520,826.880],[1834.740,832.120]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1824,826.61 1911.5,1126.8 1920.8,1110.5 1932.5,1085 1932.5,1061 1932.5,1061 1932.5,1061 1932.5,904.5 1932.5,858.42 1881.3,837.85 1835.3,828.66"
+    },
+    {
+      "_gvid": 2,
+      "tail": 11,
+      "head": 44,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "b",
+          "points": [[1684.400,1206.950],[1721.190,1196.610],[1780.220,1180.030],[1827.290,1166.810]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#ff0000"
+        },
+        {
+          "op": "P",
+          "points": [[1828.230,1170.190],[1836.910,1164.110],[1826.330,1163.450]]
+        }
+      ],
+      "_ldraw_": 
+      [
+        {
+          "op": "F",
+          "size": 14.000,
+          "face": "DejaVu Sans Mono"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "T",
+          "pt": [1839.480,1178.450],
+          "align": "c",
+          "width": 84.000,
+          "text": "(not self.tags)"
+        }
+      ],
+      "color": "red",
+      "fontname": "DejaVu Sans Mono",
+      "label": "(not self.tags)",
+      "lp": "1839.5,1183.1",
+      "pos": "e,1838.4,1163.7 1684.4,1206.9 1721.2,1196.6 1780.2,1180 1827.3,1166.8"
+    },
+    {
+      "_gvid": 0,
+      "tail": 10,
+      "head": 11,
+      "_draw_": 
+      [
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "b",
+          "points": [[1649.500,1252.490],[1649.500,1250.890],[1649.500,1249.250],[1649.500,1247.610]]
+        }
+      ],
+      "_hdraw_": 
+      [
+        {
+          "op": "S",
+          "style": "solid"
+        },
+        {
+          "op": "c",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "C",
+          "grad": "none",
+          "color": "#000000"
+        },
+        {
+          "op": "P",
+          "points": [[1653.000,1247.610],[1649.500,1237.610],[1646.000,1247.610]]
+        }
+      ],
+      "color": "black",
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,1649.5,1236.1 1649.5,1252.5 1649.5,1250.9 1649.5,1249.3 1649.5,1247.6"
+    },
+    {
+      "_gvid": 47,
+      "tail": 47,
+      "head": 45,
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,2112.9,1236 2111,1256.4 2111.3,1253.5 2111.6,1250.4 2111.9,1247.2",
+      "style": "invis"
+    },
+    {
+      "_gvid": 46,
+      "tail": 45,
+      "head": 50,
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,2114.5,1163.5 2114.5,1199.3 2114.5,1192 2114.5,1183.2 2114.5,1175",
+      "style": "invis"
+    },
+    {
+      "_gvid": 48,
+      "tail": 48,
+      "head": 51,
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,2217.7,1235.9 2196.5,1257.6 2200.7,1253.4 2205.3,1248.7 2209.8,1244",
+      "style": "invis"
+    },
+    {
+      "_gvid": 49,
+      "tail": 51,
+      "head": 46,
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,2234.5,1163.5 2234.5,1199.3 2234.5,1192 2234.5,1183.2 2234.5,1175",
+      "style": "invis"
+    },
+    {
+      "_gvid": 50,
+      "tail": 52,
+      "head": 53,
+      "fontname": "DejaVu Sans Mono",
+      "label": "",
+      "pos": "e,2348.6,1235.4 2351.4,1256.7 2351,1253.6 2350.6,1250.2 2350.1,1246.8",
+      "style": "invis"
+    }
+  ]
+}

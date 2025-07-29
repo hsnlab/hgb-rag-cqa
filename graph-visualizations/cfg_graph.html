@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 1000px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "0", "label": "evaluate_tags", "shape": "dot", "title": "Id: 0\nLabel: evaluate_tags\nShape: ellipse"}, {"color": "#97c2fc", "id": "1", "label": "1", "shape": "dot", "title": "Id: 1\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "2", "label": "2", "shape": "dot", "title": "Id: 2\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "3", "label": "3", "shape": "dot", "title": "Id: 3\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "4", "label": "4", "shape": "dot", "title": "Id: 4\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "5", "label": "5", "shape": "dot", "title": "Id: 5\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "6", "label": "6", "shape": "dot", "title": "Id: 6\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "7", "label": "7", "shape": "dot", "title": "Id: 7\nLabel: \nShape: tab"}, {"color": "#97c2fc", "id": "8", "label": "KEY", "shape": "dot", "title": "Id: 8\nLabel: KEY\nShape: ellipse"}, {"color": "#97c2fc", "id": "9", "label": "def evaluate_tags(self, only_tags, skip_tags, all_vars):...", "shape": "dot", "title": "Id: 9\nLabel: def evaluate_tags(self, only_tags, skip_tags, all_vars):...\nShape: rectangle"}, {"color": "#97c2fc", "id": "10", "label": "\"\"\" this checks if the ...\"\"\"should_run = True", "shape": "dot", "title": "Id: 10\nLabel: \"\"\" this checks if the ...\"\"\"should_run = True\nShape: rectangle"}, {"color": "#97c2fc", "id": "11", "label": "if self.tags:", "shape": "dot", "title": "Id: 11\nLabel: if self.tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "12", "label": "templar = Templar(loader=self._loader, variables=all_vars)tags = templar.template(self.tags)", "shape": "dot", "title": "Id: 12\nLabel: templar = Templar(loader=self._loader, variables=all_vars)tags = templar.template(self.tags)\nShape: rectangle"}, {"color": "#97c2fc", "id": "13", "label": "Templar", "shape": "dot", "title": "Id: 13\nLabel: Templar\nShape: tab"}, {"color": "#97c2fc", "id": "14", "label": "templar.template", "shape": "dot", "title": "Id: 14\nLabel: templar.template\nShape: tab"}, {"color": "#97c2fc", "id": "15", "label": "if not isinstance(tags, list):", "shape": "dot", "title": "Id: 15\nLabel: if not isinstance(tags, list):\nShape: diamond"}, {"color": "#97c2fc", "id": "16", "label": "if tags.find(\u0027,\u0027) != -1:", "shape": "dot", "title": "Id: 16\nLabel: if tags.find(\u0027,\u0027) != -1:\nShape: diamond"}, {"color": "#97c2fc", "id": "17", "label": "tags.find", "shape": "dot", "title": "Id: 17\nLabel: tags.find\nShape: tab"}, {"color": "#97c2fc", "id": "18", "label": "tags = set(tags.split(\u0027,\u0027))", "shape": "dot", "title": "Id: 18\nLabel: tags = set(tags.split(\u0027,\u0027))\nShape: rectangle"}, {"color": "#97c2fc", "id": "19", "label": "set", "shape": "dot", "title": "Id: 19\nLabel: set\nShape: tab"}, {"color": "#97c2fc", "id": "20", "label": "tags.split", "shape": "dot", "title": "Id: 20\nLabel: tags.split\nShape: tab"}, {"color": "#97c2fc", "id": "21", "label": "if only_tags:", "shape": "dot", "title": "Id: 21\nLabel: if only_tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "22", "label": "should_run = False", "shape": "dot", "title": "Id: 22\nLabel: should_run = False\nShape: rectangle"}, {"color": "#97c2fc", "id": "23", "label": "if \u0027always\u0027 in tags or \u0027all\u0027 in only_tags:", "shape": "dot", "title": "Id: 23\nLabel: if \u0027always\u0027 in tags or \u0027all\u0027 in only_tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "24", "label": "should_run = True", "shape": "dot", "title": "Id: 24\nLabel: should_run = True\nShape: rectangle"}, {"color": "#97c2fc", "id": "25", "label": "if should_run and skip_tags:", "shape": "dot", "title": "Id: 25\nLabel: if should_run and skip_tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "26", "label": "if \u0027all\u0027 in skip_tags:", "shape": "dot", "title": "Id: 26\nLabel: if \u0027all\u0027 in skip_tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "27", "label": "if \u0027always\u0027 not in tags or \u0027always\u0027 in skip_tags:", "shape": "dot", "title": "Id: 27\nLabel: if \u0027always\u0027 not in tags or \u0027always\u0027 in skip_tags:\nShape: diamond"}, {"color": "#97c2fc", "id": "28", "label": "should_run = False", "shape": "dot", "title": "Id: 28\nLabel: should_run = False\nShape: rectangle"}, {"color": "#97c2fc", "id": "29", "label": "return should_run", "shape": "dot", "title": "Id: 29\nLabel: return should_run\nShape: parallelogram"}, {"color": "#97c2fc", "id": "30", "label": "if tags.intersection(skip_tags):", "shape": "dot", "title": "Id: 30\nLabel: if tags.intersection(skip_tags):\nShape: diamond"}, {"color": "#97c2fc", "id": "31", "label": "tags.intersection", "shape": "dot", "title": "Id: 31\nLabel: tags.intersection\nShape: tab"}, {"color": "#97c2fc", "id": "32", "label": "should_run = False", "shape": "dot", "title": "Id: 32\nLabel: should_run = False\nShape: rectangle"}, {"color": "#97c2fc", "id": "33", "label": "if \u0027tagged\u0027 in skip_tags and tags != self.__class__.untagged:", "shape": "dot", "title": "Id: 33\nLabel: if \u0027tagged\u0027 in skip_tags and tags != self.__class__.untagged:\nShape: diamond"}, {"color": "#97c2fc", "id": "34", "label": "should_run = False", "shape": "dot", "title": "Id: 34\nLabel: should_run = False\nShape: rectangle"}, {"color": "#97c2fc", "id": "35", "label": "if tags.intersection(only_tags):", "shape": "dot", "title": "Id: 35\nLabel: if tags.intersection(only_tags):\nShape: diamond"}, {"color": "#97c2fc", "id": "36", "label": "tags.intersection", "shape": "dot", "title": "Id: 36\nLabel: tags.intersection\nShape: tab"}, {"color": "#97c2fc", "id": "37", "label": "should_run = True", "shape": "dot", "title": "Id: 37\nLabel: should_run = True\nShape: rectangle"}, {"color": "#97c2fc", "id": "38", "label": "if \u0027tagged\u0027 in only_tags and tags != self.__class__.untagged:", "shape": "dot", "title": "Id: 38\nLabel: if \u0027tagged\u0027 in only_tags and tags != self.__class__.untagged:\nShape: diamond"}, {"color": "#97c2fc", "id": "39", "label": "should_run = True", "shape": "dot", "title": "Id: 39\nLabel: should_run = True\nShape: rectangle"}, {"color": "#97c2fc", "id": "40", "label": "tags = set([tags])", "shape": "dot", "title": "Id: 40\nLabel: tags = set([tags])\nShape: rectangle"}, {"color": "#97c2fc", "id": "41", "label": "set", "shape": "dot", "title": "Id: 41\nLabel: set\nShape: tab"}, {"color": "#97c2fc", "id": "42", "label": "tags = [i for i, _ in itertools.groupby(tags)]", "shape": "dot", "title": "Id: 42\nLabel: tags = [i for i, _ in itertools.groupby(tags)]\nShape: rectangle"}, {"color": "#97c2fc", "id": "43", "label": "itertools.groupby", "shape": "dot", "title": "Id: 43\nLabel: itertools.groupby\nShape: tab"}, {"color": "#97c2fc", "id": "44", "label": "tags = self.__class__.untagged", "shape": "dot", "title": "Id: 44\nLabel: tags = self.__class__.untagged\nShape: rectangle"}, {"color": "#97c2fc", "id": "45", "label": "input", "shape": "dot", "title": "Id: 45\nLabel: input\nShape: parallelogram"}, {"color": "#97c2fc", "id": "46", "label": "default", "shape": "dot", "title": "Id: 46\nLabel: default\nShape: rectangle"}, {"color": "#97c2fc", "id": "47", "label": "if", "shape": "dot", "title": "Id: 47\nLabel: if\nShape: diamond"}, {"color": "#97c2fc", "id": "48", "label": "for", "shape": "dot", "title": "Id: 48\nLabel: for\nShape: hexagon"}, {"color": "#97c2fc", "id": "49", "label": "while", "shape": "dot", "title": "Id: 49\nLabel: while\nShape: hexagon"}, {"color": "#97c2fc", "id": "50", "label": "call", "shape": "dot", "title": "Id: 50\nLabel: call\nShape: tab"}, {"color": "#97c2fc", "id": "51", "label": "return", "shape": "dot", "title": "Id: 51\nLabel: return\nShape: parallelogram"}, {"color": "#97c2fc", "id": "52", "label": "try", "shape": "dot", "title": "Id: 52\nLabel: try\nShape: Mdiamond"}, {"color": "#97c2fc", "id": "53", "label": "raise", "shape": "dot", "title": "Id: 53\nLabel: raise\nShape: house"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "12", "label": "calls", "to": "13"}, {"arrows": "to", "from": "12", "label": "calls", "to": "14"}, {"arrows": "to", "from": "16", "label": "calls", "to": "17"}, {"arrows": "to", "from": "18", "label": "calls", "to": "19"}, {"arrows": "to", "from": "19", "label": "", "to": "20"}, {"arrows": "to", "from": "28", "label": "", "to": "29"}, {"arrows": "to", "from": "27", "label": "\u0027always\u0027 not in tags or \u0027always\u0027 in skip_tags", "to": "28"}, {"arrows": "to", "from": "27", "label": "(not (\u0027always\u0027 not in tags or \u0027always\u0027 in skip_tags))", "to": "29"}, {"arrows": "to", "from": "26", "label": "\u0027all\u0027 in skip_tags", "to": "27"}, {"arrows": "to", "from": "30", "label": "calls", "to": "31"}, {"arrows": "to", "from": "32", "label": "", "to": "29"}, {"arrows": "to", "from": "30", "label": "tags.intersection(skip_tags)", "to": "32"}, {"arrows": "to", "from": "34", "label": "", "to": "29"}, {"arrows": "to", "from": "33", "label": "\u0027tagged\u0027 in skip_tags and tags != self.__class__.untagged", "to": "34"}, {"arrows": "to", "from": "33", "label": "(not (\u0027tagged\u0027 in skip_tags and tags != self.__class__.untagged))", "to": "29"}, {"arrows": "to", "from": "30", "label": "(not tags.intersection(skip_tags))", "to": "33"}, {"arrows": "to", "from": "26", "label": "(\u0027all\u0027 not in skip_tags)", "to": "30"}, {"arrows": "to", "from": "25", "label": "should_run and skip_tags", "to": "26"}, {"arrows": "to", "from": "25", "label": "(not (should_run and skip_tags))", "to": "29"}, {"arrows": "to", "from": "24", "label": "", "to": "25"}, {"arrows": "to", "from": "23", "label": "\u0027always\u0027 in tags or \u0027all\u0027 in only_tags", "to": "24"}, {"arrows": "to", "from": "35", "label": "calls", "to": "36"}, {"arrows": "to", "from": "37", "label": "", "to": "25"}, {"arrows": "to", "from": "35", "label": "tags.intersection(only_tags)", "to": "37"}, {"arrows": "to", "from": "39", "label": "", "to": "25"}, {"arrows": "to", "from": "38", "label": "\u0027tagged\u0027 in only_tags and tags != self.__class__.untagged", "to": "39"}, {"arrows": "to", "from": "38", "label": "(not (\u0027tagged\u0027 in only_tags and tags != self.__class__.untagged))", "to": "25"}, {"arrows": "to", "from": "35", "label": "(not tags.intersection(only_tags))", "to": "38"}, {"arrows": "to", "from": "23", "label": "(not (\u0027always\u0027 in tags or \u0027all\u0027 in only_tags))", "to": "35"}, {"arrows": "to", "from": "22", "label": "", "to": "23"}, {"arrows": "to", "from": "21", "label": "only_tags", "to": "22"}, {"arrows": "to", "from": "21", "label": "(not only_tags)", "to": "25"}, {"arrows": "to", "from": "18", "label": "", "to": "21"}, {"arrows": "to", "from": "16", "label": "tags.find(\u0027,\u0027) != -1", "to": "18"}, {"arrows": "to", "from": "40", "label": "calls", "to": "41"}, {"arrows": "to", "from": "40", "label": "", "to": "21"}, {"arrows": "to", "from": "16", "label": "(tags.find(\u0027,\u0027) == -1)", "to": "40"}, {"arrows": "to", "from": "15", "label": "not isinstance(tags, list)", "to": "16"}, {"arrows": "to", "from": "42", "label": "calls", "to": "43"}, {"arrows": "to", "from": "42", "label": "", "to": "21"}, {"arrows": "to", "from": "15", "label": "(not not isinstance(tags, list))", "to": "42"}, {"arrows": "to", "from": "12", "label": "", "to": "15"}, {"arrows": "to", "from": "11", "label": "self.tags", "to": "12"}, {"arrows": "to", "from": "44", "label": "", "to": "21"}, {"arrows": "to", "from": "11", "label": "(not self.tags)", "to": "44"}, {"arrows": "to", "from": "10", "label": "", "to": "11"}, {"arrows": "to", "from": "47", "label": "", "to": "45"}, {"arrows": "to", "from": "45", "label": "", "to": "50"}, {"arrows": "to", "from": "48", "label": "", "to": "51"}, {"arrows": "to", "from": "51", "label": "", "to": "46"}, {"arrows": "to", "from": "52", "label": "", "to": "53"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": false,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

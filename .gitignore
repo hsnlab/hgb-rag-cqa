@@ -1,0 +1,13 @@
+/repos/*
+/graphs/*
+/std-code/gz/onlab/*
+/venv/*
+/graph/sklearn/cg_nodes_with_docstring_embeddings.csv
+/graph/sklearn/sg_nodes.csv
+/graph/sklearn/hg.pt
+/graph/manim/*
+cfg_output
+cfg_output.json
+std-code/gz/onlab
+/results/*
+/models/*
