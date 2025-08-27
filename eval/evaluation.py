@@ -156,7 +156,7 @@ def evaluate_semantic_similarity(reference: str, candidate: str, model) -> float
     return cosine_similarity(embeddings[0], embeddings[1])
 
 class RAGEvaluator:
-    def __init__(self, df: pd.DataFrame, rag_model: RepositoryRAG, k_values=[3, 5, 10], eval_llm_model_name="google-t5/t5-small", eval_embed_model_name="sentence-transformers/all-MiniLM-L6-v2", huggingface_apikey = "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"):
+    def __init__(self, df: pd.DataFrame, rag_model: RepositoryRAG, k_values=[3, 5, 10], eval_llm_model_name="google-t5/t5-small", eval_embed_model_name="sentence-transformers/all-MiniLM-L6-v2", huggingface_apikey = ""):
         
         self.df = df.copy()
         self.rag = rag_model
