@@ -4,6 +4,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
+from neo4j import GraphDatabase
 import uuid
 
 class QdrantStore:
@@ -13,7 +14,9 @@ class QdrantStore:
                  chunk_overlap=50,
                  qdrant_url="http://localhost:6333",
                  collection_name="rag_collection",
-                 api_key=None):
+                 api_key=None,
+                 neo4j_uri=None,
+                 neo4j_auth=None):
         
         self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
         self.collection_name = collection_name
@@ -102,6 +105,39 @@ class QdrantStore:
         if docs:
             self.vector_store.add_documents(docs)
 
+    def add_from_neo4j(self, node_label="FUNCTION", text_property="combinedName", id_property="ID", metadata_type="function"):
+        """Fetch nodes from Neo4j, embed them, and store in Qdrant."""
+        if not self.neo4j_uri or not self.neo4j_auth:
+            raise ValueError("Neo4j URI and authentication must be provided")
+
+        driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
+        docs = []
+
+        with driver.session() as session:
+            query = f"MATCH (n:{node_label}) RETURN n.{id_property} as id, n.{text_property} as text"
+            result = session.run(query)
+
+            for record in result:
+                node_id = record["id"]
+                text = record["text"]
+
+                # Split text if needed
+                for chunk in self.splitter.split_text(text):
+                    docs.append(
+                        Document(
+                            page_content=chunk,
+                            metadata={
+                                "type": metadata_type,
+                                "node_id": node_id,
+                                "doc_id": str(uuid.uuid4())
+                            }
+                        )
+                    )
+
+        if docs:
+            self.vector_store.add_documents(docs)
+        driver.close()
+
     def search(self, query, index_type="issue", top_k=5):
         """Search the Qdrant store with metadata filtering."""
         # Qdrant filtering syntax
@@ -147,14 +183,6 @@ class QdrantStore:
             vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
         )
 
-    # Note: Qdrant doesn't have built-in save/load like FAISS
-    # Data persistence is handled by the Qdrant server itself
     def backup_collection(self, backup_path):
         """Create a snapshot of the collection."""
         return self.client.create_snapshot(collection_name=self.collection_name)
-
-    def restore_collection(self, snapshot_name):
-        """Restore collection from snapshot."""
-        # This would require server-side snapshot management
-        # Implementation depends on your Qdrant deployment setup
-        pass
