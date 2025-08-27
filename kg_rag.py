@@ -4,13 +4,13 @@ import networkx as nx
 from pyvis.network import Network
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-import sys
-sys.path.append("./utils")
-from retrieval import Retrieval
+from utils.qdrant_store import QdrantStore
+from utils.retrieval import Retrieval
 
 
 class RepositoryRAG():
-    def __init__(self, data_dict: dict, model_name: str = 'all-MiniLM-L6-v2', llm_model: str = "mistralai/mistral-7b-instruct-v0.3"):
+    def __init__(self, data_dict: dict, model_name: str = 'all-MiniLM-L6-v2', qdrant_url: str = "http://localhost:6333", qdrant_collection: str = "rag_collection", qdrant_api_key: str = None,
+                 llm_model: str = "mistralai/mistral-7b-instruct-v0.3"):
         """
         Initialize the RepositoryRAG class with in-memory data and models.
 
@@ -20,14 +20,20 @@ class RepositoryRAG():
             llm_model (str): Hugging Face model for LLM-based answer generation.
         """
         self.data_dict = data_dict
-        self.retriever = Retrieval(model_name)
-
-        print("Indexing data into FAISS...")
-        self.retriever.index_data(
-            issues_df=data_dict['issues'],
-            prs_df=data_dict['prs'],
-            code_df=data_dict['cg_nodes']
+        self.vectorstore = QdrantStore(
+            model_name=model_name,
+            qdrant_url=qdrant_url,
+            collection_name=qdrant_collection,
+            api_key=qdrant_api_key
         )
+
+        print("Indexing data into Vectordb...")
+        self.vectorstore.add_code_functions(data_dict['cg_nodes'])
+        self.vectorstore.add_issues(data_dict['issues'])
+        self.vectorstore.add_prs(data_dict['prs'])
+
+        self.retriever = self.vectorestore.as_retriever()
+
 
         # LLM initialization
         self.tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left")
