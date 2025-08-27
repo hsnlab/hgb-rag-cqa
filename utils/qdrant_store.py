@@ -23,14 +23,16 @@ class QdrantStore:
         
         # Initialize Qdrant client
         self.client = QdrantClient(url=qdrant_url, api_key=api_key)
+        print("Successfully connected to Qdrant")
         
         # Get embedding dimension
         dim = len(self.embeddings.embed_query("hello world"))
         
         # Create collection if it doesn't exist
-        try:
-            self.client.get_collection(collection_name)
-        except Exception:
+        if self.client.collection_exists(collection_name):
+            print(f"Collection '{collection_name}' already exists.")
+        else:
+            print(f"Creating collection '{collection_name}'.")
             self.client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
@@ -40,7 +42,7 @@ class QdrantStore:
         self.vector_store = QdrantVectorStore(
             client=self.client,
             collection_name=collection_name,
-            embeddings=self.embeddings
+            embedding=self.embeddings
         )
         
         self.splitter = RecursiveCharacterTextSplitter.from_language(
@@ -48,6 +50,10 @@ class QdrantStore:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         )
+
+        # Neo4j connection details
+        self.neo4j_uri = neo4j_uri
+        self.neo4j_auth = neo4j_auth
 
     def add_issues(self, issues_df):
         """Index issues into Qdrant with chunking."""
