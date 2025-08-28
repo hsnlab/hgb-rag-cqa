@@ -15,8 +15,7 @@ class Summarizer:
     def __init__(self, model_id: str = "facebook/bart-large-cnn"):
         pipeline_ = pipeline("summarization", model=model_id,
                              device_map="auto",
-                             max_new_tokens = 100, 
-                             return_full_text=False)
+                             max_new_tokens = 200)
 
         self.llm = HuggingFacePipeline(pipeline=pipeline_)
 
