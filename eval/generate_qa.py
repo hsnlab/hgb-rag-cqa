@@ -14,7 +14,7 @@ def main():
     responses = []#qa_generator.generate_batch(df,batch_size=2)
     
     for idx, row in df.iterrows():
-        response = qa_generator.generate(row)
+        response = qa_generator.generate(row,multiple_candidates=True)
         responses.append(response)
     # Flatten nested context into top-level keys
     flat_responses = []
