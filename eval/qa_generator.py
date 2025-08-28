@@ -1,10 +1,75 @@
 import re
 import pandas as pd
 import torch
+import numpy as np
+from rank_bm25 import BM25Okapi
 from typing import List, Dict
 from langchain.prompts import PromptTemplate
 from langchain_huggingface.llms import HuggingFacePipeline
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, BitsAndBytesConfig
+
+class Summarizer:
+    """
+    Summarizes GitHub issues and PRs with different prompt templates.
+    """
+    def __init__(self, model_id: str = "facebook/bart-large-cnn"):
+        pipeline_ = pipeline("summarization", model=model_id,
+                             device_map="auto",
+                             max_new_tokens = 100, 
+                             return_full_text=False)
+
+        self.llm = HuggingFacePipeline(pipeline=pipeline_)
+
+        self.issue_prompt = PromptTemplate.from_template(self._issue_summary_template())
+        self.pr_prompt = PromptTemplate.from_template(self._pr_summary_template())
+
+        self.issue_chain = self.issue_prompt | self.llm
+        self.pr_chain = self.pr_prompt | self.llm
+
+    def _issue_summary_template(self):
+        return """Summarize the following GitHub issue into 2-3 sentences.
+Focus on the bug/feature request, expected vs actual behavior, and core technical details.
+Ignore system information, dependency lists, and long code snippets.
+
+### Issue Title:
+{title}
+
+### Issue Body:
+{body}
+
+### Output:
+<Concise summary here>"""
+
+    def _pr_summary_template(self):
+        return """Summarize the following GitHub pull request into 2-3 sentences.
+Focus on the intent of the PR, the functions/files changed, and the fix or enhancement proposed.
+Ignore boilerplate, references, and long code diffs.
+
+### PR Title:
+{title}
+
+### PR Body:
+{body}
+
+### Output:
+<Concise summary here>"""
+
+    def summarize_issue(self, title: str, body: str) -> str:
+        try:
+            result = self.issue_chain.invoke({"title": title, "body": body})
+            return result.strip()
+        except Exception as e:
+            print(f"[Summarizer Issue Error] {e}")
+            return ""
+
+    def summarize_pr(self, title: str, body: str) -> str:
+        try:
+            result = self.pr_chain.invoke({"title": title, "body": body})
+            return result.strip()
+        except Exception as e:
+            print(f"[Summarizer PR Error] {e}")
+            return ""
+
 
 class QAPairGenerator:
     def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct", mode:str="issue",quantize=False):
@@ -31,34 +96,51 @@ class QAPairGenerator:
         else:
             self.prompt = PromptTemplate.from_template(self._pr_only_prompt_template())
 
-        self.chain = self.prompt | self.llm
+        self.singlechain = self.prompt | self.llm
+
+        multi_prompt = PromptTemplate.from_template(self._multi_candidate_prompt_template())
+        self.multichain = multi_prompt | self.llm
+
+        self.summarizer = Summarizer()
 
     def _issue_prompt_template(self):
-        return """You are creating Q&A pairs to evaluate a codebase question-answering system.
+        return """You are generating Q&A pairs for evaluating a code-focused question-answering system.  
+Each pair must use the given GitHub issue and pull request context.  
 
-Given the following context from an issue and its linked pull requests, generate a **realistic technical question** that could be answered using this information, and a precise answer.
+### Context
+- Issue (user-facing problem description): 
+  {issue_title}
+  {issue_body}
 
-### Context:
-- Issue Title and Body (used to generate the question): {problem_statement}
-- Functions changed by the PR(s): {edit_functions}
-- PR Title and Body (contains attempted fixes): {pr_problem_statement}
+- Pull Request (title and description, developer explanation): 
+  {pr_title}
+  {pr_body}
 
-### Guidelines:
-- Formulate a technical question based on the **issue title and body**.
-- Make the question no longer than 1 sentence.
-- Use the **functions changed** as a clue to what the answer should focus on.
-- Write a precise answer using only the comments and PR content.
-- Make the answer at max 1-2 sentences.
-- Always end the question with a question mark: "?".
-- Always end the answer with a period: ".".
-- If no valid question can be made, say:
-  Question: Not applicable?
-  Answer: Not enough information.
+- Functions changed by the PR(s): 
+  {edit_functions}
 
-### Output format:
-Question: <Your question here?>
+### Instructions
+1. Formulate **one concise, technical question** inspired mainly by the *issue text* (title/body).  
+   - The question should reflect what a developer or user might ask about the problem or the fix.  
+   - The question should be no longer than 1 sentence.  
+   - Always end with a "?"  
+
+2. Write a **precise answer** that draws only on the *PR description, and changed functions*.  
+   - The answer should be at most 2 sentences.  
+   - Always end with a period.  
+
+3. Ensure that the question and answer are consistent:  
+   - The question should be understandable from the issue perspective.  
+   - The answer should show how the PR (and changed functions) addressed it.  
+
+4. If the context does not contain enough information to make a valid Q&A pair, output:  
+   - Question: Not applicable?  
+   - Answer: Not enough information.  
+
+### Output format
+Question: <Your question here?>  
 Answer: <Your answer here.>
-"""  # Your existing issue+pr prompt
+""" 
 
     def _pr_only_prompt_template(self):
         return """You are creating Q&A pairs to evaluate a codebase question-answering system.
@@ -84,23 +166,80 @@ Question: <Your technical question?>
 Answer: <Your accurate and concise answer.>
 """
 
-    def generate(self, issue_data: pd.Series) -> Dict[str, str]:
+    def _multi_candidate_prompt_template():
+        return """You are generating Q&A pairs for evaluating a code-focused question-answering system.  
+
+### Context
+- Issue (title/body): 
+{issue_title}
+{issue_body}
+
+- Pull Request (title/description): 
+{pr_title}
+{pr_body}
+
+- Functions changed by the PR(s): 
+{edit_functions}
+
+### Task
+Generate **3 different candidate Q&A pairs**.  
+Each must follow the rules below:
+
+1. The **question** should be inspired mainly by the issue (title/body) or PR text, no longer than 1 sentence, and end with a "?".  
+2. The **answer** should be based only on PR description and changed functions, no longer than 2 sentences, ending with a ".".  
+3. If the context does not support a valid Q&A, use:  
+Question: Not applicable?  
+Answer: Not enough information.  
+
+### Output format
+Candidate 1:
+Question: ...
+Answer: ...
+
+Candidate 2:
+Question: ...
+Answer: ...
+
+Candidate 3:
+Question: ...
+Answer: ...
+"""
+
+    def generate(self, issue_data: pd.Series, multiple_candidates=False) -> Dict[str, str]:
         try:
             edit_functions = issue_data.get("edit_functions", [])
             print(f"[QAGen] Generating Q&A for issue: {issue_data.get('url', 'Unknown URL')}")
             if len(edit_functions) > 10:
                 print("[QAGen] More than 10 edit functions, truncating to 10.")
                 edit_functions = edit_functions[:10]
+            issue_title = issue_data.get("issue_title", "").strip()
+            issue_body = issue_data.get("issue_body", "").strip()
+            pr_title = issue_data.get("pr_title", "").strip()
+            pr_body = issue_data.get("pr_body", "").strip()
+
+            issue_sum = self.summarizer.summarize_issue(issue_title, issue_body) if issue_body else "No issue body provided."
+            pr_sum = self.summarizer.summarize_pr(pr_title, pr_body)
+
             input_vars = {
-                "problem_statement": issue_data.get("problem_statement", ""),
+                "issue_title": issue_title,
+                "issue_body": issue_sum,
                 "edit_functions": ", ".join(edit_functions),
             #    "comments": issue_data.get("comments", ""),
-                "pr_problem_statement": issue_data.get("pr_problem_statement", ""),
+                "pr_title": pr_title,
+                "pr_body": pr_sum,
             #    "pr_comments": issue_data.get("pr_comments", ""),
             }
-
-            result = self.chain.invoke(input_vars)
-            question, answer = self._parse_output(result)
+            if multiple_candidates:
+                result = self.multichain.invoke(input_vars)
+                candidates = self._parse_multi_candidate_output(result)
+                if candidates:
+                    best = self._score_candidates_bm25(candidates, issue_body + " " + pr_body)
+                    question, answer = best.get("question"), best.get("answer")
+                else:
+                    question, answer = "Not applicable?", "Not enough information."
+            else:
+                result = self.chain.invoke(input_vars)
+                question, answer = self._parse_output(result)
 
             return {
                 "question": question,
@@ -160,7 +299,23 @@ Answer: <Your accurate and concise answer.>
                     })
 
         return results
-
+    
+    def _parse_multi_candidate_output(self, result: str) -> List[Dict[str, str]]:
+        candidates = []
+        current = {}
+        for line in result.splitlines():
+            if line.strip().startswith("Candidate"):
+                if current:
+                    candidates.append(current)
+                    current = {}
+            elif line.strip().startswith("Question:"):
+                current["question"] = line.split("Question:")[-1].strip()
+            elif line.strip().startswith("Answer:"):
+                current["answer"] = line.split("Answer:")[-1].strip()
+        if current:
+            candidates.append(current)
+        return candidates
+    
     def _parse_output(self, output: str) -> (str, str):
         # Normalize lines
         lines = output.strip().splitlines()
@@ -190,4 +345,23 @@ Answer: <Your accurate and concise answer.>
             answer = answer.rstrip("?") + "."
     
         return question, answer
+    
+    def _simple_tokenize(self,text: str):
+        return text.lower().split()
+
+    def _score_candidates_bm25(self,candidates: list, context_text: str) -> dict:
+        """
+        Score candidate questions using BM25 similarity against context (functions + PR/issue text).
+        Returns the best-scoring candidate.
+        """
+        questions = [c["question"] for c in candidates]
+        # BM25 expects a list of documents; we add the context as the last "document"
+        documents = questions + [context_text]
+        tokenized_docs = [self._simple_tokenize(doc) for doc in documents]
+
+        bm25 = BM25Okapi(tokenized_docs)
+        tokenized_query = self._simple_tokenize(context_text)
+        scores = bm25.get_scores(tokenized_query)  # similarity of each question to context
+        best_idx = np.argmax(scores[:-1])  # ignore context itself
+        return candidates[best_idx]
 
