@@ -4,3 +4,4 @@ __pycache__/
 /eval/__pycache__/
 tests/__pycache__/
 /data/*
+/_/*
