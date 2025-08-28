@@ -15,7 +15,7 @@ class Summarizer:
     def __init__(self, model_id: str = "facebook/bart-large-cnn"):
         pipeline_ = pipeline("summarization", model=model_id,
                              device_map="auto",
-                             max_new_tokens = 200)
+                             max_new_tokens = 50)
 
         self.llm = HuggingFacePipeline(pipeline=pipeline_)
 
@@ -166,24 +166,36 @@ Answer: <Your accurate and concise answer.>
 """
 
     def _multi_candidate_prompt_template(self):
-        return """"You are given context from a software project consisting of a pull request, changed functions in the PR and possibly linked issue(s). 
-Generate three useful and self-contained Q&A pair candidates that reflect the essence of the PR. Focus on generating meaningful technical questions that are relevant to developers, maintainers, or users. 
-### Context
-Text context:{context},
-Canged functions: {edit_functions}
+        return """"You are analyzing context from a software project that includes:
+- A pull request description and/or linked issue(s)
+- A list of changed functions in the PR
 
-### Output format
+Your task is to generate three self-contained Q&A pairs that distill the essence of the PR.
+
+Goals:
+- The questions should be technically meaningful, the kind that a developer, maintainer, or user might naturally ask when reviewing the PR.
+- The answers should be concise, accurate, and directly supported by the provided context (avoid speculation).
+- Together, the Q&A pairs should cover different angles—for example:
+  - Purpose/impact (why the change was made, what it fixes or improves)
+  - Implementation detail (how a function or logic changed, notable patterns or trade-offs)
+  - Practical usage or consequences (how it affects users, performance, or maintenance)
+
+Input:
+- Text context (PR and issue): {context}
+- Changed functions: {edit_functions}
+
+Output format:
 Candidate 1:
-Question: ...
-Answer: ...
+Question: …
+Answer: …
 
 Candidate 2:
-Question: ...
-Answer: ...
+Question: …
+Answer: …
 
 Candidate 3:
-Question: ...
-Answer: ...
+Question: …
+Answer: …
 """
 
     def generate(self, issue_data: pd.Series, multiple_candidates=False) -> Dict[str, str]:
