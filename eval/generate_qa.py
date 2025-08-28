@@ -3,7 +3,7 @@ from ast import literal_eval
 from qa_generator import QAPairGenerator
 
 def main():
-    df = pd.read_csv("./graph/sklearn/eval_df.csv")
+    df = pd.read_csv("../data/eval_df.csv")
     print(df.shape)
     for col in ["linked_prs", "linked_issues", "edit_functions", "labels"]:
         if col in df.columns:
