@@ -167,29 +167,11 @@ Answer: <Your accurate and concise answer.>
 """
 
     def _multi_candidate_prompt_template():
-        return """You are generating Q&A pairs for evaluating a code-focused question-answering system.  
-
+        return """"You are given context from a software project consisting of a pull request, changed functions in the PR and possibly linked issue(s). 
+Generate three useful and self-contained Q&A pair candidates that reflect the essence of the PR. Focus on generating meaningful technical questions that are relevant to developers, maintainers, or users. 
 ### Context
-- Issue (title/body): 
-{issue_title}
-{issue_body}
-
-- Pull Request (title/description): 
-{pr_title}
-{pr_body}
-
-- Functions changed by the PR(s): 
-{edit_functions}
-
-### Task
-Generate **3 different candidate Q&A pairs**.  
-Each must follow the rules below:
-
-1. The **question** should be inspired mainly by the issue (title/body) or PR text, no longer than 1 sentence, and end with a "?".  
-2. The **answer** should be based only on PR description and changed functions, no longer than 2 sentences, ending with a ".".  
-3. If the context does not support a valid Q&A, use:  
-Question: Not applicable?  
-Answer: Not enough information.  
+Text context:{context},
+Canged functions: {edit_functions}
 
 ### Output format
 Candidate 1:
@@ -220,14 +202,18 @@ Answer: ...
             issue_sum = self.summarizer.summarize_issue(issue_title, issue_body) if issue_body else "No issue body provided."
             pr_sum = self.summarizer.summarize_pr(pr_title, pr_body)
 
-            input_vars = {
-                "issue_title": issue_title,
-                "issue_body": issue_sum,
-                "edit_functions": ", ".join(edit_functions),
+            #input_vars = {
+            #    "issue_title": issue_title,
+            #    "issue_body": issue_sum,
+            #    "edit_functions": ", ".join(edit_functions),
             #    "comments": issue_data.get("comments", ""),
-                "pr_title": pr_title,
-                "pr_body": pr_sum,
+            #    "pr_title": pr_title,
+            #    "pr_body": pr_sum,
             #    "pr_comments": issue_data.get("pr_comments", ""),
+            #}
+            input_vars = {
+                "context" : pr_title + " " + pr_sum + "\n" + issue_sum + "" + issue_sum,
+                "edit_functions": ", ".join(edit_functions),
             }
             if multiple_candidates:
                 result = self.multichain.invoke(input_vars)
