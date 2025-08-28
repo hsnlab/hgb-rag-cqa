@@ -166,7 +166,7 @@ Question: <Your technical question?>
 Answer: <Your accurate and concise answer.>
 """
 
-    def _multi_candidate_prompt_template():
+    def _multi_candidate_prompt_template(self):
         return """"You are given context from a software project consisting of a pull request, changed functions in the PR and possibly linked issue(s). 
 Generate three useful and self-contained Q&A pair candidates that reflect the essence of the PR. Focus on generating meaningful technical questions that are relevant to developers, maintainers, or users. 
 ### Context
