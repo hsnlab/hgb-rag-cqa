@@ -189,6 +189,6 @@ class QdrantStore:
             vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
         )
 
-    def backup_collection(self, backup_path):
+    def backup_collection(self):
         """Create a snapshot of the collection."""
         return self.client.create_snapshot(collection_name=self.collection_name)
