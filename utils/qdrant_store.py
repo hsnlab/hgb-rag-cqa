@@ -126,7 +126,9 @@ class QdrantStore:
             for record in result:
                 node_id = record["id"]
                 text = record["text"]
-
+                
+                if isinstance(text, list):
+                    text = ", ".join(str(item) for item in text)
                 # Split text if needed
                 for chunk in self.splitter.split_text(text):
                     docs.append(
@@ -139,6 +141,7 @@ class QdrantStore:
                             }
                         )
                     )
+                    print(f"Prepared document for node ID {node_id}, with metadata: {metadata_type}, chunk length: {len(chunk)}")
 
         if docs:
             self.vector_store.add_documents(docs)
