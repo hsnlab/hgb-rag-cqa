@@ -1,20 +1,25 @@
 import pandas as pd
 from ast import literal_eval
 from qa_generator import QAPairGenerator
+from huggingface_hub import login
 
 def main():
-    df = pd.read_csv("./graph/sklearn/eval_df.csv")
+    df = pd.read_csv("../data/eval_df.csv")
     print(df.shape)
     for col in ["linked_prs", "linked_issues", "edit_functions", "labels"]:
         if col in df.columns:
             df[col] = df[col].apply(literal_eval)
-            
+
+    with open ('./_/hf_token.txt', 'r') as f:
+        hf_token = f.read().strip()
+
+    login(hf_token)
     qa_generator = QAPairGenerator(quantize=True,mode="pr")
     
     responses = []#qa_generator.generate_batch(df,batch_size=2)
     
     for idx, row in df.iterrows():
-        response = qa_generator.generate(row)
+        response = qa_generator.generate(row,multiple_candidates=True)
         responses.append(response)
     # Flatten nested context into top-level keys
     flat_responses = []
