@@ -373,7 +373,8 @@ class CodeQAGenerator:
     """
     def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct", quantize: bool = False):
         tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
-
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
         if quantize:
             bnb_config = BitsAndBytesConfig(load_in_8bit=True)
             model = AutoModelForCausalLM.from_pretrained(
@@ -483,6 +484,36 @@ Answer: <your answer.>"""
                 "function_code": function_code,
             })
         return results
+    
+    def generate_batch(self, function_code_list: List[str]) -> List[Dict[str, str]]:
+        """Generate Q&A pairs in all four categories for a batch of functions."""
+        all_results = []
+
+        for category, chain in self.chains.items():
+            try:
+                batch_data = [{"function_code": code} for code in function_code_list]
+                outputs = chain.batch(batch_data)
+
+                for i, result in enumerate(outputs):
+                    q, a = self._parse_output(result)
+                    all_results.append({
+                        "category": category,
+                        "question": q,
+                        "answer": a,
+                        "function_code": function_code_list[i],
+                    })
+
+            except Exception as e:
+                print(f"[{category} generation error] {e}")
+                for i, code in enumerate(function_code_list):
+                    all_results.append({
+                        "category": category,
+                        "question": "Not applicable?",
+                        "answer": "Not enough information.",
+                        "function_code": code,
+                    })
+
+        return all_results
 
     def _parse_output(self, output: str) -> (str, str):
         """Parse raw LLM output into Q/A strings."""
