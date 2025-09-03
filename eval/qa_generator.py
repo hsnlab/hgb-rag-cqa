@@ -1,4 +1,5 @@
 import re
+import random
 import pandas as pd
 import torch
 import numpy as np
@@ -8,6 +9,7 @@ from langchain.prompts import PromptTemplate
 from langchain_huggingface.llms import HuggingFacePipeline
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, BitsAndBytesConfig
 
+
 class Summarizer:
     """
     Summarizes GitHub issues and PRs with different prompt templates.
@@ -15,7 +17,7 @@ class Summarizer:
     def __init__(self, model_id: str = "facebook/bart-large-cnn"):
         pipeline_ = pipeline("summarization", model=model_id,
                              device_map="auto",
-                             max_new_tokens = 50)
+                             max_new_tokens = 60)
 
         self.llm = HuggingFacePipeline(pipeline=pipeline_)
 
@@ -172,13 +174,14 @@ Answer: <Your accurate and concise answer.>
 
 Your task is to generate three self-contained Q&A pairs that distill the essence of the PR.
 
-Goals:
-- The questions should be technically meaningful, the kind that a developer, maintainer, or user might naturally ask when reviewing the PR.
-- The answers should be concise, accurate, and directly supported by the provided context (avoid speculation).
-- Together, the Q&A pairs should cover different angles—for example:
-  - Purpose/impact (why the change was made, what it fixes or improves)
-  - Implementation detail (how a function or logic changed, notable patterns or trade-offs)
-  - Practical usage or consequences (how it affects users, performance, or maintenance)
+Guidelines:
+- Do not generate generic questions such as “What is the purpose of this PR?” or “What is the purpose of these changes?”
+- Each question must be technically meaningful and specific, the kind a developer, maintainer, or user might naturally ask when reviewing the PR.
+- Cover different angles:
+  1. Implementation detail: focus on what changed in one or more functions and why that matters (logic, edge cases, algorithmic change, parameter behavior, etc.).
+  2. Impact: how the change affects developers, users, performance, maintainability, or compatibility.
+  3. Risk/alternatives: what limitations, trade-offs, or potential pitfalls the change introduces (e.g., “What happens if X scenario occurs with this new code?”).
+- Answers should be concise, accurate, and directly grounded in the provided context. Avoid speculation.
 
 Input:
 - Text context (PR and issue): {context}
@@ -361,4 +364,149 @@ Answer: …
         scores = bm25.get_scores(tokenized_query)  # similarity of each question to context
         best_idx = np.argmax(scores[:-1])  # ignore context itself
         return candidates[best_idx]
+        
+
+class CodeQAGenerator:
+    """
+    Generates Q&A pairs for code snippets (functions + docstrings).
+    Supports 4 categories: general, feature request, bug report, performance issue.
+    """
+    def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct", quantize: bool = False):
+        tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
+
+        if quantize:
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                device_map="auto",
+                quantization_config=bnb_config,
+                torch_dtype=torch.float16,
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+
+        self.llm = HuggingFacePipeline(pipeline=pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=150,
+            return_full_text=False,
+        ))
+
+        # Build prompts
+        self.prompts = {
+            "general": PromptTemplate.from_template(self._general_prompt_template()),
+            "feature_request": PromptTemplate.from_template(self._feature_request_template()),
+            "bug_report": PromptTemplate.from_template(self._bug_report_template()),
+            "performance": PromptTemplate.from_template(self._performance_prompt_template()),
+        }
+
+        # Build chains
+        self.chains = {name: prompt | self.llm for name, prompt in self.prompts.items()}
+
+    def _general_prompt_template(self):
+        return """You are generating a **general Q&A pair** based on the following Python function.
+
+### Function Code
+{function_code}
+
+### Instructions
+- Create a concise **general question** about the purpose or usage of this function.
+- Write a **clear, accurate answer** based only on the function code and docstring.
+- End the question with "?" and the answer with ".".
+
+### Output format
+Question: <your question?>
+Answer: <your answer.>"""
+
+    def _feature_request_template(self):
+        return """You are generating a **feature request Q&A pair** for the following Python function.
+
+### Function Code
+{function_code}
+
+### Instructions
+- Create a question that suggests a **new feature or capability** that could be added to this function.
+- Answer by explaining briefly how the feature might be integrated or why it would be useful.
+- End the question with "?" and the answer with ".".
+
+### Output format
+Question: <your question?>
+Answer: <your answer.>"""
+
+    def _bug_report_template(self):
+        return """You are generating a **bug report Q&A pair** for the following Python function.
+
+### Function Code
+{function_code}
+
+### Instructions
+- Formulate a question that describes a possible **bug or edge case issue** with the function.
+- Answer by explaining what could cause the bug or how it could be fixed.
+- End the question with "?" and the answer with ".".
+
+### Output format
+Question: <your question?>
+Answer: <your answer.>"""
+
+    def _performance_prompt_template(self):
+        return """You are generating a **performance-related Q&A pair** for the following Python function.
+
+### Function Code
+{function_code}
+
+### Instructions
+- Ask a question about potential **performance concerns** (e.g., efficiency, complexity, memory usage).
+- Answer by explaining how the function could be optimized or what trade-offs exist.
+- End the question with "?" and the answer with ".".
+
+### Output format
+Question: <your question?>
+Answer: <your answer.>"""
+
+    def generate(self, function_code: str) -> List[Dict[str, str]]:
+        """
+        Generate Q&A pairs in all four categories for a given function.
+        """
+        results = []
+        for category, chain in self.chains.items():
+            try:
+                result = chain.invoke({"function_code": function_code})
+                q, a = self._parse_output(result)
+            except Exception as e:
+                print(f"[{category} generation error] {e}")
+                q, a = "Not applicable?", "Not enough information."
+            results.append({
+                "category": category,
+                "question": q,
+                "answer": a,
+                "function_code": function_code,
+            })
+        return results
+
+    def _parse_output(self, output: str) -> (str, str):
+        """Parse raw LLM output into Q/A strings."""
+        lines = output.strip().splitlines()
+        question, answer = None, None
+
+        for line in lines:
+            q_match = re.match(r"[*\-]*\s*Question\s*[:\-]*\s*(.*)", line, re.IGNORECASE)
+            a_match = re.match(r"[*\-]*\s*Answer\s*[:\-]*\s*(.*)", line, re.IGNORECASE)
+            if q_match:
+                question = q_match.group(1).strip()
+            elif a_match:
+                answer = a_match.group(1).strip()
+
+        if not question:
+            question = "Not applicable?"
+        elif not question.endswith("?"):
+            question = question.rstrip(".") + "?"
+
+        if not answer:
+            answer = "Not enough information."
+        elif not answer.endswith("."):
+            answer = answer.rstrip("?") + "."
+
+        return question, answer
+
 
