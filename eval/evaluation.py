@@ -182,22 +182,19 @@ class RAGEvaluator:
             self.df[f'recall_{k}'] = None
             self.df[f'f1_{k}'] = None
             self.df[f'iou_{k}'] = None
-        for metric in ["mrr","bleu", "meteor", "bertscore", "faithfulness", "answer_relevancy", "semantic_similarity"]:
+        for metric in ["mrr","bleu", "meteor", "bertscore", "faithfulness", "answer_relevancy", "semantic_similarity","generated_answer","retrieved_functions","retrieved_docs", "pred_query_class"]:
             self.df[metric] = None
 
 
     def _run_rag(self, question: str, top_n: int):
         print("\nRetrieving top results...")
 
-        functions_df = self.rag.retrieve_code_functions(question, top_n=top_n)
-        issues_df = self.rag.retrieve_issues(question, top_n=top_n)
-        prs_df = self.rag.retrieve_prs(question, top_n=top_n)
+        top_docs, query_type = self.rag.retriever.retrieve(question, top_k=top_n)
+        top_nodes = self.rag._enrich_and_print_docs(top_docs)
 
-        reranked = self.rag.rerank_functions(functions_df, issues_df, prs_df, top_n=top_n)
-        # Generate answer using RAG
-        subgraph = self.rag._filter_knowledge_graph(reranked, issues_df, prs_df)
-        answer = self.rag._generate_answer(question, subgraph)
-        return list(reranked["combinedName"].values), answer
+        print("\nGenerating answer...")
+        answer = self.rag._generate_answer_from_docs(question, top_docs)
+        return top_nodes["functions"], answer, top_docs, query_type
 
     def evaluate(self, verbose=True):
         for idx, row in self.df.iterrows():
@@ -211,10 +208,15 @@ class RAGEvaluator:
                 print(f"Golden context: {context}")
 
             
-            top_functions, answer_gen = self._run_rag(question, top_n=max(self.k_values))
+            top_functions, answer_gen, top_docs, query_type = self._run_rag(question, top_n=max(self.k_values))
+            self.df.at[idx, "pred_query_class"] = query_type
+            self.df.at[idx, "generated_answer"] = answer_gen
+            self.df.at[idx, "retrieved_functions"] = top_functions
+            self.df.at[idx, "retrieved_docs"] = top_docs    
             
             if verbose:
                 print(f"Retrieved functions: {top_functions}")
+                #print(f"Retrieved documents: {top_docs}")
 
             for k in self.k_values:
                 precision = calculate_precision_at_k(top_functions, context, k)
@@ -265,6 +267,12 @@ class RAGEvaluator:
             f1_mean = self.df[f'f1_{k}'].mean()
             iou_mean = self.df[f'iou_{k}'].mean()
             print(f"Precision@{k}: {precision_mean:.4f}, Recall@{k}: {recall_mean:.4f}, F1@{k}: {f1_mean:.4f}, IoU@{k}: {iou_mean:.4f}")
+        bleu_mean = self.df[f'bleu'].mean()
+        meteor_mean = self.df[f'meteor'].mean()
+        bertscore_mean = self.df[f'bertscore'].mean()
+        sem_sim_mean = self.df[f'semantic_similarity'].mean()
+        print(f"BLEU: {bleu_mean}, METEOR: {meteor_mean}")
+        print(f"BERTScore: {bertscore_mean}, Semantic Similarity: {sem_sim_mean}")
 
     def export(self, path):
         self.df.to_csv(path, index=False)

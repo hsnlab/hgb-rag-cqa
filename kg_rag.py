@@ -3,14 +3,17 @@ import torch
 import networkx as nx
 from pyvis.network import Network
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, BitsAndBytesConfig
 from utils.qdrant_store import QdrantStore
-from utils.retrieval import Retrieval
+from utils.retrieval import KnowledgeGraphRetriever
 
+from typing import List, Dict, Any
+from langchain_core.documents import Document
+from neo4j import GraphDatabase
 
 class RepositoryRAG():
-    def __init__(self, data_dict: dict, model_name: str = 'all-MiniLM-L6-v2', qdrant_url: str = "http://localhost:6333", qdrant_collection: str = "rag_collection", qdrant_api_key: str = None,
-                 llm_model: str = "mistralai/mistral-7b-instruct-v0.3"):
+    def __init__(self, data_dict: dict, model_name: str = 'sentence-transformers/all-MiniLM-L6-v2', qdrant_url: str = "http://localhost:6333", qdrant_collection: str = "rag_collection", qdrant_api_key: str = None,
+                 llm_model: str = "mistralai/mistral-7b-instruct-v0.3", quantize=False):
         """
         Initialize the RepositoryRAG class with in-memory data and models.
 
@@ -27,24 +30,96 @@ class RepositoryRAG():
             api_key=qdrant_api_key
         )
 
-        print("Indexing data into Vectordb...")
-        self.vectorstore.add_code_functions(data_dict['cg_nodes'])
-        self.vectorstore.add_issues(data_dict['issues'])
-        self.vectorstore.add_prs(data_dict['prs'])
+        self.retriever = KnowledgeGraphRetriever(vector_store=self.vectorstore, neo4j_url = "bolt://localhost:7687", username = "neo4j", password = "password", database = "neo4j")
 
-        self.retriever = self.vectorestore.as_retriever()
-
+        self.neo4j_uri = "bolt://localhost:7687"
+        self.neo4j_auth=("neo4j","password")
 
         # LLM initialization
         self.tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left")
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.llm = AutoModelForCausalLM.from_pretrained(llm_model).to(device)
+        if quantize:
+            bnb_config = BitsAndBytesConfig(
+                            load_in_4bit=True,
+                            bnb_4bit_use_double_quant=True,
+                            bnb_4bit_quant_type="nf4",
+                            bnb_4bit_compute_dtype=torch.bfloat16
+                        )
+
+            self.llm = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto",quantization_config=bnb_config,torch_dtype=torch.float16)
+        else:
+            self.llm = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto")
         self.generation_pipeline = pipeline(
             "text-generation",
             model=self.llm,
             tokenizer=self.tokenizer,
             device_map="auto"
         )
+    def _enrich_and_print_docs(self, docs: List[Document]) -> Dict[str, List[str]]:
+        """
+        Enrich retrieved docs with Neo4j data (function names, issue IDs, PR IDs),
+        print them, and return them as a dictionary.
+        """
+        function_names = set()
+        issue_ids = set()
+        pr_ids = set()
+
+        driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
+        with driver.session() as session:
+            for doc in docs:
+                meta = doc.metadata
+                doc_type = meta.get("type", "").lower()
+                node_id = meta.get("node_id")
+
+                if not node_id:
+                    continue
+
+                if "function" in doc_type:
+                    query = """
+                        MATCH (n:FUNCTION)
+                        WHERE n.ID = $node_id
+                        RETURN n.combinedName AS name
+                    """
+                    result = session.run(query, node_id=node_id)
+                    for record in result:
+                        if record["name"]:
+                            function_names.add(record["name"])
+
+                elif "issue" in doc_type:
+                    query = """
+                        MATCH (n:ISSUE)
+                        WHERE n.ID = $node_id
+                        RETURN n.ID AS id
+                    """
+                    result = session.run(query, node_id=node_id)
+                    for record in result:
+                        if record["id"]:
+                            issue_ids.add(str(record["id"]))
+
+                elif "pr" in doc_type:
+                    query = """
+                        MATCH (n:PR)
+                        WHERE n.ID = $node_id
+                        RETURN n.ID AS id
+                    """
+                    result = session.run(query, node_id=node_id)
+                    for record in result:
+                        if record["id"]:
+                            pr_ids.add(str(record["id"]))
+
+        # Print retrieved values
+        if function_names:
+            print("\nRetrieved Functions:", ", ".join(sorted(function_names)))
+        if issue_ids:
+            print("Retrieved Issues:", ", ".join(sorted(issue_ids)))
+        if pr_ids:
+            print("Retrieved PRs:", ", ".join(sorted(pr_ids)))
+
+        return {
+            "functions": sorted(function_names),
+            "issues": sorted(issue_ids),
+            "prs": sorted(pr_ids),
+        }
 
     def search(self, top_n: int = 10):
         try:
@@ -54,21 +129,19 @@ class RepositoryRAG():
                     continue
 
                 print("\nRetrieving top results...")
-                functions_df = self.retrieve_code_functions(question, top_n=top_n)
-                issues_df = self.retrieve_issues(question, top_n=top_n)
-                prs_df = self.retrieve_prs(question, top_n=top_n)
-                print(functions_df)
-                print(issues_df)
-                print(prs_df)
-                reranked_functions = self.rerank_functions(functions_df, issues_df, prs_df, top_n=top_n)
-                print(f"\nTop {top_n} functions based on relevance:")
-                print(reranked_functions[['func_id', 'combinedName', 'relevance_score']])
+                top_docs, query_type = self.retriever.retrieve(question, top_k=top_n)
+                print(f"Your query was classified as a(n) {query_type}")
+                #reranked_functions = self.rerank_functions(functions_df, issues_df, prs_df, top_n=top_n)
+                #print(f"\nTop {top_n} functions based on relevance:")
+                #print(reranked_functions[['func_id', 'combinedName', 'relevance_score']])
+                top_nodes = self._enrich_and_print_docs(top_docs)
                 
-                print("\nBuilding enriched knowledge graph...")
-                subgraph = self._filter_knowledge_graph(reranked_functions, issues_df, prs_df)
+                #print("\nBuilding enriched knowledge graph...")
+                #subgraph = self._filter_knowledge_graph(reranked_functions, issues_df, prs_df)
 
                 print("\nGenerating answer...")
-                answer = self._generate_answer(question, subgraph)
+                #answer = self._generate_answer(question, subgraph)
+                answer = self._generate_answer_from_docs(question, top_docs)
                 print("\nAnswer:", answer)
 
         except (KeyboardInterrupt, EOFError):
@@ -382,7 +455,36 @@ If you're unsure, say so.
             return_full_text=False,
         )
         return response[0]['generated_text'].strip()
+    
+    def _generate_answer_from_docs(self, question: str, docs: list):
+        """
+        Generate an answer to the user's question based on retrieved documents.
+        """
+        context = "\n\n".join([f"- {doc.page_content}" for doc in docs])
 
+        prompt = f"""<s>[INST] You are a helpful machine learning assistant.
+
+Use the context below to answer the question about this software repository.
+You are given text snippets from code functions, issues, and PRs.
+
+If you're unsure, say so.
+
+### Question
+{question}
+
+### Context
+{context}
+
+### Answer
+[/INST]"""
+        
+        response = self.generation_pipeline(
+            prompt,
+            max_new_tokens=100,
+            return_full_text=False,
+        )
+        return response[0]['generated_text'].strip()
+    
 if __name__ == "__main__":
     sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn.pkl")
     tool = RepositoryRAG(data_dict=sklearn_hier_json)

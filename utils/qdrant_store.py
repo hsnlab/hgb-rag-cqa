@@ -122,15 +122,22 @@ class QdrantStore:
         with driver.session() as session:
             query = f"MATCH (n:{node_label}) RETURN n.{id_property} as id, n.{text_property} as text"
             result = session.run(query)
-
+            seen = set()
             for record in result:
                 node_id = record["id"]
                 text = record["text"]
                 
                 if isinstance(text, list):
                     text = ", ".join(str(item) for item in text)
+                if not text or not text.strip():
+                    continue
                 # Split text if needed
                 for chunk in self.splitter.split_text(text):
+                    if not chunk.strip():
+                        continue
+                    if chunk in seen:
+                        continue
+                    seen.add(chunk)
                     docs.append(
                         Document(
                             page_content=chunk,
@@ -147,25 +154,20 @@ class QdrantStore:
             self.vector_store.add_documents(docs)
         driver.close()
 
-    def search(self, query, index_type="issue", top_k=5):
+    def search(self, query, top_k=5, filter=None):
         """Search the Qdrant store with metadata filtering."""
-        # Qdrant filtering syntax
-        filter_condition = {"must": [{"key": "metadata.type", "match": {"value": index_type}}]}
-        
         return self.vector_store.similarity_search(
             query, 
             k=top_k, 
-            filter=filter_condition
+            filter=filter
         )
 
-    def search_with_scores(self, query, index_type="issue", top_k=5):
-        """Search the Qdrant store with scores returned."""
-        filter_condition = {"must": [{"key": "metadata.type", "match": {"value": index_type}}]}
-        
+    def search_with_scores(self, query, top_k=5, filter=None):
+        """Search the Qdrant store with scores returned."""        
         return self.vector_store.similarity_search_with_score(
             query, 
             k=top_k, 
-            filter=filter_condition
+            filter=filter
         )
 
     def delete_by_type(self, doc_type):

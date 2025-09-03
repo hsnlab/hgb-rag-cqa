@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate a RAG model using a test DataFrame.")
     parser.add_argument(
             "eval_df_path",
-            default="../graph/sklearn/eval_df.csv",
+            default="../data/eval_df.csv",
             type=str,
             help="Path to the CSV file containing the evaluation dataframe."
         )
@@ -28,8 +28,8 @@ def main():
     dataset = pd.read_csv(eval_df_path)
     dataset["edit_functions"] = dataset["edit_functions"].apply(literal_eval)
 
-    sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn_with_summaries.pkl")
-    tool = RepositoryRAG(data_dict=sklearn_hier_json)
+    #sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn_with_summaries.pkl")
+    tool = RepositoryRAG(data_dict={},qdrant_api_key="@lmafa12", quantize=True)
 
     evaluator = RAGEvaluator(df=dataset, rag_model=tool, k_values=[3, 5, 10])
     evaluator.evaluate(verbose=True)
