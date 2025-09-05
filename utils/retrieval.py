@@ -108,6 +108,7 @@ class KnowledgeGraphRetriever:
     # Retrieval Strategies
     # ------------------
     def retrieve(self, query: str, top_k: int = 5) -> List[Document]:
+        top_k = top_k*10  # Over-retrieve to allow for reranking later
         query_type = self.classify_query(query)
         #print(f"Query classified as {query_type}")
         if query_type == "general_question":
