@@ -6,12 +6,15 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 from neo4j import GraphDatabase
 import uuid
+import ast 
+
 
 class QdrantStore:
     def __init__(self, 
                  model_name="sentence-transformers/all-MiniLM-L6-v2", 
-                 chunk_size=512, 
-                 chunk_overlap=50,
+                 distance_type="cosine",
+                 chunk_size=150, 
+                 chunk_overlap=5,
                  qdrant_url="http://localhost:6333",
                  collection_name="rag_collection",
                  api_key=None,
@@ -28,6 +31,19 @@ class QdrantStore:
         # Get embedding dimension
         dim = len(self.embeddings.embed_query("hello world"))
         
+        distance_map = {
+            "cosine": Distance.COSINE,
+            "dot": Distance.DOT,
+            "euclid": Distance.EUCLID,
+            "manhattan": Distance.MANHATTAN
+        }
+
+        if distance_type not in distance_map:
+            raise ValueError(
+                f"Invalid distance_type '{distance_type}'. "
+                f"Choose one of {list(distance_map.keys())}."
+            )
+        dist = distance_map[distance_type]
         # Create collection if it doesn't exist
         if self.client.collection_exists(collection_name):
             print(f"Collection '{collection_name}' already exists.")
@@ -35,21 +51,27 @@ class QdrantStore:
             print(f"Creating collection '{collection_name}'.")
             self.client.create_collection(
                 collection_name=collection_name,
-                vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
+                vectors_config=VectorParams(size=dim, distance=dist)
             )
         
         # Initialize LangChain Qdrant vector store
         self.vector_store = QdrantVectorStore(
             client=self.client,
             collection_name=collection_name,
-            embedding=self.embeddings
+            embedding=self.embeddings,
+            distance = dist,
+            validate_collection_config=False,  
+            validate_embeddings=False
         )
         
-        self.splitter = RecursiveCharacterTextSplitter.from_language(
-            language="python",
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
+        self.splitters = {
+            size: RecursiveCharacterTextSplitter.from_language(
+                language="python",
+                chunk_size=size,
+                chunk_overlap=chunk_overlap,
+            )
+            for size in [128, 256, 512]
+        }
 
         # Neo4j connection details
         self.neo4j_uri = neo4j_uri
@@ -67,7 +89,8 @@ class QdrantStore:
                         metadata={
                             "type": "issue",
                             "issue_number": row["issue_number"],
-                            "doc_id": str(uuid.uuid4())  # Add unique ID for Qdrant
+                            "doc_id": str(uuid.uuid4()),  # Add unique ID for Qdrant
+                            "chunk_size": self.splitter.chunk_size
                         },
                     )
                 )
@@ -93,23 +116,76 @@ class QdrantStore:
         if docs:
             self.vector_store.add_documents(docs)
 
-    def add_code(self, code_df):
-        """Index code functions into Qdrant with chunking."""
+    def add_functions_with_docstrings(self, 
+                                      node_label="FUNCTION", 
+                                      code_property="function_code",
+                                      id_property="ID",
+                                      metadata_type_code="function_code", 
+                                      metadata_type_docstring="function_docstring"):
+        """
+        Fetch functions from Neo4j, remove docstrings, store code and docstrings as separate documents,
+        and index them into Qdrant.
+        """
+        if not self.neo4j_uri or not self.neo4j_auth:
+            raise ValueError("Neo4j URI and authentication must be provided")
+
+        driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
         docs = []
-        for _, row in code_df.iterrows():
-            for chunk in self.splitter.split_text(row["function_code"]):
-                docs.append(
-                    Document(
-                        page_content=chunk,
-                        metadata={
-                            "type": "code",
-                            "func_id": row["func_id"],
-                            "doc_id": str(uuid.uuid4())
-                        },
-                    )
-                )
+
+        with driver.session() as session:
+            query = f"MATCH (n:{node_label}) RETURN n.{id_property} as id, n.{code_property} as code"
+            result = session.run(query)
+            seen = set()
+
+            for record in result:
+                node_id = record["id"]
+                code = record["code"]
+                if not code or not code.strip():
+                    continue
+
+                # Remove docstrings
+                cleaned_code, docstring = self.__remove_docstrings_from_function(code)
+
+                # Add cleaned code chunks
+                for chunk_size, splitter in self.splitters.items():
+                    for chunk in splitter.split_text(cleaned_code):
+                        if chunk in seen:
+                            continue
+                        seen.add(chunk)
+                        docs.append(Document(
+                            page_content=chunk,
+                            metadata={
+                                "type": metadata_type_code,
+                                "node_id": node_id,
+                                "doc_id": str(uuid.uuid4()),
+                                "chunk_size": chunk_size
+                            }
+                        ))
+
+                # Add docstring chunks as separate documents
+                for chunk_size, splitter in self.splitters.items():
+                    for chunk in splitter.split_text(cleaned_code):
+                        if chunk in seen:
+                            continue
+                        seen.add(chunk)
+                        docs.append(Document(
+                            page_content=chunk,
+                            metadata={
+                                "type": metadata_type_docstring,
+                                "node_id": node_id,
+                                "doc_id": str(uuid.uuid4()),
+                                "chunk_size": chunk_size
+                            }
+                        ))
+
+        # Batch insert into Qdrant
         if docs:
-            self.vector_store.add_documents(docs)
+            batch_size = 100
+            for i in range(0, len(docs), batch_size):
+                batch = docs[i:i + batch_size]
+                self.vector_store.add_documents(batch)
+
+        driver.close()
 
     def add_from_neo4j(self, node_label="FUNCTION", text_property="combinedName", id_property="ID", metadata_type="function"):
         """Fetch nodes from Neo4j, embed them, and store in Qdrant."""
@@ -130,28 +206,35 @@ class QdrantStore:
                 if isinstance(text, list):
                     text = ", ".join(str(item) for item in text)
                 if not text or not text.strip():
+                    print(f"Zero length document with id: {node_id}")
                     continue
                 # Split text if needed
-                for chunk in self.splitter.split_text(text):
-                    if not chunk.strip():
-                        continue
-                    if chunk in seen:
-                        continue
-                    seen.add(chunk)
-                    docs.append(
-                        Document(
-                            page_content=chunk,
-                            metadata={
-                                "type": metadata_type,
-                                "node_id": node_id,
-                                "doc_id": str(uuid.uuid4())
-                            }
+                for chunk_size, splitter in self.splitters.items():
+                    for chunk in splitter.split_text(text):
+                        if not chunk.strip():
+                            continue
+                        docs.append(
+                            Document(
+                                page_content=chunk,
+                                metadata={
+                                    "type": metadata_type,
+                                    "node_id": node_id,
+                                    "doc_id": str(uuid.uuid4()),
+                                    "chunk_size": chunk_size
+                                }
+                            )
                         )
-                    )
-                    print(f"Prepared document for node ID {node_id}, with metadata: {metadata_type}, chunk length: {len(chunk)}")
+                    if len(chunk) <=1:
+                        print(f"Prepared document for node ID {node_id}, with metadata: {metadata_type}, chunk length: {len(chunk)}")
 
         if docs:
-            self.vector_store.add_documents(docs)
+            batch_size = 100
+            for i in range(0, len(docs), batch_size):
+                batch = docs[i:i + batch_size]
+                try:
+                    self.vector_store.add_documents(batch)
+                except Exception as e:
+                    print(f"Error adding batch to Qdrant: {e}")
         driver.close()
 
     def search(self, query, top_k=5, filter=None):
@@ -197,3 +280,28 @@ class QdrantStore:
     def backup_collection(self):
         """Create a snapshot of the collection."""
         return self.client.create_snapshot(collection_name=self.collection_name)
+    
+    @staticmethod
+    def __remove_docstrings_from_function(code: str) -> tuple[str, str]:
+        """
+        Remove docstrings from functions and return the cleaned code and extracted docstrings.
+        
+        Args:
+            code (str): Python function code as a string.
+        Returns:
+            tuple: (code_without_docstrings, extracted_docstrings)
+        """
+        parsed = ast.parse(code)
+        extracted_docstrings = []
+
+        for node in ast.walk(parsed):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant) and isinstance(node.body[0].value.value, str):
+                    docstring = node.body[0].value.value
+                    extracted_docstrings.append(docstring)
+                    node.body.pop(0)
+
+        cleaned_code = ast.unparse(parsed)
+        # Join all docstrings into one string (or placeholder if none)
+        docstrings_text = "\t" if not extracted_docstrings else "\n".join(extracted_docstrings)
+        return cleaned_code, docstrings_text
