@@ -6,13 +6,15 @@ from pyvis.network import Network
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, BitsAndBytesConfig
 from utils.qdrant_store import QdrantStore
 from utils.retrieval import KnowledgeGraphRetriever
+from utils.reranker import Reranker
+from utils.deduplicator import Deduplicator
 
 from typing import List, Dict, Any
 from langchain_core.documents import Document
 from neo4j import GraphDatabase
 
 class RepositoryRAG():
-    def __init__(self, data_dict: dict, model_name: str = 'sentence-transformers/all-MiniLM-L6-v2', qdrant_url: str = "http://localhost:6333", qdrant_collection: str = "rag_collection", qdrant_api_key: str = None,
+    def __init__(self, data_dict: dict, model_name: str = 'sentence-transformers/all-MiniLM-L6-v2', qdrant_url: str = "http://localhost:6333", qdrant_collection: str = "rag_collection", qdrant_api_key: str = None, qdrant_dist_type="cosine",
                  llm_model: str = "mistralai/mistral-7b-instruct-v0.3", quantize=False):
         """
         Initialize the RepositoryRAG class with in-memory data and models.
@@ -27,16 +29,21 @@ class RepositoryRAG():
             model_name=model_name,
             qdrant_url=qdrant_url,
             collection_name=qdrant_collection,
-            api_key=qdrant_api_key
+            api_key=qdrant_api_key,
+            distance_type=qdrant_dist_type
         )
 
         self.retriever = KnowledgeGraphRetriever(vector_store=self.vectorstore, neo4j_url = "bolt://localhost:7687", username = "neo4j", password = "password", database = "neo4j")
+        self.deduplicator = Deduplicator(embedder=self.vectorstore.embeddings)
+        self.reranker = Reranker(device="cuda" if torch.cuda.is_available() else "cpu")
 
         self.neo4j_uri = "bolt://localhost:7687"
         self.neo4j_auth=("neo4j","password")
 
         # LLM initialization
         self.tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left")
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if quantize:
             bnb_config = BitsAndBytesConfig(
@@ -108,12 +115,12 @@ class RepositoryRAG():
                             pr_ids.add(str(record["id"]))
 
         # Print retrieved values
-        if function_names:
-            print("\nRetrieved Functions:", ", ".join(sorted(function_names)))
-        if issue_ids:
-            print("Retrieved Issues:", ", ".join(sorted(issue_ids)))
-        if pr_ids:
-            print("Retrieved PRs:", ", ".join(sorted(pr_ids)))
+        #if function_names:
+        #    print("\nRetrieved Functions:", ", ".join(sorted(function_names)))
+        #if issue_ids:
+        #    print("Retrieved Issues:", ", ".join(sorted(issue_ids)))
+        #if pr_ids:
+        #    print("Retrieved PRs:", ", ".join(sorted(pr_ids)))
 
         return {
             "functions": sorted(function_names),
@@ -131,9 +138,12 @@ class RepositoryRAG():
                 print("\nRetrieving top results...")
                 top_docs, query_type = self.retriever.retrieve(question, top_k=top_n)
                 print(f"Your query was classified as a(n) {query_type}")
-                #reranked_functions = self.rerank_functions(functions_df, issues_df, prs_df, top_n=top_n)
-                #print(f"\nTop {top_n} functions based on relevance:")
-                #print(reranked_functions[['func_id', 'combinedName', 'relevance_score']])
+                print(f"Deduplicating found {len(top_docs)} documents...")
+                top_docs = self.deduplicator.deduplicate(top_docs)
+                print(f"Reranking remaining {len(top_docs)} documents...")
+                reranked = self.reranker.rerank(question, top_docs, alpha=1.0, beta=0.0)
+                top_docs = [doc for doc, _ in reranked[:top_n]]
+
                 top_nodes = self._enrich_and_print_docs(top_docs)
                 
                 #print("\nBuilding enriched knowledge graph...")
@@ -465,7 +475,7 @@ If you're unsure, say so.
         prompt = f"""<s>[INST] You are a helpful machine learning assistant.
 
 Use the context below to answer the question about this software repository.
-You are given text snippets from code functions, issues, and PRs.
+You are given text snippets from code functions, issues, and PRs. Make your answer short and precise.
 
 If you're unsure, say so.
 
@@ -486,6 +496,7 @@ If you're unsure, say so.
         return response[0]['generated_text'].strip()
     
 if __name__ == "__main__":
-    sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn.pkl")
-    tool = RepositoryRAG(data_dict=sklearn_hier_json)
+    #sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn.pkl")
+    tool = RepositoryRAG(data_dict={},qdrant_api_key="@lmafa12",qdrant_collection = "rag_collection_codet5-base_cosine",model_name="Salesforce/codet5-base",
+                         quantize=True)
     tool.search(top_n=10)

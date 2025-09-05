@@ -4,6 +4,7 @@ from langchain_neo4j import Neo4jGraph
 from langchain_core.documents import Document
 from utils.faiss_store import FaissStore
 from qdrant_client import models
+from transformers import pipeline
 
 
 class Retrieval():
@@ -24,7 +25,7 @@ class Retrieval():
         ]
 
 class KnowledgeGraphRetriever:
-    def __init__(self, vector_store, neo4j_url: str, username: str, password: str, database: str = "neo4j"):
+    def __init__(self, vector_store, neo4j_url: str, username: str, password: str, database: str = "neo4j", query_labels: List[str] = ["general_question", "bug_report", "feature_request", "performance_issue"]):
         """
         Retriever that combines Neo4j graph traversal with FAISS text retrieval.
 
@@ -38,20 +39,21 @@ class KnowledgeGraphRetriever:
         self.store = vector_store
         self.graph = Neo4jGraph(url=neo4j_url, username=username, password=password, database=database,
                                 refresh_schema=False)
+        
+        self.classifier = pipeline(
+            "zero-shot-classification",
+            model="facebook/bart-large-mnli"   # Zero-shot or multi-class classification
+        )
+
+        self.query_labels = query_labels
 
     # ------------------
     # Query Classification
     # ------------------
     def classify_query(self, query: str) -> str:
-        query_lower = query.lower()
-        if any(word in query_lower for word in ["bug", "error", "fix", "fail"]):
-            return "bug_report"
-        elif any(word in query_lower for word in ["feature", "add", "support"]):
-            return "feature_request"
-        elif any(word in query_lower for word in ["slow", "performance", "optimize", "latency", "efficient"]):
-            return "performance_issue"
-        else:
-            return "general_qa"
+        result = self.classifier(query, self.query_labels, multi_label=False)
+        # HuggingFace returns sorted results by score
+        return result["labels"][0]
 
     # ------------------
     # Graph Expansion Helpers
@@ -81,13 +83,24 @@ class KnowledgeGraphRetriever:
         return [r["id"] for r in results]
 
     def functions_linked_to_issues_prs(self, ids: List[str], id_type: str = "issue") -> List[str]:
-        """Fetch functions linked to given issues/PRs."""
-        label = "ISSUE" if id_type == "issue" else "PR"
-        query = f"""
-        MATCH (n:{label})-[:{label}_FUNCTION]->(f:FUNCTION)
-        WHERE n.ID IN $ids
-        RETURN DISTINCT f.ID AS id
         """
+        Fetch functions linked to given issues or PRs.
+        For issues, traverse ISSUE -> PR -> FUNCTION.
+        For PRs, traverse PR -> FUNCTION.
+        """
+        assert id_type in ["issue", "pr"], "id_type must be 'issue' or 'pr'"
+        if id_type == "issue":
+            query = """
+            MATCH (i:ISSUE)-[:ISSUE_PR]->(p:PR)-[:PR_FUNCTION]->(f:FUNCTION)
+            WHERE i.ID IN $ids
+            RETURN DISTINCT f.ID AS id
+            """
+        else:  # PR
+            query = """
+            MATCH (p:PR)-[:PR_FUNCTION]->(f:FUNCTION)
+            WHERE p.ID IN $ids
+            RETURN DISTINCT f.ID AS id
+            """
         results = self.graph.query(query, params={"ids": ids})
         return [r["id"] for r in results]
 
@@ -96,18 +109,29 @@ class KnowledgeGraphRetriever:
     # ------------------
     def retrieve(self, query: str, top_k: int = 5) -> List[Document]:
         query_type = self.classify_query(query)
-        print(f"Query classified as {query_type}")
-        if query_type == "general_qa":
-            # Step 1: retrieve candidate functions via FAISS
+        #print(f"Query classified as {query_type}")
+        if query_type == "general_question":
+            # Step 1: retrieve candidate functions via docstring and function name search
             index_filter = models.Filter(must=[
                 models.FieldCondition(
                     key="metadata.type",
-                    match=models.MatchValue(value="function_code")
+                    match=models.MatchValue(value="function_docstring")
                 )
             ])
-            func_docs = self.store.search(query, filter = index_filter, top_k=top_k)
-            func_ids = [d.metadata["node_id"] for d in func_docs]
+            func_docs_docstring = self.store.search(query, filter = index_filter, top_k=top_k)
+            func_ids_docstring = [d.metadata["node_id"] for d in func_docs_docstring]
 
+            index_filter = models.Filter(must=[
+                models.FieldCondition(
+                    key="metadata.type",
+                    match=models.MatchValue(value="function_name")
+                )
+            ])
+            func_docs_name = self.store.search(query, filter = index_filter, top_k=top_k)
+            func_ids_name = [d.metadata["node_id"] for d in func_docs_name]
+            
+            func_ids = list(set(func_ids_docstring + func_ids_name))
+            func_docs = func_docs_docstring + func_docs_name
             # Step 2: expand neighborhood in KG
             neighbors = self.expand_function_neighbors(func_ids, hops=2)
 
@@ -228,6 +252,8 @@ class KnowledgeGraphRetriever:
                 WHERE c.ID IN $cluster_ids
                 RETURN f.ID AS id
             """, params={"cluster_ids": cluster_ids})
+
+            func_ids = [r["id"] for r in func_ids]
             
             # Expand via CFG edges
             cfg_neighbors = self.expand_cfg_neighbors(func_ids, hops=2)
