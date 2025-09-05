@@ -62,6 +62,32 @@ class RepositoryRAG():
             tokenizer=self.tokenizer,
             device_map="auto"
         )
+
+    def __call__(self, question: str, top_n: int = 10) -> str:
+        """Simplest usage: just return the generated answer."""
+        return self._run_pipeline(question, top_n)["answer"]
+
+
+    def _run_pipeline(self, question: str, top_n: int = 10) -> Dict[str, Any]:
+        """Core RAG logic — reusable across eval, API, and CLI."""
+        # Retrieve
+        top_docs, query_type = self.retriever.retrieve(question, top_k=top_n)
+        top_docs = self.deduplicator.deduplicate(top_docs)
+        reranked = self.reranker.rerank(question, top_docs, alpha=1.0, beta=0.0)
+        top_docs = [doc for doc, _ in reranked[:top_n]]
+
+        # Enrich
+        top_nodes = self._enrich_and_print_docs(top_docs)
+
+        # Generate
+        answer = self._generate_answer_from_docs(question, top_docs)
+
+        return {
+            "answer": answer,
+            "top_docs": top_docs,
+            "top_nodes": top_nodes,
+            "query_type": query_type,
+        }
     def _enrich_and_print_docs(self, docs: List[Document]) -> Dict[str, List[str]]:
         """
         Enrich retrieved docs with Neo4j data (function names, issue IDs, PR IDs),
@@ -114,14 +140,6 @@ class RepositoryRAG():
                         if record["id"]:
                             pr_ids.add(str(record["id"]))
 
-        # Print retrieved values
-        #if function_names:
-        #    print("\nRetrieved Functions:", ", ".join(sorted(function_names)))
-        #if issue_ids:
-        #    print("Retrieved Issues:", ", ".join(sorted(issue_ids)))
-        #if pr_ids:
-        #    print("Retrieved PRs:", ", ".join(sorted(pr_ids)))
-
         return {
             "functions": sorted(function_names),
             "issues": sorted(issue_ids),
@@ -129,30 +147,23 @@ class RepositoryRAG():
         }
 
     def search(self, top_n: int = 10):
+        """Interactive CLI loop."""
         try:
             while True:
                 question = input("\nPlease enter your question (Ctrl+C to exit): ").strip()
                 if not question:
                     continue
+                result = self._run_pipeline(question, top_n)
 
-                print("\nRetrieving top results...")
-                top_docs, query_type = self.retriever.retrieve(question, top_k=top_n)
-                print(f"Your query was classified as a(n) {query_type}")
-                print(f"Deduplicating found {len(top_docs)} documents...")
-                top_docs = self.deduplicator.deduplicate(top_docs)
-                print(f"Reranking remaining {len(top_docs)} documents...")
-                reranked = self.reranker.rerank(question, top_docs, alpha=1.0, beta=0.0)
-                top_docs = [doc for doc, _ in reranked[:top_n]]
+                print(f"\nQuery type: {result['query_type']}")
+                if result["top_nodes"]["functions"]:
+                    print("\nRetrieved Functions:", ", ".join(result["top_nodes"]["functions"]))
+                if result["top_nodes"]["issues"]:
+                    print("Retrieved Issues:", ", ".join(result["top_nodes"]["issues"]))
+                if result["top_nodes"]["prs"]:
+                    print("Retrieved PRs:", ", ".join(result["top_nodes"]["prs"]))
 
-                top_nodes = self._enrich_and_print_docs(top_docs)
-                
-                #print("\nBuilding enriched knowledge graph...")
-                #subgraph = self._filter_knowledge_graph(reranked_functions, issues_df, prs_df)
-
-                print("\nGenerating answer...")
-                #answer = self._generate_answer(question, subgraph)
-                answer = self._generate_answer_from_docs(question, top_docs)
-                print("\nAnswer:", answer)
+                print("\nAnswer:", result["answer"])
 
         except (KeyboardInterrupt, EOFError):
             print("\n\nExiting search. Goodbye!")
