@@ -371,7 +371,7 @@ class CodeQAGenerator:
     Generates Q&A pairs for code snippets (functions + docstrings).
     Supports 4 categories: general, feature request, bug report, performance issue.
     """
-    def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct", quantize: bool = False):
+    def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct", quantize: bool = False, question_types = ["general", "feature_request", "bug_report", "performance"]):
         tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side="left")
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
@@ -395,14 +395,20 @@ class CodeQAGenerator:
         ))
 
         # Build prompts
-        self.prompts = {
-            "general": PromptTemplate.from_template(self._general_prompt_template()),
-            "feature_request": PromptTemplate.from_template(self._feature_request_template()),
-            "bug_report": PromptTemplate.from_template(self._bug_report_template()),
-            "performance": PromptTemplate.from_template(self._performance_prompt_template()),
+        # Available prompt templates
+        template_map = {
+            "general": self._general_prompt_template,
+            "feature_request": self._feature_request_template,
+            "bug_report": self._bug_report_template,
+            "performance": self._performance_prompt_template,
         }
 
-        # Build chains
+        # Build only requested prompts and chains
+        self.prompts = {
+            qtype: PromptTemplate.from_template(template_map[qtype]())
+            for qtype in question_types
+            if qtype in template_map
+        }
         self.chains = {name: prompt | self.llm for name, prompt in self.prompts.items()}
 
     def _general_prompt_template(self):

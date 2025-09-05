@@ -187,15 +187,56 @@ class RAGEvaluator:
 
 
     def _run_rag(self, question: str, top_n: int):
-        print("\nRetrieving top results...")
-
         top_docs, query_type = self.rag.retriever.retrieve(question, top_k=top_n)
+        
+        reranked = self.rag.reranker.rerank(question, top_docs, alpha=1.0, beta=0.0)
+        top_docs = [doc for doc, _ in reranked[:top_n]]
+        
         top_nodes = self.rag._enrich_and_print_docs(top_docs)
 
-        print("\nGenerating answer...")
         answer = self.rag._generate_answer_from_docs(question, top_docs)
         return top_nodes["functions"], answer, top_docs, query_type
 
+    def evaluate_single(self, idx, row):
+        """Evaluate a single row of the dataset (used for tqdm iteration)."""
+        question = row.get("question","")
+        context = row.get("edit_functions", [])
+        answer = row.get("answer", "")
+
+        top_functions, answer_gen, top_docs, query_type = self._run_rag(question, top_n=max(self.k_values))
+        self.df.at[idx, "pred_query_class"] = query_type
+        self.df.at[idx, "generated_answer"] = answer_gen
+        self.df.at[idx, "retrieved_functions"] = top_functions
+        self.df.at[idx, "retrieved_docs"] = top_docs    
+
+        for k in self.k_values:
+            self.df.at[idx, f'precision_{k}'] = calculate_precision_at_k(top_functions, context, k)
+            self.df.at[idx, f'recall_{k}'] = calculate_recall_at_k(top_functions, context, k)
+            self.df.at[idx, f'f1_{k}'] = calculate_f1_at_k(top_functions, context, k)
+            self.df.at[idx, f'iou_{k}'] = calculate_iou(top_functions, context, k)
+
+        self.df.at[idx, 'mrr'] = calculate_rr(top_functions, context)
+
+        bleu, meteor = evaluate_answer(answer, answer_gen)
+        bertscore = evaluate_with_bertscore(reference=answer, candidate=answer_gen, scorer=self.bert_scorer)
+        semantic_similarity_score = evaluate_semantic_similarity(answer, answer_gen, self.eval_embeddings)
+        
+        self.df.at[idx, 'bleu'] = bleu
+        self.df.at[idx, 'meteor'] = meteor
+        self.df.at[idx, 'bertscore'] = bertscore
+        self.df.at[idx, 'semantic_similarity'] = semantic_similarity_score
+
+    def get_live_summary(self, idx):
+        """Return running average metrics for tqdm display."""
+        df_slice = self.df.iloc[:idx+1]
+        summary = {
+            "MRR": round(df_slice['mrr'].mean(), 4),
+            "BLEU": round(df_slice['bleu'].mean(), 3),
+            "BERT": round(df_slice['bertscore'].mean(), 3),
+            "SemSim": round(df_slice['semantic_similarity'].mean(), 3)
+        }
+        return summary
+    
     def evaluate(self, verbose=True):
         for idx, row in self.df.iterrows():
             question = row.get("question","")
@@ -239,7 +280,7 @@ class RAGEvaluator:
                 print(f"Generated Answer: {answer_gen}")
             # Evaluate answer correctness
             bleu, meteor = evaluate_answer(answer, answer_gen)
-            bertscore = evaluate_with_bertscore(answer, answer_gen, self.bert_scorer)
+            bertscore = evaluate_with_bertscore(reference=answer, candidate=answer_gen, scorer=self.bert_scorer)
             #ragas_metrics = evaluate_with_ragas(question, answer_gen, answer, context, self.eval_llm_, self.eval_embeddings)
             #faithfulness_score = ragas_metrics.get("faithfulness", None)
             #answer_relevancy_score = ragas_metrics.get("answer_relevancy", None)
