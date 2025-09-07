@@ -9,10 +9,6 @@ class Deduplicator:
     def __init__(
         self,
         prefer_small_chunks: bool = True,
-        use_minhash: bool = False,
-        jaccard_threshold: float = 0.9,
-        use_semantic: bool = False,
-        sim_threshold: float = 0.95,
         embedder=None
     ):
         """
@@ -27,10 +23,6 @@ class Deduplicator:
             embedder: embedding model (must implement .embed_documents).
         """
         self.prefer_small_chunks = prefer_small_chunks
-        self.use_minhash = use_minhash
-        self.jaccard_threshold = jaccard_threshold
-        self.use_semantic = use_semantic
-        self.sim_threshold = sim_threshold
         self.embedder = embedder
 
     # ------------------------
@@ -46,7 +38,21 @@ class Deduplicator:
     # ------------------------
     # Deduplication pipeline
     # ------------------------
-    def deduplicate(self, docs: List[Document]) -> List[Document]:
+    def deduplicate(self, docs: List[Document],use_minhash: bool = False,
+        jaccard_threshold: float = 0.9,
+        use_semantic: bool = False,
+        sim_threshold: float = 0.95,
+        ) -> List[Document]:
+        """
+        Deduplicate documents with multiple strategies.
+
+        Args:
+            docs: list of LangChain Documents.
+            use_minhash: apply MinHash Jaccard deduplication.
+            jaccard_threshold: threshold for MinHash LSH.
+            use_semantic: apply embedding-based semantic deduplication.
+            sim_threshold: cosine similarity threshold for semantic dedup.
+        """
         if not docs:
             return []
 
@@ -68,8 +74,8 @@ class Deduplicator:
         unique_docs = list(seen.values())
 
         # --- Step 2: MinHash Jaccard dedup (optional) ---
-        if self.use_minhash and len(unique_docs) > 1:
-            lsh = MinHashLSH(threshold=self.jaccard_threshold, num_perm=128)
+        if use_minhash and len(unique_docs) > 1:
+            lsh = MinHashLSH(threshold=jaccard_threshold, num_perm=128)
             mh_map = {}
             kept = []
 
@@ -89,13 +95,13 @@ class Deduplicator:
                         kept.append(doc)
 
                 else:
-                    lsh.insert(i, mh)
                     kept.append(doc)
+                lsh.insert(i, mh)
 
             unique_docs = kept
 
         # --- Step 3: semantic similarity dedup (optional) ---
-        if self.use_semantic and self.embedder is not None and len(unique_docs) > 1:
+        if use_semantic and self.embedder is not None and len(unique_docs) > 1:
             embeddings = self.embedder.embed_documents([d.page_content for d in unique_docs])
             keep = []
             removed = set()
@@ -108,7 +114,7 @@ class Deduplicator:
                     if j in removed:
                         continue
                     sim = cosine_similarity([emb_i], [embeddings[j]])[0][0]
-                    if sim >= self.sim_threshold:
+                    if sim >= sim_threshold:
                         removed.add(j)
 
             unique_docs = keep
