@@ -6,26 +6,8 @@ from utils.faiss_store import FaissStore
 from qdrant_client import models
 from transformers import pipeline
 
-
-class Retrieval():
-
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
-        self.store = FaissStore(model_name=model_name)
-
-    def index_data(self, issues_df, prs_df, code_df):
-        self.store.add_issues(issues_df)
-        self.store.add_prs(prs_df)
-        self.store.add_code(code_df)
-
-    def retrieve(self, query, source="issue", top_k=5):
-        results = self.store.search(query, index_type=source, top_k=top_k)
-        return [
-            {"text": doc.page_content, **doc.metadata}
-            for doc in results
-        ]
-
 class KnowledgeGraphRetriever:
-    def __init__(self, vector_store, neo4j_url: str, username: str, password: str, database: str = "neo4j", query_labels: List[str] = ["general_question", "bug_report", "feature_request", "performance_issue"]):
+    def __init__(self, vector_store, neo4j_url: str, neo4j_username: str, neo4j_password: str, database: str = "neo4j", query_labels: List[str] = ["general_question", "bug_report", "feature_request", "performance_issue"]):
         """
         Retriever that combines Neo4j graph traversal with FAISS text retrieval.
 
@@ -37,7 +19,7 @@ class KnowledgeGraphRetriever:
             database: Neo4j database name (default: "neo4j").
         """
         self.store = vector_store
-        self.graph = Neo4jGraph(url=neo4j_url, username=username, password=password, database=database,
+        self.graph = Neo4jGraph(url=neo4j_url, username=neo4j_username, password=neo4j_password, database=database,
                                 refresh_schema=False)
         
         self.classifier = pipeline(
