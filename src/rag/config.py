@@ -13,7 +13,7 @@ class PipelineConfig:
     rerank_use_graph: bool = False
     top_k: int = 10
     llm_max_tokens: int = 200
-    over_retrieve: bool = False               
+    over_retrieve: bool = True               
     over_retrieve_factor: int = 10            
     over_retrieve_cap: int = 200              
     rerank_candidate_cap: int = 50            
