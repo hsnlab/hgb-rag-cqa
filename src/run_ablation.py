@@ -61,6 +61,8 @@ def main():
     parser.add_argument("--mlflow_uri", type=str, default=None,
                     help="MLflow tracking URI (e.g., http://mlflow-server:5000 or file:///path/to/mlruns)."
     )
+    parser.add_argument("--dry_run", action="store_true",
+                        help="If set, run only a single quick experiment on a small slice (for smoke test).")
 
 
     args = parser.parse_args()
@@ -122,11 +124,35 @@ def main():
     semantic_dedup_flags = [False, True]
     reranks = [False, True]
     rerank_graph_flags = [False, True]
+    over_retrieve_factor = [10]            
+    over_retrieve_cap=[100,  200]              
+    rerank_candidate_cap = [50, 100]
 
     if mlflow_uri:
         mlflow.set_tracking_uri(mlflow_uri)
     mlflow.set_experiment("rag_ablation_study")
+    run_counter = 0
 
+    # dry run too test everything works
+    if args.dry_run:
+        # run only a single small job on the first row for quick smoke testing
+        sample_df = df.head(2).copy()
+        cfg = PipelineConfig(
+            retriever="simple",
+            deduplicate=False,
+            dedup_use_minhash=False,
+            dedup_use_semantic=False,
+            rerank=False,
+            rerank_use_graph=False,
+            top_k=3,
+            llm_max_tokens=64,
+        )
+        print("Dry run: running a single quick job using 'simple' retriever on 2 rows")
+        evaluator = RAGEvaluator(sample_df, simple_rag, k_values=[1, 3])
+        evaluator.evaluate(cfg, run_name="dry_run_simple", verbose=True)
+        return
+
+    # Iterate over all combinations and run evaluations
     for retr in retrievers:
         if retr == "simple":
             # single, minimal config for simple retriever
@@ -143,14 +169,14 @@ def main():
             rag_impl = simple_rag
             run_name = safe_run_name(f"exp_{run_counter}_retr-simple_minimal")
             print(f"[{run_counter}] Starting {run_name}")
-            evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10], mlflow_uri=None)
+            evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
             evaluator.evaluate(cfg, run_name=run_name, verbose=False)
             print(f"[{run_counter}] Finished {run_name}")
             run_counter += 1
 
         else:
-            for dedup, mh, semd, rr, rrgraph in itertools.product(
-                dedups, minhash_flags, semantic_dedup_flags, reranks, rerank_graph_flags
+            for dedup, mh, semd, rr, rrgraph,orf,orc,rcc in itertools.product(
+                dedups, minhash_flags, semantic_dedup_flags, reranks, rerank_graph_flags, over_retrieve_factor, over_retrieve_cap, rerank_candidate_cap
             ):
                 cfg = PipelineConfig(
                     retriever="kg",
@@ -161,13 +187,17 @@ def main():
                     rerank_use_graph=rrgraph,
                     top_k=10,
                     llm_max_tokens=200,
+                    over_retrieve=True,
+                    over_retrieve_factor=orf,
+                    over_retrieve_cap=orc,
+                    rerank_candidate_cap=rcc
                 )
                 rag_impl = repo_rag
                 run_name = safe_run_name(
                     f"exp_{run_counter}_retr-kg_dedup-{dedup}_minhash-{mh}_semdep-{semd}_rr-{rr}_rrgraph-{rrgraph}"
                 )
                 print(f"[{run_counter}] Starting {run_name}")
-                evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10], mlflow_uri=None)
+                evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
                 evaluator.evaluate(cfg, run_name=run_name, verbose=False)
                 print(f"[{run_counter}] Finished {run_name}")
                 run_counter += 1
