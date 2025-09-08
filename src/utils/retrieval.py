@@ -2,7 +2,6 @@
 from typing import List, Dict, Any
 from langchain_neo4j import Neo4jGraph
 from langchain_core.documents import Document
-from utils.faiss_store import FaissStore
 from qdrant_client import models
 from transformers import pipeline
 
@@ -90,7 +89,6 @@ class KnowledgeGraphRetriever:
     # Retrieval Strategies
     # ------------------
     def retrieve(self, query: str, top_k: int = 5) -> List[Document]:
-        top_k = top_k*10  # Over-retrieve to allow for reranking later
         query_type = self.classify_query(query)
         #print(f"Query classified as {query_type}")
         if query_type == "general_question":

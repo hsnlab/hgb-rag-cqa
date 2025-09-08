@@ -3,6 +3,7 @@ from typing import Optional
 
 @dataclass
 class PipelineConfig:
+    verbose: bool = False
     retriever: str = "simple"
     deduplicate: bool = False
     dedup_use_minhash: bool = False
@@ -11,6 +12,7 @@ class PipelineConfig:
     dedup_sim_threshold: float = 0.95
     rerank: bool = False
     rerank_use_graph: bool = False
+    rerank_use_popularity: bool = False
     top_k: int = 10
     llm_max_tokens: int = 200
     over_retrieve: bool = True               

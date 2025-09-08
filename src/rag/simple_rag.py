@@ -1,11 +1,11 @@
 from typing import List, Dict, Any
-from src.rag.config import PipelineConfig
-from src.rag.base_rag import BaseRAG
+from .config import PipelineConfig
+from .base_rag import BaseRAG
 from langchain_core.documents import Document
 from transformers import pipeline
 from neo4j import GraphDatabase
 
-class SimpleRAG:
+class SimpleRAG(BaseRAG):
     def __init__(self, vectorstore, neo4j_uri, neo4j_auth, llm=None, llm_model: str = None):
         """
         Args:
@@ -100,6 +100,5 @@ Use the context below to answer the question. If unsure, say you don’t know.
 
 ### Answer
 [/INST]"""
-
-        response = self.generation_pipeline(prompt, max_new_tokens=config.llm_max_tokens, return_full_text=False)
+        response = self.llm(prompt, max_new_tokens=config.llm_max_tokens, return_full_text=False)
         return response[0]["generated_text"].strip()

@@ -1,8 +1,7 @@
-# base_rag.py
 from typing import List, Dict, Any
 from langchain_core.documents import Document
 from abc import ABC, abstractmethod
-from config import PipelineConfig
+from .config import PipelineConfig
 
 class BaseRAG(ABC):
     def __init__(self):
@@ -21,6 +20,8 @@ class BaseRAG(ABC):
         top_k = config.top_k
         # retrieval stage (implemented/overridden by subclass)
         retrieved, query_type = self._retrieve(query, config)
+        if config.verbose:
+            print(f"Retrieved {len(retrieved)} documents.")
 
         # optional deduplication
         if config.deduplicate and hasattr(self, "deduplicator"):
@@ -31,6 +32,8 @@ class BaseRAG(ABC):
                 use_semantic=config.dedup_use_semantic,
                 sim_threshold=config.dedup_sim_threshold,
             )
+            if config.verbose:
+                print(f"Deduplicated to {len(retrieved)} documents.")
 
 
         # optional rerank
@@ -38,7 +41,8 @@ class BaseRAG(ABC):
             reranked = self.reranker.rerank(
                 query,
                 retrieved,
-                use_graph=config.rerank_use_graph
+                use_graph=config.rerank_use_graph,
+                use_popularity=config.rerank_use_popularity,
             )
             # reranked is list[(doc,score)]
             # update retrieved list limited to top_k
