@@ -5,7 +5,8 @@ from tqdm import tqdm
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from rag.config import PipelineConfig
-from metrics import ( 
+from huggingface_hub import login
+from .metrics import ( 
     calculate_precision_at_k,
     calculate_recall_at_k,
     calculate_f1_at_k,
@@ -40,9 +41,7 @@ class RAGEvaluator:
                 mlflow.set_tracking_uri(mlflow_uri)
 
         # Set HF tokens
-        os.environ["HUGGINGFACE_TOKEN"] = huggingface_apikey
-        os.environ["HF_TOKEN"] = huggingface_apikey
-        os.environ["HUGGINGFACE_HUB_TOKEN"] = huggingface_apikey
+        #login(huggingface_apikey)
 
         # Models for answer evaluation
         self.bert_scorer = BERTScorer(
@@ -152,10 +151,10 @@ class RAGEvaluator:
                 "mrr_mean": float(self.df["mrr"].mean()),
             }
             for k in self.k_values:
-                metrics[f"precision@{k}"] = float(self.df[f"precision_{k}"].mean())
-                metrics[f"recall@{k}"] = float(self.df[f"recall_{k}"].mean())
-                metrics[f"f1@{k}"] = float(self.df[f"f1_{k}"].mean())
-                metrics[f"iou@{k}"] = float(self.df[f"iou_{k}"].mean())
+                metrics[f"precision_{k}"] = float(self.df[f"precision_{k}"].mean())
+                metrics[f"recall_{k}"] = float(self.df[f"recall_{k}"].mean())
+                metrics[f"f1_{k}"] = float(self.df[f"f1_{k}"].mean())
+                metrics[f"iou_{k}"] = float(self.df[f"iou_{k}"].mean())
 
             mlflow.log_metrics(metrics)
 

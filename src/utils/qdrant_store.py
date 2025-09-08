@@ -13,7 +13,7 @@ class QdrantStore:
     def __init__(self, 
                  model_name="sentence-transformers/all-MiniLM-L6-v2", 
                  distance_type="cosine",
-                 chunk_size=150, 
+                 chunk_sizel_list=[150], 
                  chunk_overlap=5,
                  qdrant_url="http://localhost:6333",
                  collection_name="rag_collection",
@@ -70,7 +70,7 @@ class QdrantStore:
                 chunk_size=size,
                 chunk_overlap=chunk_overlap,
             )
-            for size in [128, 256, 512]
+            for size in chunk_sizel_list
         }
 
         # Neo4j connection details

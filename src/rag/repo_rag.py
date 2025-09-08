@@ -1,8 +1,7 @@
-# rag/repository_rag.py
 from typing import List, Tuple, Dict, Any, Optional, Union
 from langchain_core.documents import Document
-from simple_rag import SimpleRAG
-from config import PipelineConfig
+from .simple_rag import SimpleRAG
+from .config import PipelineConfig
 
 class RepositoryRAG(SimpleRAG):
     """
@@ -26,7 +25,10 @@ class RepositoryRAG(SimpleRAG):
         retriever,
         deduplicator=None,
         reranker=None,
-        llm_model: str = "mistralai/mistral-7b-instruct-v0.3",
+        llm=None,
+        llm_model: str = None,
+        neo4j_uri: str = None,
+        neo4j_auth: Union[Tuple[str, str], str, None] = None,
     ):
         """
         Args:
@@ -34,10 +36,10 @@ class RepositoryRAG(SimpleRAG):
             retriever: KnowledgeGraphRetriever instance (must implement .retrieve(query, top_k))
             deduplicator: optional Deduplicator instance (provides .deduplicate(docs, ...))
             reranker: optional Reranker instance (provides .rerank(query, docs, ...))
-            llm_model: name of LLM to pass to SimpleRAG initializer
+            llm: (optional) pre-initialized HuggingFace pipeline or model wrapper
+            llm_model: (optional) name of LLM to pass to SimpleRAG initializer
         """
-        # Initialize SimpleRAG (loads LLM and provides _enrich/_generate)
-        super().__init__(vectorstore=vectorstore, llm_model=llm_model)
+        super().__init__(vectorstore=vectorstore, llm=llm, llm_model=llm_model,neo4j_auth=neo4j_auth, neo4j_uri=neo4j_uri)
 
         # KG-specific components
         self.retriever = retriever
@@ -67,7 +69,7 @@ class RepositoryRAG(SimpleRAG):
                 effective_k = config.top_k
             cap = getattr(config, "over_retrieve_cap", 200)
             effective_k = min(effective_k, cap)
-            docs, query_type = self.retriever.retrieve(query, top_k=config.top_k)
+            docs, query_type = self.retriever.retrieve(query, top_k=effective_k)
             return docs, query_type
 
         # Fallback: use SimpleRAG's vectorstore-based retrieval
