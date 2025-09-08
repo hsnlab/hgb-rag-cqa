@@ -1,26 +1,99 @@
 import itertools
+import os
 import pandas as pd
+from ast import literal_eval
 import mlflow
 import argparse
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from huggingface_hub import login
+import torch
+from typing import Tuple
+from transformers import BitsAndBytesConfig
+import warnings
 
-from src.rag.config import PipelineConfig
-from src.rag.simple_rag import SimpleRAG
-from src.rag.repository_rag import RepositoryRAG
-from src.eval.evaluator import RAGEvaluator
-from src.utils.dedup import Deduplicator
-from src.utils.rerank import Reranker
-from src.utils.qdrant_store import QdrantStore
-from src.utils.kg_retriever import KnowledgeGraphRetriever
+from rag.config import PipelineConfig
+from rag.simple_rag import SimpleRAG
+from rag.repo_rag import RepositoryRAG
+from eval.evaluation import RAGEvaluator
+from utils.deduplicator import Deduplicator
+from utils.reranker import Reranker
+from utils.qdrant_store import QdrantStore
+from utils.retrieval import KnowledgeGraphRetriever
 
-def build_llm(llm_model: str):
-    tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left")
+def build_llm(
+    llm_model: str,
+    quantize: bool = False,
+    use_4bit: bool = True,
+    bnb_4bit_use_double_quant: bool = True,
+    bnb_4bit_quant_type: str = "nf4",
+    bnb_4bit_compute_dtype = torch.bfloat16,
+    use_8bit: bool = False,
+) -> Tuple[AutoModelForCausalLM, AutoTokenizer, pipeline]:
+    """
+    Build (optionally quantized) LLM + tokenizer + generation pipeline.
+
+    Args:
+      llm_model: HF model id
+      quantize: whether to load a quantized model
+      use_4bit: if quantize=True, prefer 4-bit (nf4) quantization. If False and quantize=True, will try 8-bit
+      bnb_4bit_*: bitsandbytes config options for 4-bit
+      use_8bit: explicit 8-bit flag (overrides use_4bit when quantize=True)
+
+    Returns:
+      (model, tokenizer, gen_pipeline)
+    """
+
+    # tokenizer (safe to always load)
+    tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left", use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    llm = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto")
-    gen = pipeline("text-generation", model=llm, tokenizer=tokenizer, device_map="auto")
-    return llm, tokenizer, gen
+
+    # decide device availability
+    has_cuda = torch.cuda.is_available()
+    if quantize and not has_cuda:
+        raise RuntimeError("Quantization (bitsandbytes) requires CUDA. Set quantize=False or run on GPU.")
+
+    model = None
+
+    if quantize:
+        # prefer explicit 4-bit if use_4bit True and use_8bit False
+        if use_4bit and not use_8bit:
+            # 4-bit config using BitsAndBytesConfig
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=bnb_4bit_use_double_quant,
+                bnb_4bit_quant_type=bnb_4bit_quant_type,
+                bnb_4bit_compute_dtype=bnb_4bit_compute_dtype,
+            )
+        
+        else:
+            # fallback to 8-bit (older but widely supported)
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            llm_model,
+            device_map="auto",
+            quantization_config=bnb_config,
+            torch_dtype=torch.float16
+        )
+
+    else:
+        # Full precision or mixed precision (let transformers pick optimal device_map)
+        # If CUDA present, we request float16 for speed; otherwise default dtype.
+        if has_cuda:
+            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto", torch_dtype=torch.float16)
+        else:
+            # CPU fallback (may be slow)
+            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto")
+
+    # Build generation pipeline. We pass the already loaded model + tokenizer.
+    gen = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        device_map="auto"  # keep this consistent with model device_map
+    )
+
+    return model, tokenizer, gen
 
 def safe_run_name(base: str) -> str:
     """Ensure run_name is filesystem/MLflow safe (no spaces)."""
@@ -58,7 +131,9 @@ def main():
     parser.add_argument("--llm_model",type=str,default="mistralai/mistral-7b-instruct-v0.3",
         help="LLM model for RAG."
     )
-    parser.add_argument("--mlflow_uri", type=str, default=None,
+    parser.add_argument("--quantize_llm", action="store_true",
+                        help="If set, load the LLM in quantized mode (requires GPU).")
+    parser.add_argument("--mlflow_uri", type=str, default="http://127.0.0.1:5000",
                     help="MLflow tracking URI (e.g., http://mlflow-server:5000 or file:///path/to/mlruns)."
     )
     parser.add_argument("--dry_run", action="store_true",
@@ -77,16 +152,20 @@ def main():
     neo4j_password = args.neo4j_password
     neo4j_auth = (neo4j_user, neo4j_password)
     llm_model = args.llm_model
+    quantize = args.quantize_llm
     mlflow_uri = args.mlflow_uri
 
     # Load huggingface API key
-    with open("../_/hf_token.txt", "r") as f:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    token_path = os.path.abspath(os.path.join(script_dir, "..", "_", "hf_token.txt"))
+    with open(token_path, "r") as f:
         huggingface_apikey = f.read().strip()
 
     login(huggingface_apikey)
 
     # Load dataset
     df = pd.read_csv(eval_data_apth)  
+    df["edit_functions"] = df["edit_functions"].apply(literal_eval)
 
     # Instantiate backend components
     vectorstore = QdrantStore(
@@ -101,7 +180,7 @@ def main():
     reranker = Reranker()
 
     # Build LLM
-    llm, tokenizer, gen = build_llm(llm_model)
+    llm, tokenizer, gen = build_llm(llm_model,quantize=quantize,use_8bit=True)
     # Instantiate both RAG variants
     simple_rag = SimpleRAG(
         vectorstore,
@@ -114,23 +193,26 @@ def main():
         retriever=kg_retriever,
         deduplicator=deduplicator,
         reranker=reranker,
-        llm=gen
+        llm=gen,
+        neo4j_auth=neo4j_auth,
+        neo4j_uri=neo4j_uri,
     )
 
     # Hyperparameter sweeps
-    retrievers = ["simple", "kg"]
-    dedups = [False, True]
-    minhash_flags = [False, True]
-    semantic_dedup_flags = [False, True]
-    reranks = [False, True]
-    rerank_graph_flags = [False, True]
-    over_retrieve_factor = [10]            
-    over_retrieve_cap=[100,  200]              
-    rerank_candidate_cap = [50, 100]
+    retrievers = ["simple","kg"]
+    dedups = [True, False]
+    reranks = [True, False]
+    over_retrieve_factor = [10, 15]            
+    over_retrieve_cap=[200, 300]              
+    rerank_candidate_cap = [150, 200]
 
     if mlflow_uri:
         mlflow.set_tracking_uri(mlflow_uri)
-    mlflow.set_experiment("rag_ablation_study")
+    experiment_name = "rag_ablation_study"
+    mlflow.set_experiment(experiment_name)
+    experiment = mlflow.get_experiment_by_name(experiment_name)
+    runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
+    done_runs = list(set(runs["tags.mlflow.runName"]))
     run_counter = 0
 
     # dry run too test everything works
@@ -146,16 +228,17 @@ def main():
             rerank_use_graph=False,
             top_k=3,
             llm_max_tokens=64,
+            over_retrieve=False
         )
         print("Dry run: running a single quick job using 'simple' retriever on 2 rows")
         evaluator = RAGEvaluator(sample_df, simple_rag, k_values=[1, 3])
         evaluator.evaluate(cfg, run_name="dry_run_simple", verbose=True)
         return
 
-    # Iterate over all combinations and run evaluations
+    # Iterate over all retrievers and run evaluations
     for retr in retrievers:
         if retr == "simple":
-            # single, minimal config for simple retriever
+            # Single, minimal config for simple retriever
             cfg = PipelineConfig(
                 retriever="simple",
                 deduplicate=False,
@@ -165,9 +248,14 @@ def main():
                 rerank_use_graph=False,
                 top_k=10,
                 llm_max_tokens=200,
+                over_retrieve=False
             )
             rag_impl = simple_rag
             run_name = safe_run_name(f"exp_{run_counter}_retr-simple_minimal")
+            if run_name in done_runs:
+                print(f"[{run_counter}] Skipping {run_name} (already done)")
+                run_counter += 1
+                continue
             print(f"[{run_counter}] Starting {run_name}")
             evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
             evaluator.evaluate(cfg, run_name=run_name, verbose=False)
@@ -175,32 +263,52 @@ def main():
             run_counter += 1
 
         else:
-            for dedup, mh, semd, rr, rrgraph,orf,orc,rcc in itertools.product(
-                dedups, minhash_flags, semantic_dedup_flags, reranks, rerank_graph_flags, over_retrieve_factor, over_retrieve_cap, rerank_candidate_cap
-            ):
-                cfg = PipelineConfig(
-                    retriever="kg",
-                    deduplicate=dedup,
-                    dedup_use_minhash=mh,
-                    dedup_use_semantic=semd,
-                    rerank=rr,
-                    rerank_use_graph=rrgraph,
-                    top_k=10,
-                    llm_max_tokens=200,
-                    over_retrieve=True,
-                    over_retrieve_factor=orf,
-                    over_retrieve_cap=orc,
-                    rerank_candidate_cap=rcc
-                )
-                rag_impl = repo_rag
-                run_name = safe_run_name(
-                    f"exp_{run_counter}_retr-kg_dedup-{dedup}_minhash-{mh}_semdep-{semd}_rr-{rr}_rrgraph-{rrgraph}"
-                )
-                print(f"[{run_counter}] Starting {run_name}")
-                evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
-                evaluator.evaluate(cfg, run_name=run_name, verbose=False)
-                print(f"[{run_counter}] Finished {run_name}")
-                run_counter += 1
+            # For "kg" retriever, only iterate flags if the parent feature is enabled
+            for dedup, rr in itertools.product(dedups, reranks):
+                # dependent flags
+                minhash_iter = [True, False] if dedup else [False]
+                semd_iter = [True, False] if dedup else [False]
+                rrgraph_iter = [True, False] if rr else [False]
+                rrpop_iter = [True, False] if rr else [False]
+
+                for mh, semd, rrgraph, rrpop, orf, orc, rcc in itertools.product(
+                    minhash_iter,
+                    semd_iter,
+                    rrgraph_iter,
+                    rrpop_iter,
+                    over_retrieve_factor,
+                    over_retrieve_cap,
+                    rerank_candidate_cap
+                ):
+                    cfg = PipelineConfig(
+                        retriever="kg",
+                        deduplicate=dedup,
+                        dedup_use_minhash=mh,
+                        dedup_use_semantic=semd,
+                        rerank=rr,
+                        rerank_use_graph=rrgraph,
+                        rerank_use_popularity=rrpop,
+                        top_k=10,
+                        llm_max_tokens=150,
+                        over_retrieve=True,
+                        over_retrieve_factor=orf,
+                        over_retrieve_cap=orc,
+                        rerank_candidate_cap=rcc
+                    )
+                    rag_impl = repo_rag
+                    run_name = safe_run_name(
+                        f"exp_{run_counter}_retr-kg_dedup-{dedup}_minhash-{mh}_semdep-{semd}_rr-{rr}_rrgraph-{rrgraph}_rrpop-{rrpop}_orf-{orf}_orc-{orc}_rcc-{rcc}"
+                    )
+                    if run_name in done_runs:
+                        print(f"[{run_counter}] Skipping {run_name} (already done)")
+                        run_counter += 1
+                        continue
+                    print(f"[{run_counter}] Starting {run_name}")
+                    evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
+                    evaluator.evaluate(cfg, run_name=run_name, verbose=False)
+                    print(f"[{run_counter}] Finished {run_name}")
+                    run_counter += 1
+
 
     print(f"All done — total runs: {run_counter}")
 
