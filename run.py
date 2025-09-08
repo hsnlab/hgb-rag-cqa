@@ -132,7 +132,8 @@ def main():
         dedup_use_semantic=False,
         rerank=True,
         rerank_use_graph=True,
-        over_retrieve_factor=15,
+        rerank_use_popularity=True,
+        over_retrieve_factor=10,
         over_retrieve_cap=200,
         rerank_candidate_cap=200,
     )
