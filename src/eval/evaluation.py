@@ -52,6 +52,7 @@ class RAGEvaluator:
         self.eval_embeddings = SentenceTransformer(eval_embed_model_name)
 
         self._prepare_columns()
+        print("init complete")
 
     def _prepare_columns(self):
         for k in self.k_values:
