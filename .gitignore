@@ -5,3 +5,6 @@ __pycache__/
 tests/__pycache__/
 /data/*
 /_/*
+/mlruns/*
+/evaluation_results.csv
+/config_used.txt
