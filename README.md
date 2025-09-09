@@ -93,4 +93,7 @@ python src/run_ablation.py --eval_data_path data/yourdata.csv --qdrant_collectio
 ## Notes
 
 - The repository supports both Windows and Linux.
+
 - For advanced usage, see the source code in `src/` for customization via rag config.
+
+- Some of the scripts use api keys to Huggingface and GitHub. To ensure the code runs smoothly, create two separate files for these API keys at `/_/hf_token.txt` and `/_/github_token.txt` containing the respective access tokens.
