@@ -1,0 +1,836 @@
+function_code,combinedName,category,question,answer,edit_functions
+"def test_l1_ratio():
+    X, y = datasets.make_classification(n_samples=1000, n_features=100, n_informative=20, random_state=1234)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None, max_iter=6, l1_ratio=0.9999999999, random_state=42).fit(X, y)
+    est_l1 = SGDClassifier(alpha=0.001, penalty='l1', max_iter=6, random_state=42, tol=None).fit(X, y)
+    assert_array_almost_equal(est_en.coef_, est_l1.coef_)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None, max_iter=6, l1_ratio=1e-10, random_state=42).fit(X, y)
+    est_l2 = SGDClassifier(alpha=0.001, penalty='l2', max_iter=6, random_state=42, tol=None).fit(X, y)
+    assert_array_almost_equal(est_en.coef_, est_l2.coef_)",test_l1_ratio,general,How does the test_l1_ratio function handle the trade-off between L1 and L2 regularization?,The test_l1_ratio function handles the trade-off between L1 and L2 regularization by comparing the coefficients of a classifier trained with elastic net regularization (which combines L1 and L2 regularization) with the coefficients of a classifier trained with L1 regularization and L2 regularization separately..,test_l1_ratio
+"def _fit_transform(self, X):
+    self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors, algorithm=self.neighbors_algorithm, n_jobs=self.n_jobs)
+    random_state = check_random_state(self.random_state)
+    X = validate_data(self, X, dtype=float)
+    self.nbrs_.fit(X)
+    self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(X=self.nbrs_, n_neighbors=self.n_neighbors, n_components=self.n_components, eigen_solver=self.eigen_solver, tol=self.tol, max_iter=self.max_iter, method=self.method, hessian_tol=self.hessian_tol, modified_tol=self.modified_tol, random_state=random_state, reg=self.reg, n_jobs=self.n_jobs)
+    self._n_features_out = self.embedding_.shape[1]",LocallyLinearEmbedding._fit_transform,general,What is the primary purpose of the _fit_transform function in this Python code?,"The primary purpose of the _fit_transform function is to fit a nearest neighbors model to the input data X and then transform it into a lower-dimensional representation using locally linear embedding, while also calculating the reconstruction error of the transformed data..",LocallyLinearEmbedding._fit_transform
+"@pytest.mark.parametrize('csc_container', CSC_CONTAINERS)
+def test_sparse_lasso_not_as_toy_dataset(csc_container):
+    n_samples = 100
+    max_iter = 1000
+    n_informative = 10
+    X, y = make_sparse_data(csc_container, n_samples=n_samples, n_informative=n_informative)
+    X_train, X_test = (X[n_samples // 2:], X[:n_samples // 2])
+    y_train, y_test = (y[n_samples // 2:], y[:n_samples // 2])
+    s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-07)
+    s_clf.fit(X_train, y_train)
+    assert_almost_equal(s_clf.dual_gap_, 0, 4)
+    assert s_clf.score(X_test, y_test) > 0.85
+    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-07)
+    d_clf.fit(X_train.toarray(), y_train)
+    assert_almost_equal(d_clf.dual_gap_, 0, 4)
+    assert d_clf.score(X_test, y_test) > 0.85
+    assert np.sum(s_clf.coef_ != 0.0) == n_informative",test_sparse_lasso_not_as_toy_dataset,general,What is the purpose of the test_sparse_lasso_not_as_toy_dataset function?,"This function tests the sparse Lasso regression model on a real-world dataset, comparing the results with a dense version of the model, and verifying that the model converges and achieves a high accuracy..",test_sparse_lasso_not_as_toy_dataset
+"@pytest.mark.parametrize('input_data', [X] + X_as_any_csr, ids=data_containers_ids)
+@pytest.mark.parametrize('Estimator', [KMeans, MiniBatchKMeans])
+def test_scaled_weights(Estimator, input_data, global_random_seed):
+    sample_weight = np.random.RandomState(global_random_seed).uniform(size=n_samples)
+    km = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
+    km_orig = clone(km).fit(input_data, sample_weight=sample_weight)
+    km_scaled = clone(km).fit(input_data, sample_weight=0.5 * sample_weight)
+    assert_array_equal(km_orig.labels_, km_scaled.labels_)
+    assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)",test_scaled_weights,general,What is the purpose of this function?,This function tests the scaled weights in KMeans and MiniBatchKMeans clustering algorithms.,test_scaled_weights
+"def test_multi_target_regression_one_target():
+    X, y = datasets.make_regression(n_targets=1, random_state=0)
+    rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    msg = 'at least two dimensions'
+    with pytest.raises(ValueError, match=msg):
+        rgr.fit(X, y)",test_multi_target_regression_one_target,general,What is the purpose of the test_multi_target_regression_one_target function?,"This function tests the MultiOutputRegressor class from scikit-learn, specifically checking that it raises a ValueError when trying to fit a model with only one target variable, which requires at least two dimensions..  ####.",test_multi_target_regression_one_target
+"@_fit_context(prefer_skip_nested_validation=False)
+def fit(self, X, y=None, **fit_params):
+    """"""Fit the SelectFromModel meta-transformer.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The training input samples.
+
+        y : array-like of shape (n_samples,), default=None
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+
+        **fit_params : dict
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the sub-estimator. They are ignored if
+              `prefit=True`.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the sub-estimator. They are ignored if `prefit=True`.
+
+            .. versionchanged:: 1.4
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """"""
+    self._check_max_features(X)
+    if self.prefit:
+        try:
+            check_is_fitted(self.estimator)
+        except NotFittedError as exc:
+            raise NotFittedError('When `prefit=True`, `estimator` is expected to be a fitted estimator.') from exc
+        self.estimator_ = deepcopy(self.estimator)
+    elif _routing_enabled():
+        routed_params = process_routing(self, 'fit', **fit_params)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X, y, **routed_params.estimator.fit)
+    else:
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X, y, **fit_params)
+    if hasattr(self.estimator_, 'feature_names_in_'):
+        self.feature_names_in_ = self.estimator_.feature_names_in_
+    else:
+        _check_feature_names(self, X, reset=True)
+    return self",SelectFromModel.fit,general,Not applicable?,Not enough information.,SelectFromModel.fit
+"def _get_median(data, n_zeros):
+    """"""Compute the median of data with n_zeros additional zeros.
+
+    This function is used to support sparse matrices; it modifies data
+    in-place.
+    """"""
+    n_elems = len(data) + n_zeros
+    if not n_elems:
+        return np.nan
+    n_negative = np.count_nonzero(data < 0)
+    middle, is_odd = divmod(n_elems, 2)
+    data.sort()
+    if is_odd:
+        return _get_elem_at_rank(middle, data, n_negative, n_zeros)
+    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) + _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.0",_get_median,general,What does the function do if the input data is empty?,The function returns NaN (Not a Number) if the input data is empty..,_get_median
+"def test_ovr_decision_function():
+    X_train = np.array([[1, 1], [-1, 1], [-1, -1], [1, -1]])
+    y_train = [0, 1, 2, 3]
+    base_points = np.array([[5, 5], [10, 10]])
+    X_test = np.vstack((base_points * [1, 1], base_points * [-1, 1], base_points * [-1, -1], base_points * [1, -1]))
+    y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
+    clf = svm.SVC(kernel='linear', decision_function_shape='ovr')
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    assert_array_equal(y_pred, y_test)
+    deci_val = clf.decision_function(X_test)
+    assert_array_equal(np.argmax(deci_val, axis=1), y_pred)
+    pred_class_deci_val = deci_val[range(8), y_pred].reshape((4, 2))
+    assert np.min(pred_class_deci_val) > 0.0
+    assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])",test_ovr_decision_function,general,What is the purpose of the test_ovr_decision_function() function?,"This function tests the decision function of an SVM classifier with the 'ovr' (one-vs-rest) decision_function_shape, and verifies that the predicted classes match the expected output..",test_ovr_decision_function
+"@config_context(enable_metadata_routing=True)
+def test_process_routing_invalid_object():
+
+    class InvalidObject:
+        pass
+    with pytest.raises(AttributeError, match='either implement the routing method'):
+        process_routing(InvalidObject(), 'fit', groups=my_groups)",test_process_routing_invalid_object,general,What is the type of object that will cause the test_process_routing_invalid_object function to fail?,An instance of the InvalidObject class will.,test_process_routing_invalid_object
+"@config_context(enable_metadata_routing=True)
+def test_transform_tuple_input():
+    """"""Test that if metadata is a tuple of arrays, both arrays are transformed.""""""
+
+    class Estimator(ClassifierMixin, BaseEstimator):
+
+        def fit(self, X, y, X_val=None, y_val=None):
+            assert isinstance(X_val, tuple)
+            assert isinstance(y_val, tuple)
+            assert_array_equal(X_val[0], np.array([[2, 3]]))
+            assert_array_equal(y_val[0], np.array([0, 1]))
+            assert_array_equal(X_val[1], np.array([[11, 12]]))
+            assert_array_equal(y_val[1], np.array([1, 2]))
+            self.fitted_ = True
+            return self
+
+    class Transformer(TransformerMixin, BaseEstimator):
+
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def transform(self, X):
+            return X + 1
+    X = np.array([[1, 2]])
+    y = np.array([0, 1])
+    X_val0 = np.array([[1, 2]])
+    y_val0 = np.array([0, 1])
+    X_val1 = np.array([[10, 11]])
+    y_val1 = np.array([1, 2])
+    pipe = Pipeline([('transformer', Transformer()), ('estimator', Estimator().set_fit_request(X_val=True, y_val=True))], transform_input=['X_val'])
+    pipe.fit(X, y, X_val=(X_val0, X_val1), y_val=(y_val0, y_val1))",test_transform_tuple_input,general,What is the purpose of the test_transform_tuple_input function?,"This function tests that if metadata is a tuple of arrays, both arrays are transformed by a pipeline of a transformer and an estimator in a scikit-learn pipeline, using the set_fit_request method to set the fit request for the estimator to use a tuple of arrays for both X_val and y_val..",test_transform_tuple_input
+"def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar, xp=None):
+    """"""Estimate the spherical variance values.
+
+    Parameters
+    ----------
+    responsibilities : array-like of shape (n_samples, n_components)
+
+    X : array-like of shape (n_samples, n_features)
+
+    nk : array-like of shape (n_components,)
+
+    means : array-like of shape (n_components, n_features)
+
+    reg_covar : float
+
+    Returns
+    -------
+    variances : array, shape (n_components,)
+        The variance values of each components.
+    """"""
+    xp, _ = get_namespace(X)
+    return xp.mean(_estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar, xp=xp), axis=1)",_estimate_gaussian_covariances_spherical,general,"= ""What is the function _estimate_gaussian_covariances_spherical used for?""?",Not enough information.,_estimate_gaussian_covariances_spherical
+"@pytest.mark.parametrize('X, err_msg', [(np.array([[1, np.nan]]), 'Input contains NaN.'), (np.array([[1, np.nan]]), 'Input contains NaN.'), (np.array([[1, np.inf]]), 'Input contains infinity or a value too large for.*int'), (np.array([[1, np.nan]], dtype=object), 'cannot convert float NaN to integer')])
+@pytest.mark.parametrize('ensure_all_finite', [True, False])
+def test_check_array_ensure_all_finite_object_unsafe_casting(X, err_msg, ensure_all_finite):
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(X, dtype=int, ensure_all_finite=ensure_all_finite)",test_check_array_ensure_all_finite_object_unsafe_casting,general,What is the purpose of the `check_array` function in this code?,"The purpose of the `check_array` function is to check if the input array contains NaN or infinity values, and if `ensure_all_finite` is set to `True`, it raises a `ValueError` with an error message if the array is not finite, or if `ensure_all_finite` is set to `False`, it does not check for finite values and allows the array to be used..",test_check_array_ensure_all_finite_object_unsafe_casting
+"@pytest.mark.parametrize('response_method', ['predict_proba', 'predict_log_proba'])
+def test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba(response_method):
+    """"""Check that `_get_response_values` will raise an error when `y_pred` has a
+    single class with `predict_proba`.""""""
+    X, y_two_class = make_classification(n_samples=10, n_classes=2, random_state=0)
+    y_single_class = np.zeros_like(y_two_class)
+    classifier = DecisionTreeClassifier().fit(X, y_single_class)
+    err_msg = 'Got predict_proba of shape \\(10, 1\\), but need classifier with two classes'
+    with pytest.raises(ValueError, match=err_msg):
+        _get_response_values(classifier, X, response_method=response_method)",test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba,general,What is the purpose of the test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba function?,This function tests that _get_response_values will raise an error when y_pred has a single class with predict_proba..,test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba
+"def test_isotonic_2darray_more_than_1_feature():
+    X = np.arange(10)
+    X_2d = np.c_[X, X]
+    y = np.arange(10)
+    msg = 'should be a 1d array or 2d array with 1 feature'
+    with pytest.raises(ValueError, match=msg):
+        IsotonicRegression().fit(X_2d, y)
+    iso_reg = IsotonicRegression().fit(X, y)
+    with pytest.raises(ValueError, match=msg):
+        iso_reg.predict(X_2d)
+    with pytest.raises(ValueError, match=msg):
+        iso_reg.transform(X_2d)",test_isotonic_2darray_more_than_1_feature,general,What is the purpose of the test_isotonic_2darray_more_than_1_feature function?,This function tests the error handling of the IsotonicRegression class when the input data has more than one feature.  Please confirm before I proceed.  I will then generate another Q&A pair.  Thank you.  Bye for now.,test_isotonic_2darray_more_than_1_feature
+"def test_grid_search_precomputed_kernel_error_nonsquare():
+    K_train = np.zeros((10, 20))
+    y_train = np.ones((10,))
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    with pytest.raises(ValueError):
+        cv.fit(K_train, y_train)",test_grid_search_precomputed_kernel_error_nonsquare,general,What is the purpose of the test_grid_search_precomputed_kernel_error_nonsquare function?,This function checks for a ValueError when trying to perform grid search on a precomputed kernel with a nonsquare kernel matrix....,test_grid_search_precomputed_kernel_error_nonsquare
+"@pytest.mark.parametrize('X, X2, cats, cat_dtype', [(np.array([['a', np.nan]], dtype=object).T, np.array([['a', 'b']], dtype=object).T, [np.array(['a', 'd', np.nan], dtype=object)], np.object_), (np.array([['a', np.nan]], dtype=object).T, np.array([['a', 'b']], dtype=object).T, [np.array(['a', 'd', np.nan], dtype=object)], np.object_), (np.array([[2.0, np.nan]], dtype=np.float64).T, np.array([[3.0]], dtype=np.float64).T, [np.array([2.0, 4.0, np.nan])], np.float64)], ids=['object-None-missing-value', 'object-nan-missing_value', 'numeric-missing-value'])
+def test_ordinal_encoder_specified_categories_missing_passthrough(X, X2, cats, cat_dtype):
+    """"""Test ordinal encoder for specified categories.""""""
+    oe = OrdinalEncoder(categories=cats)
+    exp = np.array([[0.0], [np.nan]])
+    assert_array_equal(oe.fit_transform(X), exp)
+    assert oe.categories_[0].dtype == cat_dtype
+    oe = OrdinalEncoder(categories=cats)
+    with pytest.raises(ValueError, match='Found unknown categories'):
+        oe.fit(X2)",test_ordinal_encoder_specified_categories_missing_passthrough,general,What is the purpose of this function?,"This function tests the ordinal encoder for specified categories, encoding missing values as NaN and passing them through the encoder..",test_ordinal_encoder_specified_categories_missing_passthrough
+"def test_coef_shape_not_zero():
+    est_no_intercept = Lasso(fit_intercept=False)
+    est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
+    assert est_no_intercept.coef_.shape == (1,)",test_coef_shape_not_zero,general,What is the purpose of the test_coef_shape_not_zero function?,"This function tests that the coefficient shape of the Lasso model without an intercept is a 1-dimensional array, ensuring the model's output meets the expected shape after fitting the data..  Please wait...  (Your output will be here) Question: What is the purpose of the test_coef_shape_not_zero function? Answer: This function tests that the coefficient shape of the Lasso model without an intercept is a 1-dimensional array, ensuring the model's output meets the expected shape after fitting the data..  That was quick! Your Q&A pair is ready. You can use it as a starting point for your knowledge base.",test_coef_shape_not_zero
+"def eval_kernel_for_theta(theta):
+    kernel_clone = kernel.clone_with_theta(theta)
+    K = kernel_clone(X, eval_gradient=False)
+    return K",eval_kernel_for_theta,general,"What is the input parameter ""theta"" used for in the eval_kernel_for_theta function?",.,eval_kernel_for_theta
+"@pytest.mark.parametrize('raise_warning', [True, False])
+def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
+    """"""Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
+    param is set.""""""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+    msg = '`raise_warning` was deprecated in version 1.7 and will be removed in 1.9.'
+    with pytest.warns(FutureWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)",test_likelihood_ratios_raise_warning_deprecation,general,What does the test_likelihood_ratios_raise_warning_deprecation function test?,This function tests that the class_likelihood_ratios function raises a FutureWarning when the raise_warning parameter is set..,test_likelihood_ratios_raise_warning_deprecation
+"def test_fit_rejects_params_with_no_routing_enabled():
+    X, y = make_classification(random_state=42)
+    est = LinearRegression()
+    sfs = SequentialFeatureSelector(estimator=est)
+    with pytest.raises(ValueError, match='is only supported if'):
+        sfs.fit(X, y, sample_weight=np.ones_like(y))",test_fit_rejects_params_with_no_routing_enabled,general,What is the purpose of the test_fit_rejects_params_with_no_routing_enabled function?,This function tests if the Sequential Feature Selector (SFS) can reject parameters with no routing enabled during the fitting process.,test_fit_rejects_params_with_no_routing_enabled
+"@pytest.mark.parametrize('degree, n_features', [(2, 65535), (3, 2344), (2, int(np.sqrt(np.iinfo(np.int64).max) + 1)), (3, 65535), (2, int(np.sqrt(np.iinfo(np.int64).max)))])
+@pytest.mark.parametrize('interaction_only', [True, False])
+@pytest.mark.parametrize('include_bias', [True, False])
+@pytest.mark.parametrize('csr_container', CSR_CONTAINERS)
+def test_csr_polynomial_expansion_index_overflow(degree, n_features, interaction_only, include_bias, csr_container):
+    """"""Tests known edge-cases to the dtype promotion strategy and custom
+    Cython code, including a current bug in the upstream
+    `scipy.sparse.hstack`.
+    """"""
+    data = [1.0]
+    indices_dtype = np.int32 if n_features - 1 <= np.iinfo(np.int32).max else np.int64
+    row = np.array([0], dtype=indices_dtype)
+    col = np.array([n_features - 1], dtype=indices_dtype)
+    expected_indices = [n_features - 1 + int(include_bias)]
+    expected_indices.append(n_features * (n_features + 1) // 2 + expected_indices[0])
+    expected_indices.append(n_features * (n_features + 1) * (n_features + 2) // 6 + expected_indices[1])
+    X = csr_container((data, (row, col)))
+    pf = PolynomialFeatures(interaction_only=interaction_only, include_bias=include_bias, degree=degree)
+    num_combinations = pf._num_combinations(n_features=n_features, min_degree=0, max_degree=degree, interaction_only=pf.interaction_only, include_bias=pf.include_bias)
+    if num_combinations > np.iinfo(np.intp).max:
+        msg = 'The output that would result from the current configuration would have \\d* features which is too large to be indexed'
+        with pytest.raises(ValueError, match=msg):
+            pf.fit(X)
+        return
+    if sp_version < parse_version('1.9.2') and n_features == 65535 and (degree == 2) and (not interaction_only):
+        msg = 'In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`'
+        with pytest.raises(ValueError, match=msg):
+            X_trans = pf.fit_transform(X)
+        return
+    X_trans = pf.fit_transform(X)
+    expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
+    non_bias_terms = 1 + (degree - 1) * int(not interaction_only)
+    expected_nnz = int(include_bias) + non_bias_terms
+    assert X_trans.dtype == X.dtype
+    assert X_trans.shape == (1, pf.n_output_features_)
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
+    assert X_trans.nnz == expected_nnz
+    if include_bias:
+        assert X_trans[0, 0] == pytest.approx(1.0)
+    for idx in range(non_bias_terms):
+        assert X_trans[0, expected_indices[idx]] == pytest.approx(1.0)
+    offset = interaction_only * n_features
+    if degree == 3:
+        offset *= 1 + n_features
+    assert pf.n_output_features_ == expected_indices[degree - 1] + 1 - offset",test_csr_polynomial_expansion_index_overflow,general,What is the purpose of the test_csr_polynomial_expansion_index_overflow function?,"This function tests the PolynomialFeatures class for edge cases related to dtype promotion and custom Cython code, including a bug in scipy.sparse.hstack, to ensure correct behavior and prevent indexing issues..",test_csr_polynomial_expansion_index_overflow
+"@pytest.mark.parametrize('kind, line_kw, label', [('individual', {}, None), ('individual', {'label': 'xxx'}, None), ('average', {}, None), ('average', {'label': 'xxx'}, 'xxx'), ('both', {}, 'average'), ('both', {'label': 'xxx'}, 'xxx')])
+def test_partial_dependence_overwrite_labels(pyplot, clf_diabetes, diabetes, kind, line_kw, label):
+    """"""Test that make sure that we can overwrite the label of the PDP plot""""""
+    disp = PartialDependenceDisplay.from_estimator(clf_diabetes, diabetes.data, [0, 2], grid_resolution=25, feature_names=diabetes.feature_names, kind=kind, line_kw=line_kw)
+    for ax in disp.axes_.ravel():
+        if label is None:
+            assert ax.get_legend() is None
+        else:
+            legend_text = ax.get_legend().get_texts()
+            assert len(legend_text) == 1
+            assert legend_text[0].get_text() == label",test_partial_dependence_overwrite_labels,general,What is the purpose of the `test_partial_dependence_overwrite_labels` function?,This function tests that the label of the Partial Dependence Display plot can be overwritten..,test_partial_dependence_overwrite_labels
+"@pytest.mark.parametrize('n_samples, n_features', [(2, 3), (3, 2)])
+def test_raises_value_error_if_sample_weights_greater_than_1d(n_samples, n_features):
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+    sample_weights_OK_1 = 1.0
+    sample_weights_OK_2 = 2.0
+    reg = LinearRegression()
+    reg.fit(X, y, sample_weights_OK)
+    reg.fit(X, y, sample_weights_OK_1)
+    reg.fit(X, y, sample_weights_OK_2)",test_raises_value_error_if_sample_weights_greater_than_1d,general,What is the purpose of the test function `test_raises_value_error_if_sample_weights_greater_than_1d`?,The purpose of the test function `test_raises_value_error_if_sample_weights_greater_than_1d` is to test whether the `LinearRegression` function raises a `ValueError` when the sample weights are greater than 1D..,test_raises_value_error_if_sample_weights_greater_than_1d
+"@pytest.mark.parametrize('params, err_type, err_msg', [({'maxval': np.iinfo(np.int64).max + 1}, ValueError, 'is to large to be represented as np.int64'), ({'arrays': np.array([1, 2], dtype=np.float64)}, ValueError, 'Array dtype float64 is not supported'), ({'arrays': [1, 2]}, TypeError, 'Arrays should be of type np.ndarray')])
+def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):
+    """"""Check that we raise the proper error message.""""""
+    with pytest.raises(err_type, match=err_msg):
+        _smallest_admissible_index_dtype(**params)",test_smallest_admissible_index_dtype_error,general,What is the purpose of the test_smallest_admissible_index_dtype_error function?,This function tests the error handling of the _smallest_admissible_index_dtype function by raising the expected errors and checking that the error messages match the expected strings..,test_smallest_admissible_index_dtype_error
+"def _pandas_indexing(X, key, key_dtype, axis):
+    """"""Index a pandas dataframe or a series.""""""
+    if _is_arraylike_not_scalar(key):
+        key = np.asarray(key)
+    if key_dtype == 'int' and (not (isinstance(key, slice) or np.isscalar(key))):
+        return X.take(key, axis=axis)
+    else:
+        indexer = X.iloc if key_dtype == 'int' else X.loc
+        return indexer[:, key] if axis else indexer[key]",_pandas_indexing,general,What is the main purpose of the _pandas_indexing function?,"The main purpose of the _pandas_indexing function is to index a pandas dataframe or a series, allowing for efficient data retrieval and manipulation based on various indexing methods..",_pandas_indexing
+"def test_nonfinite_params():
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.standard_normal(size=n_samples)
+    clf = MLPRegressor()
+    msg = 'Solver produced non-finite parameter weights. The input data may contain large values and need to be preprocessed.'
+    with pytest.raises(ValueError, match=msg):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            clf.fit(X, y)",test_nonfinite_params,general,What is the purpose of the test_nonfinite_params function in the given Python code?,"The purpose of the test_nonfinite_params function is to test the MLPRegressor model for non-finite parameter weights when fitting data with large values, and to raise a ValueError with a specific error message if such a situation is encountered.",test_nonfinite_params
+"@pytest.mark.parametrize('csr_container', CSR_CONTAINERS)
+def test_label_ranking_loss_sparse(csr_container):
+    assert_almost_equal(label_ranking_loss(csr_container(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]), (0 + 2 / 2) / 2.0)",test_label_ranking_loss_sparse,general,What is the purpose of the `assert_almost_equal` statement in this function?,The `assert_almost_equal` statement is used to verify that the calculated label ranking loss is close to the expected value.,test_label_ranking_loss_sparse
+"def test_ordinal_encoder_infrequent_mixed():
+    """"""Test when feature 0 has infrequent categories and feature 1 does not.""""""
+    X = np.column_stack(([0, 1, 3, 3, 3, 3, 2, 0, 3], [0, 0, 0, 0, 1, 1, 1, 1, 1]))
+    ordinal = OrdinalEncoder(max_categories=3).fit(X)
+    assert_array_equal(ordinal.infrequent_categories_[0], [1, 2])
+    assert ordinal.infrequent_categories_[1] is None
+    X_test = [[3, 0], [1, 1]]
+    expected_trans = [[1, 0], [2, 1]]
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, expected_trans)
+    X_inverse = ordinal.inverse_transform(X_trans)
+    expected_inverse = np.array([[3, 0], ['infrequent_sklearn', 1]], dtype=object)
+    assert_array_equal(X_inverse, expected_inverse)",test_ordinal_encoder_infrequent_mixed,general,What is the purpose of the test function test_ordinal_encoder_infrequent_mixed?,This function tests the OrdinalEncoder when feature 0 has infrequent categories and feature 1 does not..,test_ordinal_encoder_infrequent_mixed
+"def test_rbf_sampler_fitted_attributes_dtype(global_dtype):
+    """"""Check that the fitted attributes are stored accordingly to the
+    data type of X.""""""
+    rbf = RBFSampler()
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+    rbf.fit(X)
+    assert rbf.random_offset_.dtype == global_dtype
+    assert rbf.random_weights_.dtype == global_dtype",test_rbf_sampler_fitted_attributes_dtype,general,What type of data does the test_rbf_sampler_fitted_attributes_dtype function check for?,The function checks for the data type of X..,test_rbf_sampler_fitted_attributes_dtype
+"@pytest.mark.parametrize('scorer_name, metric', [('accuracy', accuracy_score), ('balanced_accuracy', balanced_accuracy_score), ('f1_weighted', partial(f1_score, average='weighted')), ('f1_macro', partial(f1_score, average='macro')), ('f1_micro', partial(f1_score, average='micro')), ('precision_weighted', partial(precision_score, average='weighted')), ('precision_macro', partial(precision_score, average='macro')), ('precision_micro', partial(precision_score, average='micro')), ('recall_weighted', partial(recall_score, average='weighted')), ('recall_macro', partial(recall_score, average='macro')), ('recall_micro', partial(recall_score, average='micro')), ('jaccard_weighted', partial(jaccard_score, average='weighted')), ('jaccard_macro', partial(jaccard_score, average='macro')), ('jaccard_micro', partial(jaccard_score, average='micro'))])
+def test_classification_multiclass_scores(scorer_name, metric):
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=30, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, stratify=y)
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X_train, y_train)
+    score = get_scorer(scorer_name)(clf, X_test, y_test)
+    expected_score = metric(y_test, clf.predict(X_test))
+    assert score == pytest.approx(expected_score)",test_classification_multiclass_scores,general,What is the purpose of the test_classification_multiclass_scores function?,The purpose of the test_classification_multiclass_scores function is to test the multiclass classification scores of a DecisionTreeClassifier model using various scoring metrics..,test_classification_multiclass_scores
+"@pytest.fixture(params=['long', 'wide'])
+def ols_ridge_dataset(global_random_seed, request):
+    """"""Dataset with OLS and Ridge solutions, well conditioned X.
+
+    The construction is based on the SVD decomposition of X = U S V'.
+
+    Parameters
+    ----------
+    type : {""long"", ""wide""}
+        If ""long"", then n_samples > n_features.
+        If ""wide"", then n_features > n_samples.
+
+    For ""wide"", we return the minimum norm solution w = X' (XX')^-1 y:
+
+        min ||w||_2 subject to X w = y
+
+    Returns
+    -------
+    X : ndarray
+        Last column of 1, i.e. intercept.
+    y : ndarray
+    coef_ols : ndarray of shape
+        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with minimum ||w||_2 in
+        case of ambiguity)
+        Last coefficient is intercept.
+    coef_ridge : ndarray of shape (5,)
+        Ridge solution with alpha=1, i.e. min ||X w - y||_2_2 + ||w||_2^2.
+        Last coefficient is intercept.
+    """"""
+    if request.param == 'long':
+        n_samples, n_features = (12, 4)
+    else:
+        n_samples, n_features = (4, 12)
+    k = min(n_samples, n_features)
+    rng = np.random.RandomState(global_random_seed)
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features, effective_rank=k, random_state=rng)
+    X[:, -1] = 1
+    U, s, Vt = linalg.svd(X)
+    assert np.all(s > 0.001)
+    U1, U2 = (U[:, :k], U[:, k:])
+    Vt1, _ = (Vt[:k, :], Vt[k:, :])
+    if request.param == 'long':
+        coef_ols = rng.uniform(low=-10, high=10, size=n_features)
+        y = X @ coef_ols
+        y += U2 @ rng.normal(size=n_samples - n_features) ** 2
+    else:
+        y = rng.uniform(low=-10, high=10, size=n_samples)
+        coef_ols = Vt1.T @ np.diag(1 / s) @ U1.T @ y
+    alpha = 1
+    d = alpha * np.identity(n_features)
+    d[-1, -1] = 0
+    coef_ridge = linalg.solve(X.T @ X + d, X.T @ y)
+    R_OLS = y - X @ coef_ols
+    R_Ridge = y - X @ coef_ridge
+    assert np.linalg.norm(R_OLS) < np.linalg.norm(R_Ridge)
+    return (X, y, coef_ols, coef_ridge)",ols_ridge_dataset,general,How does the ols_ridge_dataset function determine the values of X and y?,"The ols_ridge_dataset function determines the values of X and y based on the SVD decomposition of X = U S V', and.",ols_ridge_dataset
+"def test_features_names_passthrough():
+    """"""Check pipeline.get_feature_names_out with passthrough""""""
+    pipe = Pipeline(steps=[('names', FeatureNameSaver()), ('pass', 'passthrough'), ('clf', LogisticRegression())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names), iris.feature_names)",test_features_names_passthrough,general,What does the test_features_names_passthrough function fit?,The test_features_names_passthrough function fits the pipeline with the iris dataset and its target values..  (Note: You can adjust the answer based on the function code).,test_features_names_passthrough
+"def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+    super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)",StratifiedKFold.__init__,general,What is the purpose of the `__init__` function in this code?,.,StratifiedKFold.__init__
+"def test_cached_unique_returns_cached_unique():
+    my_dtype = np.dtype(np.float64, metadata={'unique': np.array([1, 2])})
+    arr = np.array([1, 2, 2, 3, 4, 4, 5], dtype=my_dtype)
+    assert_array_equal(cached_unique(arr), np.array([1, 2]))",test_cached_unique_returns_cached_unique,general,What is the purpose of the test_cached_unique_returns_cached_unique function?,This function tests whether the cached_unique function returns the correct unique values when given an array with duplicates..,test_cached_unique_returns_cached_unique
+"def c_step(X, n_support, remaining_iterations=30, initial_estimates=None, verbose=False, cov_computation_method=empirical_covariance, random_state=None):
+    """"""C_step procedure described in [Rouseeuw1984]_ aiming at computing MCD.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data set in which we look for the n_support observations whose
+        scatter matrix has minimum determinant.
+
+    n_support : int
+        Number of observations to compute the robust estimates of location
+        and covariance from. This parameter must be greater than
+        `n_samples / 2`.
+
+    remaining_iterations : int, default=30
+        Number of iterations to perform.
+        According to [Rouseeuw1999]_, two iterations are sufficient to get
+        close to the minimum, and we never need more than 30 to reach
+        convergence.
+
+    initial_estimates : tuple of shape (2,), default=None
+        Initial estimates of location and shape from which to run the c_step
+        procedure:
+        - initial_estimates[0]: an initial location estimate
+        - initial_estimates[1]: an initial covariance estimate
+
+    verbose : bool, default=False
+        Verbose mode.
+
+    cov_computation_method : callable,             default=:func:`sklearn.covariance.empirical_covariance`
+        The function which will be used to compute the covariance.
+        Must return array of shape (n_features, n_features).
+
+    random_state : int, RandomState instance or None, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    location : ndarray of shape (n_features,)
+        Robust location estimates.
+
+    covariance : ndarray of shape (n_features, n_features)
+        Robust covariance estimates.
+
+    support : ndarray of shape (n_samples,)
+        A mask for the `n_support` observations whose scatter matrix has
+        minimum determinant.
+
+    References
+    ----------
+    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+        Estimator, 1999, American Statistical Association and the American
+        Society for Quality, TECHNOMETRICS
+    """"""
+    X = np.asarray(X)
+    random_state = check_random_state(random_state)
+    return _c_step(X, n_support, remaining_iterations=remaining_iterations, initial_estimates=initial_estimates, verbose=verbose, cov_computation_method=cov_computation_method, random_state=random_state)",c_step,general,What is the purpose of the c_step function in Python?,"It aims at computing the Minimum Covariance Determinant (MCD) estimator, a robust method for estimating location and covariance from a given dataset..",c_step
+"def _record_output_indices(self, Xs):
+    """"""
+        Record which transformer produced which column.
+        """"""
+    idx = 0
+    self.output_indices_ = {}
+    for transformer_idx, (name, _, _, _) in enumerate(self._iter(fitted=True, column_as_labels=False, skip_drop=True, skip_empty_columns=True)):
+        n_columns = Xs[transformer_idx].shape[1]
+        self.output_indices_[name] = slice(idx, idx + n_columns)
+        idx += n_columns
+    all_names = [t[0] for t in self.transformers] + ['remainder']
+    for name in all_names:
+        if name not in self.output_indices_:
+            self.output_indices_[name] = slice(0, 0)",ColumnTransformer._record_output_indices,general,What is the purpose of the _record_output_indices function in the transformer?,It records which transformer produced which column in the output data..,ColumnTransformer._record_output_indices
+"def pad(x: Array, pad_width: int | tuple[int, int] | Sequence[tuple[int, int]], *, constant_values: complex=0, xp: ModuleType) -> Array:
+    """"""See docstring in `array_api_extra._delegation.py`.""""""
+    if isinstance(pad_width, int):
+        pad_width_seq = [(pad_width, pad_width)] * x.ndim
+    elif isinstance(pad_width, tuple) and len(pad_width) == 2 and all((isinstance(i, int) for i in pad_width)):
+        pad_width_seq = [cast(tuple[int, int], pad_width)] * x.ndim
+    else:
+        pad_width_seq = cast(list[tuple[int, int]], list(pad_width))
+    slices: list[slice] = []
+    newshape: list[int] = []
+    for ax, w_tpl in enumerate(pad_width_seq):
+        if len(w_tpl) != 2:
+            msg = f'expect a 2-tuple (before, after), got {w_tpl}.'
+            raise ValueError(msg)
+        sh = eager_shape(x)[ax]
+        if w_tpl[0] == 0 and w_tpl[1] == 0:
+            sl = slice(None, None, None)
+        else:
+            start, stop = w_tpl
+            stop = None if stop == 0 else -stop
+            sl = slice(start, stop, None)
+            sh += w_tpl[0] + w_tpl[1]
+        newshape.append(sh)
+        slices.append(sl)
+    padded = xp.full(tuple(newshape), fill_value=constant_values, dtype=x.dtype, device=_compat.device(x))
+    return at(padded, tuple(slices)).set(x)",pad,general,Not applicable?,Not enough information.,pad
+"@pytest.mark.parametrize('X, n_components, n_components_validated', [(iris.data, 0.95, 2), (iris.data, 0.01, 1), (np.random.RandomState(0).rand(5, 20), 0.5, 2)])
+def test_infer_dim_by_explained_variance(X, n_components, n_components_validated):
+    pca = PCA(n_components=n_components, svd_solver='full')
+    pca.fit(X)
+    assert pca.n_components == pytest.approx(n_components)
+    assert pca.n_components_ == n_components_validated",test_infer_dim_by_explained_variance,general,"What does the function ""test_infer_dim_by_explained_variance"" do?",It tests the PCA (Principal Component Analysis) function to infer the optimal number of components based on the explained variance ratio and validates the result by comparing it with the input number of components..,test_infer_dim_by_explained_variance
+"@validate_params({'shape': [tuple], 'n_clusters': [Interval(Integral, 1, None, closed='left'), 'array-like'], 'noise': [Interval(Real, 0, None, closed='left')], 'minval': [Interval(Real, None, None, closed='neither')], 'maxval': [Interval(Real, None, None, closed='neither')], 'shuffle': ['boolean'], 'random_state': ['random_state']}, prefer_skip_nested_validation=True)
+def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10, maxval=100, shuffle=True, random_state=None):
+    """"""Generate an array with block checkerboard structure for biclustering.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
+
+    Parameters
+    ----------
+    shape : tuple of shape (n_rows, n_cols)
+        The shape of the result.
+
+    n_clusters : int or array-like or shape (n_row_clusters, n_column_clusters)
+        The number of row and column clusters.
+
+    noise : float, default=0.0
+        The standard deviation of the gaussian noise.
+
+    minval : float, default=10
+        Minimum value of a bicluster.
+
+    maxval : float, default=100
+        Maximum value of a bicluster.
+
+    shuffle : bool, default=True
+        Shuffle the samples.
+
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    X : ndarray of shape `shape`
+        The generated array.
+
+    rows : ndarray of shape (n_clusters, X.shape[0])
+        The indicators for cluster membership of each row.
+
+    cols : ndarray of shape (n_clusters, X.shape[1])
+        The indicators for cluster membership of each column.
+
+    See Also
+    --------
+    make_biclusters : Generate an array with constant block diagonal structure
+        for biclustering.
+
+    References
+    ----------
+    .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
+        Spectral biclustering of microarray data: coclustering genes
+        and conditions. Genome research, 13(4), 703-716.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_checkerboard
+    >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10,
+    ...                                         random_state=42)
+    >>> data.shape
+    (300, 300)
+    >>> rows.shape
+    (100, 300)
+    >>> columns.shape
+    (100, 300)
+    >>> print(rows[0][:5], columns[0][:5])
+    [False False False  True False] [False False False False False]
+    """"""
+    generator = check_random_state(random_state)
+    if hasattr(n_clusters, '__len__'):
+        n_row_clusters, n_col_clusters = n_clusters
+    else:
+        n_row_clusters = n_col_clusters = n_clusters
+    n_rows, n_cols = shape
+    row_sizes = generator.multinomial(n_rows, np.repeat(1.0 / n_row_clusters, n_row_clusters))
+    col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_col_clusters, n_col_clusters))
+    row_labels = np.hstack([np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes)])
+    col_labels = np.hstack([np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes)])
+    result = np.zeros(shape, dtype=np.float64)
+    for i in range(n_row_clusters):
+        for j in range(n_col_clusters):
+            selector = np.outer(row_labels == i, col_labels == j)
+            result[selector] += generator.uniform(minval, maxval)
+    if noise > 0:
+        result += generator.normal(scale=noise, size=result.shape)
+    if shuffle:
+        result, row_idx, col_idx = _shuffle(result, random_state)
+        row_labels = row_labels[row_idx]
+        col_labels = col_labels[col_idx]
+    rows = np.vstack([row_labels == label for label in range(n_row_clusters) for _ in range(n_col_clusters)])
+    cols = np.vstack([col_labels == label for _ in range(n_row_clusters) for label in range(n_col_clusters)])
+    return (result, rows, cols)",make_checkerboard,general,Not applicable?,Not enough information.,make_checkerboard
+"@pytest.mark.parametrize('n_bins', [3, 32, 256])
+def test_histogram_split(n_bins):
+    rng = np.random.RandomState(42)
+    feature_idx = 0
+    l2_regularization = 0
+    min_hessian_to_split = 0.001
+    min_samples_leaf = 1
+    min_gain_to_split = 0.0
+    X_binned = np.asfortranarray(rng.randint(0, n_bins - 1, size=(int(10000.0), 1)), dtype=X_BINNED_DTYPE)
+    binned_feature = X_binned.T[feature_idx]
+    sample_indices = np.arange(binned_feature.shape[0], dtype=np.uint32)
+    ordered_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
+    all_hessians = ordered_hessians
+    sum_hessians = all_hessians.sum()
+    hessians_are_constant = False
+    for true_bin in range(1, n_bins - 2):
+        for sign in [-1, 1]:
+            ordered_gradients = np.full_like(binned_feature, sign, dtype=G_H_DTYPE)
+            ordered_gradients[binned_feature <= true_bin] *= -1
+            all_gradients = ordered_gradients
+            sum_gradients = all_gradients.sum()
+            builder = HistogramBuilder(X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads)
+            n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+            has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+            monotonic_cst = np.array([MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8)
+            is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+            missing_values_bin_idx = n_bins - 1
+            splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx, has_missing_values, is_categorical, monotonic_cst, l2_regularization, min_hessian_to_split, min_samples_leaf, min_gain_to_split, hessians_are_constant)
+            histograms = builder.compute_histograms_brute(sample_indices)
+            value = compute_node_value(sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization)
+            split_info = splitter.find_node_split(sample_indices.shape[0], histograms, sum_gradients, sum_hessians, value)
+            assert split_info.bin_idx == true_bin
+            assert split_info.gain >= 0
+            assert split_info.feature_idx == feature_idx
+            assert split_info.n_samples_left + split_info.n_samples_right == sample_indices.shape[0]
+            assert split_info.n_samples_left == split_info.sum_hessian_left",test_histogram_split,general,<your question?>?,<your answer.>.,test_histogram_split
+"def _radius_neighbors_from_graph(graph, radius, return_distance):
+    """"""Decompose a nearest neighbors sparse graph into distances and indices.
+
+    Parameters
+    ----------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
+
+    radius : float
+        Radius of neighborhoods which should be strictly positive.
+
+    return_distance : bool
+        Whether or not to return the distances.
+
+    Returns
+    -------
+    neigh_dist : ndarray of shape (n_samples,) of arrays
+        Distances to nearest neighbors. Only present if `return_distance=True`.
+
+    neigh_ind : ndarray of shape (n_samples,) of arrays
+        Indices of nearest neighbors.
+    """"""
+    assert graph.format == 'csr'
+    no_filter_needed = bool(graph.data.max() <= radius)
+    if no_filter_needed:
+        data, indices, indptr = (graph.data, graph.indices, graph.indptr)
+    else:
+        mask = graph.data <= radius
+        if return_distance:
+            data = np.compress(mask, graph.data)
+        indices = np.compress(mask, graph.indices)
+        indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
+    indices = indices.astype(np.intp, copy=no_filter_needed)
+    if return_distance:
+        neigh_dist = _to_object_array(np.split(data, indptr[1:-1]))
+    neigh_ind = _to_object_array(np.split(indices, indptr[1:-1]))
+    if return_distance:
+        return (neigh_dist, neigh_ind)
+    else:
+        return neigh_ind",_radius_neighbors_from_graph,general,What is the purpose of the _radius_neighbors_from_graph function?,"This function decomposes a nearest neighbors sparse graph into distances and indices, allowing for the extraction of neighborhoods within a specified radius..",_radius_neighbors_from_graph
+"def test_input_error_related_to_feature_names():
+    pd = pytest.importorskip('pandas')
+    X = pd.DataFrame({'a': [0, 1, 2], 'b': [0, 1, 2]})
+    y = np.array([0, 1, 0])
+    monotonic_cst = {'d': 1, 'a': 1, 'c': -1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(""monotonic_cst contains 2 unexpected feature names: ['c', 'd']."")
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+    monotonic_cst = {k: 1 for k in 'abcdefghijklmnopqrstuvwxyz'}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(""monotonic_cst contains 24 unexpected feature names: ['c', 'd', 'e', 'f', 'g', '...']."")
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+    monotonic_cst = {'a': 1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape('HistGradientBoostingRegressor was not fitted on data with feature names. Pass monotonic_cst as an integer array instead.')
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X.values, y)
+    monotonic_cst = {'b': -1, 'a': '+'}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(""monotonic_cst['a'] must be either -1, 0 or 1. Got '+'."")
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)",test_input_error_related_to_feature_names,general,What does the `test_input_error_related_to_feature_names` function do?,"This function tests input errors related to feature names in the HistGradientBoostingRegressor class, specifically checking for unexpected feature names, invalid monotonic constraints, and incorrect feature name ordering during the fitting process..",test_input_error_related_to_feature_names
+"def test_incremental_pca_against_pca_iris():
+    X = iris.data
+    Y_pca = PCA(n_components=2).fit_transform(X)
+    Y_ipca = IncrementalPCA(n_components=2, batch_size=25).fit_transform(X)
+    assert_almost_equal(np.abs(Y_pca), np.abs(Y_ipca), 1)",test_incremental_pca_against_pca_iris,general,What is the purpose of the test_incremental_pca_against_pca_iris function?,"The purpose of the test_incremental_pca_against_pca_iris function is to compare the results of incremental PCA (IPCA) and traditional PCA on the iris dataset, with a batch size of 25 for IPCA, and check if the results are similar up to a certain tolerance (1 in this case)..",test_incremental_pca_against_pca_iris
+"@pytest.mark.parametrize('sample_weight', [[1.0] * N_SAMPLES, np.ones(N_SAMPLES)])
+def test_calibration_with_sample_weight_estimator(sample_weight, data):
+    """"""Tests that sample_weight is passed to the underlying base
+    estimator.
+    """"""
+    X, y = data
+    clf = CheckingClassifier(expected_sample_weight=True)
+    pc_clf = CalibratedClassifierCV(clf)
+    pc_clf.fit(X, y, sample_weight=sample_weight)",test_calibration_with_sample_weight_estimator,general,What is the purpose of the `test_calibration_with_sample_weight_estimator` function?,It tests that sample_weight is passed to the underlying base estimator..,test_calibration_with_sample_weight_estimator
+"@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('lr', ['constant', 'optimal', 'invscaling', 'adaptive'])
+def test_partial_fit_equal_fit_classif(klass, lr):
+    for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
+        clf = klass(alpha=0.01, eta0=0.01, max_iter=2, learning_rate=lr, shuffle=False)
+        clf.fit(X_, Y_)
+        y_pred = clf.decision_function(T_)
+        t = clf.t_
+        classes = np.unique(Y_)
+        clf = klass(alpha=0.01, eta0=0.01, learning_rate=lr, shuffle=False)
+        for i in range(2):
+            clf.partial_fit(X_, Y_, classes=classes)
+        y_pred2 = clf.decision_function(T_)
+        assert clf.t_ == t
+        assert_array_almost_equal(y_pred, y_pred2, decimal=2)",test_partial_fit_equal_fit_classif,general,What type of classifier does this function support?,This function supports both SGDClassifier and SparseSGDClassifier..,test_partial_fit_equal_fit_classif
+"def test_bic_1d_1component():
+    rng = np.random.RandomState(0)
+    n_samples, n_dim, n_components = (100, 1, 1)
+    X = rng.randn(n_samples, n_dim)
+    bic_full = GaussianMixture(n_components=n_components, covariance_type='full', random_state=rng).fit(X).bic(X)
+    for covariance_type in ['tied', 'diag', 'spherical']:
+        bic = GaussianMixture(n_components=n_components, covariance_type=covariance_type, random_state=rng).fit(X).bic(X)
+        assert_almost_equal(bic_full, bic)",test_bic_1d_1component,general,What is the purpose of the test_bic_1d_1component function?,It verifies that the Bayesian Information Criterion (BIC) values for a Gaussian Mixture model with different covariance types are equal in a 1D dataset with 1 component..,test_bic_1d_1component
+"@pytest.mark.parametrize('base_loss', LOSSES)
+@pytest.mark.parametrize('fit_intercept', [False, True])
+@pytest.mark.parametrize('n_features', [0, 1, 10])
+@pytest.mark.parametrize('dtype', [None, np.float32, np.float64, np.int64])
+def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype, global_random_seed):
+    """"""Test that init_zero_coef initializes coef correctly.""""""
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(5, n_features))
+    coef = loss.init_zero_coef(X, dtype=dtype)
+    if loss.base_loss.is_multiclass:
+        n_classes = loss.base_loss.n_classes
+        assert coef.shape == (n_classes, n_features + fit_intercept)
+        assert coef.flags['F_CONTIGUOUS']
+    else:
+        assert coef.shape == (n_features + fit_intercept,)
+    if dtype is None:
+        assert coef.dtype == X.dtype
+    else:
+        assert coef.dtype == dtype
+    assert np.count_nonzero(coef) == 0",test_init_zero_coef,general,What does the `init_zero_coef` function do?,It initializes the coefficients of a linear model to zero..,test_init_zero_coef
+"@pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
+def test_sgd_averaged_partial_fit(klass):
+    eta = 0.001
+    alpha = 0.01
+    n_samples = 20
+    n_features = 10
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(n_samples, n_features))
+    w = rng.normal(size=n_features)
+    y = np.dot(X, w)
+    clf = klass(loss='squared_error', learning_rate='constant', eta0=eta, alpha=alpha, fit_intercept=True, max_iter=1, average=True, shuffle=False)
+    clf.partial_fit(X[:int(n_samples / 2)][:], y[:int(n_samples / 2)])
+    clf.partial_fit(X[int(n_samples / 2):][:], y[int(n_samples / 2):])
+    average_weights, average_intercept = asgd(klass, X, y, eta, alpha)
+    assert_array_almost_equal(clf.coef_, average_weights, decimal=16)
+    assert_almost_equal(clf.intercept_[0], average_intercept, decimal=16)",test_sgd_averaged_partial_fit,general,What is the purpose of the test_sgd_averaged_partial_fit function?,"This function tests the correctness of the partial_fit method for SGDRegressor and SparseSGDRegressor classes with averaging enabled, comparing the weights and intercept computed by the function with the ones computed by the average_weights and average_intercept functions..",test_sgd_averaged_partial_fit
+"def test_check_increasing_up():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1.5, 2.77, 8.99, 8.99, 50]
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        is_increasing = check_increasing(x, y)
+    assert is_increasing",test_check_increasing_up,general,What is the purpose of the `check_increasing` function?,"The purpose of the `check_increasing` function is to check if a given set of data is increasing or not, based on the provided input arrays `x` and `y`..",test_check_increasing_up
+"def test_linearsvr():
+    diabetes = datasets.load_diabetes()
+    lsvr = svm.LinearSVR(C=1000.0).fit(diabetes.data, diabetes.target)
+    score1 = lsvr.score(diabetes.data, diabetes.target)
+    svr = svm.SVR(kernel='linear', C=1000.0).fit(diabetes.data, diabetes.target)
+    score2 = svr.score(diabetes.data, diabetes.target)
+    assert_allclose(np.linalg.norm(lsvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001)
+    assert_almost_equal(score1, score2, 2)",test_linearsvr,general,What is the purpose of the test_linearsvr function?,"This function tests the performance of Linear Support Vector Regression (SVR) and compares it to the standard SVR model with a linear kernel, using the diabetes dataset, and verifies that the coefficients and scores are similar..  # Do not forget the dot at the end!.",test_linearsvr
