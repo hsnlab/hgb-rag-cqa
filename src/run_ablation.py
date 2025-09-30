@@ -136,10 +136,13 @@ def main():
     parser.add_argument("--mlflow_uri", type=str, default="http://127.0.0.1:5000",
                     help="MLflow tracking URI (e.g., http://mlflow-server:5000 or file:///path/to/mlruns)."
     )
+    parser.add_argument("--mlflow_experiment", type=str, default="rag_ablation_study",
+                        help="MLflow experiment name.")
     parser.add_argument("--dry_run", action="store_true",
                         help="If set, run only a single quick experiment on a small slice (for smoke test).")
 
-
+    import os 
+    print(os.getenv("HF_HOME"))
     args = parser.parse_args()
     eval_data_apth = args.eval_data_path
     qdrant_url = args.qdrant_url
@@ -154,6 +157,7 @@ def main():
     llm_model = args.llm_model
     quantize = args.quantize_llm
     mlflow_uri = args.mlflow_uri
+    experiment_name = args.mlflow_experiment
 
     # Load huggingface API key
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -202,17 +206,19 @@ def main():
     retrievers = ["simple","kg"]
     dedups = [True, False]
     reranks = [True, False]
-    over_retrieve_factor = [10, 15]            
-    over_retrieve_cap=[200, 300]              
-    rerank_candidate_cap = [150, 200]
+    over_retrieve_factor = [15]            
+    over_retrieve_cap=[300]              
+    rerank_candidate_cap = [300]
 
     if mlflow_uri:
         mlflow.set_tracking_uri(mlflow_uri)
-    experiment_name = "rag_ablation_study"
     mlflow.set_experiment(experiment_name)
     experiment = mlflow.get_experiment_by_name(experiment_name)
     runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-    done_runs = list(set(runs["tags.mlflow.runName"]))
+    if not runs.empty:
+        done_runs = list(set(runs["tags.mlflow.runName"]))
+    else:
+        done_runs = []
     run_counter = 0
 
     # dry run too test everything works
