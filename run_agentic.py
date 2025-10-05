@@ -2,7 +2,7 @@ from src.rag.agentic_rag import AgenticRAG
 
 def main():
     rag = AgenticRAG()
-
+    crew = rag.crew()
     try:
         while True:
             question = input("\nPlease enter your question (Ctrl+C to exit): ").strip()
@@ -10,7 +10,7 @@ def main():
                 continue
 
             print("\nRunning Agentic RAG pipeline...")
-            result = rag.run(question)
+            result = crew.kickoff(inputs={"query": question})
 
             print("\n=== Final Answer ===")
             print(result)
