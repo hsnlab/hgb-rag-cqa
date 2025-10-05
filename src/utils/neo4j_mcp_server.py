@@ -1,10 +1,10 @@
 # neo4j_mcp_server.py
-from mcp.server.fastmcp import FastMCPServer
+from fastmcp import FastMCP
 from neo4j import GraphDatabase
 from typing import List
 
 # Create MCP server
-mcp = FastMCPServer("neo4j-retriever")
+mcp = FastMCP("neo4j-retriever")
 
 driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 
@@ -60,4 +60,4 @@ def functions_linked_to_issues_prs(ids: List[str], id_type: str = "issue") -> Li
         return [r["id"] for r in results]
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="http", host="0.0.0.0", port=8765, path="/mcp")

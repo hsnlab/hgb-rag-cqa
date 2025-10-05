@@ -14,19 +14,19 @@ class AgenticRAG:
     # ---------------------------------------------------
     # YAML configuration paths (relative to project root)
     # ---------------------------------------------------
-    agents_config_path = os.path.join("src", "rag", "agent_config", "agents.yaml")
-    tasks_config_path = os.path.join("src", "rag", "agent_config", "tasks.yaml")
+    agents_config = "config/agents.yaml"
+    tasks_config = "config/tasks.yaml"
 
     # ---------------------------------------------------
     # MCP server configuration
     # ---------------------------------------------------
     mcp_server_params = [
         {
-            "url": "http://localhost:8765",  
+            "url": "http://localhost:8765/mcp",  
             "transport": "streamable-http",
         },
         {
-            "url": "http://localhost:8766", 
+            "url": "http://localhost:8766/mcp", 
             "transport": "streamable-http",
         },
     ]
