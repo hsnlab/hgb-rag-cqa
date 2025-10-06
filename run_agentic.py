@@ -13,7 +13,9 @@ def main():
             result = crew.kickoff(inputs={"query": question})
 
             print("\n=== Final Answer ===")
-            print(result)
+            print(result["answer"])
+            print("\n=== Evaluation ===")
+            print(result.get("evaluation", "No evaluation available."))
 
     except (KeyboardInterrupt, EOFError):
         print("\n\nExiting. Goodbye!")

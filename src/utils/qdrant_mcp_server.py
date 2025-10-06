@@ -20,11 +20,11 @@ qdrant_store = QdrantStore(
 )
 
 @mcp.tool()
-def qdrant_search(query: str, top_k: int = 5, metadata_filter: Optional[Dict] = None) -> List[Dict]:
+def qdrant_search(query: str, top_k: int = 5) -> List[Dict]:
     """
     Search Qdrant for documents matching a query. Read-only tool.
     """
-    results = qdrant_store.search_with_scores(query, top_k=top_k, filter=metadata_filter)
+    results = qdrant_store.search_with_scores(query, top_k=top_k)
 
     return [
         {
