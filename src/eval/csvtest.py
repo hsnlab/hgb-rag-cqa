@@ -1,61 +1,55 @@
 import pandas as pd
-from crewai import Agent, Task, Crew, Process
-from langchain_community.chat_models import ChatOllama
-from crewai.tools import BaseTool
+from crewai import Agent, Task, Crew, Process, LLM
 
-class CsvProcessingTool(BaseTool):
-    name: str = "CSV Processing Tool"
-    description: str = "A tool to load, filter, and save CSV data. It specifically removes rows related to documentation."
 
-    def _run(self, input_file: str) -> str:
-        try:
-            df = pd.read_csv("eval_df.csv")
-            initial_rows = len(df)
-            if 'labels' in df.columns:
-                df = df[~df['labels'].astype(str).str.contains("documentation", case=False, na=False)]
-            filtered_rows = len(df)
-            print(f"Filtered out {initial_rows - filtered_rows} documentation-related rows.")
+#Filter out documentation related tickets
+df = pd.read_csv("eval_df.csv")
+initial_rows = len(df)
+if 'labels' in df.columns:
+    df = df[~df['labels'].astype(str).str.contains("documentation", case=False, na=False)]
+filtered_rows = len(df)
+print(f"Filtered out {initial_rows - filtered_rows} documentation-related rows.")
 
-            output_file = "filtered_data.csv"
-            df.to_csv(output_file, index=False)
-            return f"Data has been filtered and saved to {output_file}. It now contains {filtered_rows} rows."
-        except Exception as e:
-            return f"An error occurred: {e}"
+output_file = "filtered_data.csv"
+df.to_csv(output_file, index=False)
 
-#TODO: tool to save the generated qa pairs as well
 
-#TODO: agent to score the questions and answers based on a scale from 1 to 10 as how likely that this question would be asked by a user in a real world scenario
+# llm = LLM(
+#    model="ollama/llama3",
+#    #base_url="http://localhost:11434",
+#    request_timeout=120
+# )
+#
+#
+# data_wrangler_agent = Agent(
+#    role="Data Wrangler",
+#    goal="Load data from a CSV, filter out rows related to documentation, and save the result.",
+#    backstory="You are an efficient data specialist. Your primary job is to clean up datasets for other agents to process.",
+#    llm=llm,
+#    tools=[CsvProcessingTool()],
+#    verbose=False,
+# )
+#
+# data_prep_task = Task(
+#    description="Load the 'eval_df.csv' file, filter it to remove documentation tickets, and save the clean data.",
+#    expected_output="A confirmation message indicating the name of the file where the cleaned data is saved.",
+#    agent=data_wrangler_agent,
+# )
+#
+# data_prep_crew = Crew(
+#    agents=[data_wrangler_agent],
+#    tasks=[data_prep_task],
+#    process=Process.sequential,
+#    verbose=False,
+# )
+#
+# data_prep_result = data_prep_crew.kickoff()
+# print(data_prep_result)
 
-llm = ChatOllama(
-    model="gpt-oss",
-    base_url="http://localhost:11434"
+llm = LLM(
+    model="ollama/mistral",
+    request_timeout = 120
 )
-
-
-data_wrangler_agent = Agent(
-    role="Data Wrangler",
-    goal="Load data from a CSV, filter out rows related to documentation, and save the result.",
-    backstory="You are an efficient data specialist. Your primary job is to clean up datasets for other agents to process.",
-    llm=llm,
-    tools=[CsvProcessingTool()],
-    verbose=True,
-)
-
-data_prep_task = Task(
-    description="Load the 'eval_df.csv' file, filter it to remove documentation tickets, and save the clean data.",
-    expected_output="A confirmation message indicating the name of the file where the cleaned data is saved.",
-    agent=data_wrangler_agent,
-)
-
-data_prep_crew = Crew(
-    agents=[data_wrangler_agent],
-    tasks=[data_prep_task],
-    process=Process.sequential,
-    verbose=True,
-)
-
-data_prep_result = data_prep_crew.kickoff()
-print(data_prep_result)
 
 data_analyst = Agent(
     role='Data Analyst',
@@ -65,7 +59,7 @@ data_analyst = Agent(
         "code issue tracking. You have a knack for dissecting bug reports and understanding "
         "the core of a technical problem from a textual description."
     ),
-    verbose=True,
+    verbose=False,
     allow_delegation=False,
     llm=llm
 )
@@ -78,7 +72,7 @@ question_generator = Agent(
         "You are a master at formulating questions. You can look at any piece of text and "
         "devise clear, concise, and relevant questions that probe the most important aspects of the information presented."
     ),
-    verbose=True,
+    verbose=False,
     allow_delegation=False,
     llm=llm,
 )
@@ -90,12 +84,29 @@ answer_generator = Agent(
         "You are a meticulous and factual AI. Your sole purpose is to answer questions based on a given context. "
         "You do not invent information and stick strictly to the text you are provided."
     ),
-    verbose=True,
+    verbose=False,
     allow_delegation=False,
     llm=llm,
 )
 
-all_qa_pairs = []
+#TODO: update fields
+score_generator = Agent(
+    role='Score Generator',
+    goal='Provide accurate and concise answers to the questions, based *only* on the provided text.',
+    backstory=(
+        "You are a meticulous and factual AI. Your sole purpose is to answer questions based on a given context. "
+        "You do not invent information and stick strictly to the text you are provided."
+    ),
+    verbose=False,
+    allow_delegation=False,
+    llm=llm,
+)
+
+all_summaries = []
+all_questions = []
+all_answers = []
+all_scores = []
+
 try:
     filtered_df = pd.read_csv("filtered_data.csv")
     print(f"\n--- Starting Q&A Generation for {len(filtered_df)} rows ---")
@@ -113,6 +124,7 @@ try:
         task_generate_question = Task(
             description="Based on the analysis, generate ONE question that can be answered from the text.",
             expected_output='A single question.',
+            context=[task_analyze],
             agent=question_generator,
         )
 
@@ -123,19 +135,37 @@ try:
             context=[task_analyze, task_generate_question],
         )
 
+        #TODO: update fields
+        task_score = Task(
+            description="Provide a clear answer to the generated question using *only* the provided text context.",
+            expected_output="A single answer corresponding to the question.",
+            agent=answer_generator,
+            context=[task_analyze, task_generate_question, task_generate_answer],
+        )
+
         qa_crew = Crew(
-            agents=[data_analyst, question_generator, answer_generator],
-            tasks=[task_analyze, task_generate_question, task_generate_answer],
+            agents=[data_analyst, question_generator, answer_generator, score_generator],
+            tasks=[task_analyze, task_generate_question, task_generate_answer, task_score],
             process=Process.sequential,
+#            output_log_file=f"log_{index}.json",
             verbose=True,
         )
 
         result = qa_crew.kickoff()
-        all_qa_pairs.append(result)
+
+        all_summaries.append(task_analyze.output)
+        all_questions.append(task_generate_question.output)
+        all_answers.append(task_generate_answer.output)
+        all_scores.append(task_score.output)
+
         print(f"--- Result for Row {index + 1} ---\n{result}")
 
 except Exception as e:
     print(f"\nAn error occurred during Q&A generation: {e}")
 
-for i, qa_pair in enumerate(all_qa_pairs):
-    print(f"--- Q&A Pair {i+1} ---\n{qa_pair}\n")
+data = {"summaries": all_summaries,
+        "questions": all_questions,
+        "answers": all_answers,
+        "scores": all_scores,}
+df = pd.DataFrame(data)
+df.to_csv("generated_QnA.csv", sep='\t', encoding='utf-8', index=False, header=True)
