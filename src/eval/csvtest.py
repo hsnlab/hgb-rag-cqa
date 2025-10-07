@@ -1,13 +1,12 @@
 import pandas as pd
 from crewai import Agent, Task, Crew, Process, LLM
 import time
-import datetime
 
 
 start = time.time()
 
 #Filter out documentation related tickets
-df = pd.read_csv("eval_df.csv")
+df = pd.read_csv("eval_prs_2023-01-01.csv")
 initial_rows = len(df)
 if 'labels' in df.columns:
     df = df[~df['labels'].astype(str).str.contains("documentation", case=False, na=False)]
@@ -50,8 +49,11 @@ df.to_csv(output_file, index=False)
 # data_prep_result = data_prep_crew.kickoff()
 # print(data_prep_result)
 
+MODEL = "llama3"
+
 llm = LLM(
-    model="ollama/mistral",
+    # model="ollama/mistral",
+    model = f"ollama/{MODEL}",
     request_timeout = 120
 )
 
@@ -110,6 +112,8 @@ all_summaries = []
 all_questions = []
 all_answers = []
 all_scores = []
+all_context_statements = []
+all_context_comments = []
 
 try:
     filtered_df = pd.read_csv("filtered_data.csv")
@@ -164,20 +168,24 @@ try:
         all_questions.append(task_generate_question.output)
         all_answers.append(task_generate_answer.output)
         all_scores.append(task_score_qa_pair.output)
+        all_context_statements.append(row['problem_statement'])
+        all_context_statements.append(row['pr_comments'])
 
         print(f"--- Finished row {index + 1} ---")
 
 except Exception as e:
     print(f"\nAn error occurred during Q&A generation: {e}")
 
-data = {"summaries": all_summaries,
+data = {"statements": all_context_statements,
+        "comments": all_context_comments,
+        "summaries": all_summaries,
         "questions": all_questions,
         "answers": all_answers,
         "scores": all_scores,}
 df = pd.DataFrame(data)
-df.to_csv("generated_QnA.csv", sep='\t', encoding='utf-8', index=False, header=True)
+df.to_csv(f"generated_qna_large_{MODEL}.csv", sep='\t', encoding='utf-8', index=False, header=True)
 
 
 end = time.time()
 elapsed = end - start
-print(f"The script ran for {elapsed} seconds, which is {datetime.timedelta(elapsed)}")
+print(f"The script ran for {elapsed} seconds, which is {time.strftime("%H:%M:%S", time.gmtime(elapsed))}")
