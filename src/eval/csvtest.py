@@ -1,6 +1,10 @@
 import pandas as pd
 from crewai import Agent, Task, Crew, Process, LLM
+import time
+import datetime
 
+
+start = time.time()
 
 #Filter out documentation related tickets
 df = pd.read_csv("eval_df.csv")
@@ -89,17 +93,17 @@ answer_generator = Agent(
     llm=llm,
 )
 
-#TODO: update fields
-score_generator = Agent(
-    role='Score Generator',
-    goal='Provide accurate and concise answers to the questions, based *only* on the provided text.',
+quality_assurance_agent = Agent(
+    role="Quality Assurance Analyst",
+    goal="Score the generated question-and-answer pair on a scale of 1 to 10 for its human relevance and practical value.",
     backstory=(
-        "You are a meticulous and factual AI. Your sole purpose is to answer questions based on a given context. "
-        "You do not invent information and stick strictly to the text you are provided."
+        "You are an expert in user experience and conversational AI. You have a keen sense of what makes a question "
+        "truly useful to a human trying to understand a complex technical repository. You evaluate Q&A pairs not just for "
+        "accuracy, but for their intuition, clarity, and resemblance to a real user's query."
     ),
     verbose=False,
     allow_delegation=False,
-    llm=llm,
+    llm=llm
 )
 
 all_summaries = []
@@ -124,8 +128,8 @@ try:
         task_generate_question = Task(
             description="Based on the analysis, generate ONE question that can be answered from the text.",
             expected_output='A single question.',
-            context=[task_analyze],
             agent=question_generator,
+            context=[task_analyze],
         )
 
         task_generate_answer = Task(
@@ -135,20 +139,23 @@ try:
             context=[task_analyze, task_generate_question],
         )
 
-        #TODO: update fields
-        task_score = Task(
-            description="Provide a clear answer to the generated question using *only* the provided text context.",
-            expected_output="A single answer corresponding to the question.",
-            agent=answer_generator,
+        task_score_qa_pair = Task(
+            description=(
+                "Read the following question-and-answer pair. On a scale from 1 to 10, how likely is it that this exact "
+                "question would be asked by a real human who wants to gain knowledge about the repository from an all-knowing chatbot? "
+                "A score of 1 means it is highly unlikely, robotic, or not useful. A score of 10 means it is a perfect, intuitive, "
+                "and highly valuable question a human would ask."
+            ),
+            expected_output="A single integer score from 1 to 10.",
+            agent=quality_assurance_agent,
             context=[task_analyze, task_generate_question, task_generate_answer],
         )
 
         qa_crew = Crew(
-            agents=[data_analyst, question_generator, answer_generator, score_generator],
-            tasks=[task_analyze, task_generate_question, task_generate_answer, task_score],
+            agents=[data_analyst, question_generator, answer_generator, quality_assurance_agent],
+            tasks=[task_analyze, task_generate_question, task_generate_answer, task_score_qa_pair],
             process=Process.sequential,
-#            output_log_file=f"log_{index}.json",
-            verbose=True,
+            verbose=False,
         )
 
         result = qa_crew.kickoff()
@@ -156,9 +163,9 @@ try:
         all_summaries.append(task_analyze.output)
         all_questions.append(task_generate_question.output)
         all_answers.append(task_generate_answer.output)
-        all_scores.append(task_score.output)
+        all_scores.append(task_score_qa_pair.output)
 
-        print(f"--- Result for Row {index + 1} ---\n{result}")
+        print(f"--- Finished row {index + 1} ---")
 
 except Exception as e:
     print(f"\nAn error occurred during Q&A generation: {e}")
@@ -169,3 +176,8 @@ data = {"summaries": all_summaries,
         "scores": all_scores,}
 df = pd.DataFrame(data)
 df.to_csv("generated_QnA.csv", sep='\t', encoding='utf-8', index=False, header=True)
+
+
+end = time.time()
+elapsed = end - start
+print(f"The script ran for {elapsed} seconds, which is {datetime.timedelta(elapsed)}")
