@@ -1,0 +1,1 @@
+PipelineConfig(verbose=False, retriever='kg', deduplicate=True, dedup_use_minhash=True, dedup_jaccard_threshold=0.9, dedup_use_semantic=True, dedup_sim_threshold=0.95, rerank=True, rerank_use_graph=False, rerank_use_popularity=False, top_k=10, llm_max_tokens=150, over_retrieve=True, over_retrieve_factor=15, over_retrieve_cap=300, rerank_candidate_cap=300)
