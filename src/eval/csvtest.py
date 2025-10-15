@@ -49,7 +49,7 @@ df.to_csv(output_file, index=False)
 # data_prep_result = data_prep_crew.kickoff()
 # print(data_prep_result)
 
-MODEL = "llama3"
+MODEL = "gpt-oss:20b"
 
 llm = LLM(
     # model="ollama/mistral",
@@ -114,6 +114,9 @@ all_answers = []
 all_scores = []
 all_context_statements = []
 all_context_comments = []
+all_edit_functions = []
+
+context_text_columns = ["pr_problem_statement", "pr_comments"]
 
 try:
     filtered_df = pd.read_csv("filtered_data.csv")
@@ -121,7 +124,7 @@ try:
 
     for index, row in filtered_df.iterrows():
         print(f"\n--- Processing Row {index + 1} ---")
-        context_text = f"Problem Statement: {row['problem_statement']}\n\nPR Comments: {row['pr_comments']}"
+        context_text = f"Problem Statement: {row[context_text_columns[0]]}\n\nPR Comments: {row[context_text_columns[1]]}"
 
         task_analyze = Task(
             description=f"Analyze the following text and summarize the key points:\n\n---\n{context_text}\n---",
@@ -159,7 +162,7 @@ try:
             agents=[data_analyst, question_generator, answer_generator, quality_assurance_agent],
             tasks=[task_analyze, task_generate_question, task_generate_answer, task_score_qa_pair],
             process=Process.sequential,
-            verbose=False,
+            verbose=True,
         )
 
         result = qa_crew.kickoff()
@@ -168,8 +171,9 @@ try:
         all_questions.append(task_generate_question.output)
         all_answers.append(task_generate_answer.output)
         all_scores.append(task_score_qa_pair.output)
-        all_context_statements.append(row['problem_statement'])
-        all_context_statements.append(row['pr_comments'])
+        all_context_statements.append(row[context_text_columns[0]])
+        all_context_comments.append(row[context_text_columns[1]])
+        all_edit_functions.append(row["edit_functions"])
 
         print(f"--- Finished row {index + 1} ---")
 
@@ -181,6 +185,7 @@ data = {"statements": all_context_statements,
         "summaries": all_summaries,
         "questions": all_questions,
         "answers": all_answers,
+        "context": all_edit_functions,
         "scores": all_scores,}
 df = pd.DataFrame(data)
 df.to_csv(f"generated_qna_large_{MODEL}.csv", sep='\t', encoding='utf-8', index=False, header=True)
