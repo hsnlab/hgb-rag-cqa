@@ -1,13 +1,16 @@
+from datetime import datetime
+from email import message
 import os
 from crewai import Agent, Task, Crew
 from typing import Optional
 import traceback
 
-from dotenv import load_dotenv
-
 from src.rag.hf_llm_wrapper import HFLocalLLM, clean_final_output
-from src.utils.qdrant_store import QdrantStore
+from src.utils.retrieval import KnowledgeGraphRetriever
 
+def log_event(message: str):
+    """Simple timestamped console logger."""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 
 def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] = None) -> str:
     """
@@ -19,25 +22,53 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
 
     llm = HFLocalLLM(context["gen"])
 
-    # --- Loading Qdrant API key ---
-    try:
-        with open("_/drant_api_key.txt", "r", encoding="utf-8") as f:
-            qdrant_api_key = f.read().strip()
-            print("✅ Qdrant API key loaded from file.")
-    except FileNotFoundError:
-        qdrant_api_key = None
-        print("⚠️ Qdrant API key file not found — proceeding without API key.")
+    log_event("🚀 Agent-based RAG pipeline started.")
+    log_event(f"User question: {question}")
 
-    retrieval_layer = QdrantStore(
-        qdrant_url="http://localhost:6333",
-        api_key=qdrant_api_key,
-        neo4j_uri="bolt://localhost:7687",
-        neo4j_auth=("neo4j", "password")
-    )
+    # === Initialize LLM shared by all agents ===
+    gen_pipeline = context.get("gen")
+    llm = HFLocalLLM(gen_pipeline)
+    log_event("LLM initialized successfully.")
+
+    # === Initialize the retrieval layer ===
+    try:
+        neo4j_cfg = context.get("neo4j", {
+            "url": "bolt://localhost:7687",
+            "username": "neo4j",
+            "password": "password"
+        })
+
+        vectorstore = context.get("qdrant_vectorstore") or context.get("vectorstore") or context.get("repo_rag")
+        retrieval = KnowledgeGraphRetriever(
+            vector_store=vectorstore,
+            neo4j_url=neo4j_cfg["url"],
+            neo4j_username=neo4j_cfg["username"],
+            neo4j_password=neo4j_cfg["password"],
+        )
+        log_event("Retrieval layer successfully initialized.")
+        log_event("Starting data retrieval...")
+
+        retrieved_docs, query_type = retrieval.retrieve(question)
+
+        if not retrieved_docs:
+            context_text = "[No relevant results found in Qdrant/Neo4j.]"
+            log_event("⚠️ No relevant results found in databases.")
+        else:
+            context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
+            log_event(f"✅ Retrieved {len(retrieved_docs)} context chunks (query type: {query_type}).")
+            log_event(f"📚 Context sample:\n{context_text[:400]}...\n")
+    except Exception as e:
+        log_event(f"❌ Retrieval error: {e}")
+        log_event(traceback.format_exc())
+        context_text = "[Retrieval error — proceeding without external context.]"
+
 
     # ==============================================================
     # 1️⃣ Interpreter agent – understands and decomposes the task
     # ==============================================================
+    
+    log_event("Defining agents (Interpreter, Retriever, Summarizer)...")
+    log_event("Defining multi-agent tasks...")
 
     interpreter = Agent(
         role="Interpreter",
@@ -58,17 +89,6 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
     # 2️⃣ Retriever agent – database query (Qdrant + Neo4j)
     # ==============================================================
 
-    print("\n[Retrieval] Searching databases for relevant context...")
-
-    try:
-        contextual_data = retrieval_layer.search(question)
-        if not contextual_data or len(contextual_data) == 0:
-            print("⚠️ No relevant results found in Qdrant/Neo4j.")
-            contextual_data = []  # ✅ Important: ensure it's a list
-    except Exception as e:
-        print(f"❌ Retrieval error: {e}")
-        contextual_data = []  # ✅ Also a list fallback
-
     retriever = Agent(
         role="Retriever",
         goal="Find relevant code, documentation, and explanations from Qdrant and Neo4j.",
@@ -82,7 +102,6 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
         description=f"Retrieve information related to: '{question}'.",
         expected_output="Relevant database context retrieved from Qdrant and Neo4j.",
         agent=retriever,
-        context=contextual_data
     )
 
     # ==============================================================
@@ -102,8 +121,10 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
         description=f"Based on the retrieved information, explain clearly and factually:\n\n{question}",
         expected_output="A factual, database-backed explanation.",
         agent=summarizer,
-        context=contextual_data
     )
+
+    log_event("Agents successfully initialized.")
+    log_event("Tasks defined and assigned.")
 
     # ==============================================================
     # Crew assembly and execution
@@ -117,6 +138,7 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
 
     # --- Execute pipeline ---
     try:
+        log_event("🧠 Launching agent crew execution...")
         result = crew.kickoff()
 
         if hasattr(result, "final_output"):
@@ -127,9 +149,11 @@ def run_agents(question: str, context: dict, huggingface_apikey: Optional[str] =
             final_answer = str(result)
 
         final_answer = clean_final_output(final_answer)
+        log_event("✅ Crew execution completed successfully.")
+        log_event("=== Final Answer ===")
         return final_answer
 
     except Exception:
-        print("❌ Error during Crew execution:")
-        print(traceback.format_exc())
+        log_event("❌ Error during Crew execution:")
+        log_event(traceback.format_exc())
         return "[Crew execution error]"
