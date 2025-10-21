@@ -28,10 +28,6 @@ class AgenticRAGState(TypedDict):
 
     messages: Annotated[list, add_messages]
 
-class QdrantSearchInput(BaseModel):
-    query: str
-    top_k: int = 5
-    filters: Optional[dict] = None
 
 class QdrantSearchWrapper:
     """Wraps the MCP qdrant_search tool to extract documents and node IDs into state."""
@@ -77,44 +73,6 @@ class QdrantSearchWrapper:
 
         print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
         return result, enriched_state
-async def qdrant_search_with_state(tool, query: str, top_k: int = 5, filters: Optional[dict] = None) -> Tuple[List[dict], dict]:
-    """
-    Run MCP qdrant_search and enrich the result with documents and node IDs for state.
-    
-    Returns:
-        - Raw qdrant_search result (list of dicts)
-        - Enriched state: {'relevant_docs': [...], 'relevant_node_ids': [...]}
-    """
-    print(f"[DEBUG] Calling qdrant_search with query={query}, top_k={top_k}, filters={filters}")
-    # Call the underlying MCP tool
-    result = await tool.ainvoke(query=query, top_k=top_k, filters=filters)
-
-    # Parse JSON string if returned
-    if isinstance(result, str):
-        try:
-            result = json.loads(result)
-            print(f"[DEBUG] Parsed JSON string into {len(result)} results.")
-        except json.JSONDecodeError:
-            print("[WARN] Could not parse qdrant_search result as JSON.")
-            result = []
-
-    if not isinstance(result, list):
-        print(f"[WARN] Unexpected qdrant_search return type: {type(result)}")
-        result = []
-
-    # Convert raw dicts → LangChain Documents
-    docs = [Document(page_content=r["content"], metadata=r["metadata"]) for r in result]
-
-    # Extract node IDs
-    node_ids = [str(doc.metadata.get("node_id")) for doc in docs if doc.metadata.get("node_id")]
-
-    enriched_state = {
-        "relevant_docs": docs,
-        "relevant_node_ids": node_ids,
-    }
-
-    print(f"[DEBUG] qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
-    return result, enriched_state
 
 class FilterBuilderInput(BaseModel):
     query: str = Field(..., description="Natural language description of what to filter for")
@@ -298,6 +256,7 @@ async def main():
                 messages = value["messages"]
                 last_msg = messages[-1]
 
+                print(f"[DEBUG] Current State: relevant_docs={len(value.get('relevant_docs', []))}, relevant_node_ids={value.get('relevant_node_ids', [])}")
                 # Case 1: Assistant message (LLM response)
                 if isinstance(last_msg, AIMessage):
                     #print(f"\nAssistant: {last_msg.content}\n")
@@ -306,26 +265,6 @@ async def main():
                 # Case 2: Tool message (result from MCP tool)
                 elif isinstance(last_msg, ToolMessage):
                     last_msg.pretty_print()
-                    #try:
-                    #    result = json.loads(last_msg.content)
-                    #except json.JSONDecodeError:
-                    #    result = last_msg.content
-#
-                    #print(f"[DEBUG] Tool '{last_msg.name}' finished:")
-                    #if isinstance(result, dict):
-                    #    for key, val in result.items():
-                    #        if isinstance(val, list):
-                    #            print(f"  - {key}: list[{len(val)}]")
-                    #        else:
-                    #            short = str(val)
-                    #            if len(short) > 120:
-                    #                short = short[:117] + "..."
-                    #            print(f"  - {key}: {short}")
-                    #else:
-                    #    short = str(result)
-                    #    if len(short) > 200:
-                    #        short = short[:197] + "..."
-                    #    print(f"  {short}")
                 else:
                     print(f"[DEBUG] Message type {type(last_msg)} -> {last_msg}")
 
