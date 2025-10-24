@@ -233,7 +233,7 @@ class AgenticLangGraph:
     relevant docs/nodes, and tool call logs.
     """
 
-    def __init__(self, model_name: str = "mistral:7b"):
+    def __init__(self, model_name: str = "gpt-oss:20b"):
         self.tool_log = []
         self.graph = None
         self.model_name = model_name
@@ -282,6 +282,7 @@ class AgenticLangGraph:
 
         basic_tool_node = BasicToolNode(wrapped_tools)
 
+        print(f"Building model with: {self.model_name}")
         llm = ChatOllama(
             model=self.model_name,
             base_url="http://localhost:11434",

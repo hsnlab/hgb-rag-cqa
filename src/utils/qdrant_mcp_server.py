@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastmcp import FastMCP
 from typing import Optional, Dict, List
-from qdrant_store import QdrantStore  # <-- import your wrapper class
+from src.utils.qdrant_store import QdrantStore  # <-- import your wrapper class
 
 # Create MCP server
 mcp = FastMCP("qdrant-store")

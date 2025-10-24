@@ -28,13 +28,14 @@ def main():
         dataset = pd.read_csv(eval_df_path)
     except:
         dataset = pd.read_csv(eval_df_path, sep="\t")
-    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer"})
+    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
+                                      "questions":"question", "answers":"answer", "contexts":"golden_context"})
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     dataset = dataset.loc[dataset["golden_context"].str.len() > 0]
 
     #sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn_with_summaries.pkl")
-    model_name = "mistral:7b"
+    model_name = "gpt-oss:20b"
     tool = AgenticLangGraph(model_name=model_name)
 
     evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context")
