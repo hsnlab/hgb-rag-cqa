@@ -5,8 +5,8 @@ from ast import literal_eval
 import os
 import sys
 sys.path.append("..")
-from kg_rag import RepositoryRAG
-from evaluation import RAGEvaluator
+from rag.repo_rag import RepositoryRAG
+from eval.evaluation import RAGEvaluator  
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a RAG model using a test DataFrame.")
@@ -25,11 +25,16 @@ def main():
         sys.exit(1)
         
     print(f"Loading dataset from: {eval_df_path}")
-    dataset = pd.read_csv(eval_df_path)
-    dataset["edit_functions"] = dataset["edit_functions"].apply(literal_eval)
+    dataset = pd.read_csv(eval_df_path, sep=None, engine="python")
+
+    if "contexts" in dataset.columns:
+        dataset["contexts"] = dataset["contexts"].apply(literal_eval)
+    else:
+        print("⚠️  No 'contexts' column found — using empty lists for evaluation context.")
+        dataset["contexts"] = [[] for _ in range(len(dataset))]
 
     #sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn_with_summaries.pkl")
-    tool = RepositoryRAG(data_dict={},qdrant_api_key="@lmafa12", quantize=True)
+    tool = RepositoryRAG(qdrant_api_key="@lmafa12", quantize=True)
 
     evaluator = RAGEvaluator(df=dataset, rag_model=tool, k_values=[3, 5, 10])
     evaluator.evaluate(verbose=True)

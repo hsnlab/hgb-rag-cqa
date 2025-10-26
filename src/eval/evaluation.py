@@ -45,7 +45,7 @@ class RAGEvaluator:
 
         # Models for answer evaluation
         self.bert_scorer = BERTScorer(
-            model_type="microsoft/deberta-xlarge-mnli",
+            model_type="microsoft/deberta-base-mnli",
             lang="en",
             rescale_with_baseline=True,
         )
@@ -87,10 +87,28 @@ class RAGEvaluator:
         )
 
     def evaluate_single(self, idx, row, config: PipelineConfig):
+
+        try:
+            # először lefuttatjuk a RAG / agent pipeline-t
+            retrieved_fns, answer_gen, retrieved_docs, query_type = self._run_rag(row["questions"], config)
+            answer_ref = row["answers"]
+        except Exception as e:
+            print(f"[⚠️] Error in _run_rag for row {idx}: {e}")
+            answer_gen = ""
+            retrieved_fns, retrieved_docs, query_type = [], [], "error"
+
+        if not answer_gen or not answer_gen.strip():
+            self.df.at[idx, "bleu"] = 0.0
+            self.df.at[idx, "meteor"] = 0.0
+            self.df.at[idx, "bertscore"] = 0.0
+            self.df.at[idx, "semantic_similarity"] = 0.0
+            self.df.at[idx, "mrr"] = 0.0
+            return
+
         """Evaluate a single datapoint and store results in df."""
-        question = row.get("question", "")
-        context = row.get("edit_functions", [])
-        answer_ref = row.get("answer", "")
+        question = row.get("questions", "")
+        context = row.get("contexts", [])
+        answer_ref = row.get("answers", "")
 
         top_functions, answer_gen, top_docs, query_type = self._run_rag(question, config)
 
@@ -134,7 +152,7 @@ class RAGEvaluator:
         """
         with mlflow.start_run(run_name=run_name):
             # log config params
-            mlflow.log_params(config.__dict__)
+            mlflow.log_params(config if isinstance(config, dict) else config.__dict__)
 
             pbar = tqdm(range(len(self.df)), desc="Evaluating", unit="item")
             for idx in pbar:
