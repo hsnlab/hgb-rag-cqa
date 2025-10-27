@@ -6,6 +6,7 @@ from src.utils.deduplicator import Deduplicator
 from src.utils.reranker import Reranker
 from typing import Tuple
 import torch
+import json
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, pipeline
 
 
@@ -121,6 +122,34 @@ def main():
         huggingface_apikey = f.read().strip()
 
     login(huggingface_apikey)
+    
+    qdrant_config_path = "_/qdrant_config.json"
+    try:
+        with open(qdrant_config_path, "r") as f:
+            qdrant_config = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Qdrant config file not found at {qdrant_config_path}")
+    except json.JSONDecodeError:
+        print(f"Error: Qdrant config file is not valid JSON: {qdrant_config_path}")
+    
+    neo4j_config_path = "_/neo4j_config.json"
+    try:
+        with open(neo4j_config_path, "r") as f:
+            neo4j_config = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Neo4j config file not found at {neo4j_config_path}")
+    except json.JSONDecodeError:
+        print(f"Error: Neo4j config file is not valid JSON: {neo4j_config_path}")
+        
+    rag_config_path = "_/rag_config.json"
+    try:
+        with open(rag_config_path, "r") as f:
+            rag_config = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: RAG config file not found at {rag_config_path}")
+    except json.JSONDecodeError:
+        print(f"Error: RAG config file is not valid JSON: {rag_config_path}")
+    
     # Configuration
     config = PipelineConfig(
         verbose=True,
@@ -137,21 +166,25 @@ def main():
         over_retrieve_cap=200,
         rerank_candidate_cap=200,
     )
+    
     # Instantiate backend components
     vectorstore = QdrantStore(
-            model_name="microsoft/codebert-base",
-            qdrant_url="http://localhost:6333",
-            collection_name="rag_collection_codebert-base_cosine",
-            api_key="@lmafa12",
-            distance_type="cosine"
+            model_name=qdrant_config["model_name"],
+            qdrant_url=qdrant_config["url"],
+            collection_name=qdrant_config["collection"],
+            api_key=qdrant_config["api_key"],
+            distance_type=qdrant_config["distance"]
         )
-    kg_retriever = KnowledgeGraphRetriever(vector_store=vectorstore, neo4j_url ="bolt://localhost:7687", neo4j_username="neo4j", neo4j_password ="password", database= "neo4j")
-    deduplicator = Deduplicator(embedder=vectorstore.embeddings)
-    reranker = Reranker()
-
+        
     # Build LLM
     llm_model = "mistralai/mistral-7b-instruct-v0.3"
     llm, tokenizer, gen = build_llm(llm_model,quantize=True,use_8bit=True)
+    print(gen.device)
+    kg_retriever = KnowledgeGraphRetriever(vector_store=vectorstore, neo4j_url =neo4j_config["url"], neo4j_username=neo4j_config["user"], neo4j_password =neo4j_config["password"], database= "neo4j")
+    deduplicator = Deduplicator(embedder=vectorstore.embeddings)
+    reranker = Reranker()
+
+    
     # Instantiate both RAG variants
 
     repo_rag = RepositoryRAG(
@@ -160,8 +193,8 @@ def main():
         deduplicator=deduplicator,
         reranker=reranker,
         llm=gen,
-        neo4j_auth=("neo4j", "password"),
-        neo4j_uri="bolt://localhost:7687",
+        neo4j_auth=(neo4j_config["user"], neo4j_config["password"]),
+        neo4j_uri=neo4j_config["url"],
     )
 
     # Start interactive search
