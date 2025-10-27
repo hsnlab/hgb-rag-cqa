@@ -2,11 +2,21 @@
 from fastmcp import FastMCP
 from neo4j import GraphDatabase
 from typing import List, Dict, Any
+import json
 
 # Create MCP server
 mcp = FastMCP("neo4j-retriever")
 
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+neo4j_config_path = "_/neo4j_config.json"
+try:
+    with open(neo4j_config_path, "r") as f:
+        neo4j_config = json.load(f)
+except FileNotFoundError:
+    print(f"Error: Neo4j config file not found at {neo4j_config_path}")
+except json.JSONDecodeError:
+    print(f"Error: Neo4j config file is not valid JSON: {neo4j_config_path}")
+
+driver = GraphDatabase.driver(neo4j_config["url"], auth=(neo4j_config["user"], neo4j_config["password"]))
 
 @mcp.tool()
 def expand_function_neighbors(func_ids: List[str], hops: int = 2) -> List[str]:

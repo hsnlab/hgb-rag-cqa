@@ -1,23 +1,40 @@
 from pathlib import Path
 from fastmcp import FastMCP
+import json
 from typing import Optional, Dict, List
-from src.utils.qdrant_store import QdrantStore  # <-- import your wrapper class
+from src.utils.qdrant_store import QdrantStore
 
 # Create MCP server
 mcp = FastMCP("qdrant-store")
-qdrant_key_path = Path(__file__).resolve().parents[2] / "_" / "drant_api_key.txt"
-with open(qdrant_key_path, "r") as f:
-    qdrant_apikey = f.read().strip()
+qdrant_config_path = "_/qdrant_config.json"
+try:
+    with open(qdrant_config_path, "r") as f:
+        qdrant_config = json.load(f)
+except FileNotFoundError:
+    print(f"Error: Qdrant config file not found at {qdrant_config_path}")
+except json.JSONDecodeError:
+    print(f"Error: Qdrant config file is not valid JSON: {qdrant_config_path}")
 
+neo4j_config_path = "_/neo4j_config.json"
+try:
+    with open(neo4j_config_path, "r") as f:
+        neo4j_config = json.load(f)
+except FileNotFoundError:
+    print(f"Error: Neo4j config file not found at {neo4j_config_path}")
+except json.JSONDecodeError:
+    print(f"Error: Neo4j config file is not valid JSON: {neo4j_config_path}")
+
+
+print(f"Loaded configs: {qdrant_config}\n{neo4j_config}")
 # Initialize your QdrantStore (read-only)
+
 qdrant_store = QdrantStore(
-    model_name="microsoft/codebert-base",
-    qdrant_url="http://localhost:6333",
-    collection_name="rag_collection_codebert-base_cosine",
-    api_key=qdrant_apikey,
-    neo4j_uri="bolt://localhost:7687",
-    neo4j_auth=("neo4j", "password")
-)
+            model_name=qdrant_config["model_name"],
+            qdrant_url=qdrant_config["url"],
+            collection_name=qdrant_config["collection"],
+            api_key=qdrant_config["api_key"],
+            distance_type=qdrant_config["distance"]
+        )
 
 @mcp.tool()
 def qdrant_search(query: str, top_k: int = 5, metadata_filter: Optional[Dict] = None) -> List[Dict]:
