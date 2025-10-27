@@ -1,6 +1,7 @@
 import asyncio
 import json
 import traceback
+import uuid
 from typing import Dict, Any, List
 
 from langchain_core.documents import Document
@@ -73,7 +74,7 @@ async def build_qdrant_metadata_type_filter(query: str) -> models.Filter:
         matched_types.append("semantic_cluster")
 
     if not matched_types:
-        #print(f"[DEBUG] No matching keywords found in query: '{query}' → returning empty filter.")
+        print(f"[DEBUG] No matching keywords found in query: '{query}' → returning empty filter.")
         return models.Filter(must=[]).model_dump()
 
     condition = models.FieldCondition(
@@ -83,7 +84,7 @@ async def build_qdrant_metadata_type_filter(query: str) -> models.Filter:
 
     qdrant_filter = models.Filter(must=[condition])
 
-    #print(f"[DEBUG] Built Qdrant filter for '{query}': {qdrant_filter}")
+    print(f"[DEBUG] Built Qdrant filter for '{query}': {qdrant_filter}")
 
     return qdrant_filter.model_dump()
 
@@ -104,7 +105,7 @@ class QdrantSearchWrapper:
         """
         Run the wrapped MCP tool asynchronously and enrich the result.
         """
-        #print(f"[DEBUG] Calling wrapped qdrant_search with args={args}")
+        print(f"[DEBUG] Calling wrapped qdrant_search with args={args}")
         try:
             result = await self.tool.ainvoke(args, **kwargs)
         except Exception as e:
@@ -132,7 +133,7 @@ class QdrantSearchWrapper:
                 result = []
 
         if not isinstance(result, list):
-            #print(f"[WARN] Unexpected qdrant_search return type: {type(result)}")
+            print(f"[WARN] Unexpected qdrant_search return type: {type(result)}")
             result = []
         # Convert raw dicts → LangChain Documents
         docs = [Document(page_content=r["content"], metadata=r["metadata"]) for r in result]
@@ -149,7 +150,7 @@ class QdrantSearchWrapper:
             "relevant_node_ids": node_ids,
         }
 
-        #print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
+        print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
         return result, enriched_state
 
 
@@ -176,7 +177,7 @@ class BasicToolNode:
             tool_args = tool_call["args"]
             tool = self.tools_by_name[tool_name]
 
-            #print(f"[DEBUG] Executing tool: {tool_name} with args={tool_args}")
+            print(f"[DEBUG] Executing tool: {tool_name} with args={tool_args}")
             tool_result = await tool.ainvoke(tool_args)
 
 
@@ -289,7 +290,7 @@ class AgenticLangGraph:
         )
         llm_with_tools = llm.bind_tools(tools)
 
-        def llm_call(state: AgenticRAGState):
+        async def llm_call(state: AgenticRAGState):
             # --- Build tool descriptions ---
             available_tools = [
                 f"- **{t.name}**: {t.description.strip()}"
@@ -321,7 +322,7 @@ class AgenticLangGraph:
             # --- Prepend system message ---
             messages = [{"role": "system", "content": system_prompt}] + state["messages"]
 
-            response = llm_with_tools.invoke(messages)
+            response = await llm_with_tools.ainvoke(messages)
             return Command(update={"messages": [response]})
 
 
@@ -336,12 +337,15 @@ class AgenticLangGraph:
         print("[INIT] Graph compiled successfully.")
         print(self.graph.get_graph().draw_ascii())
 
-    async def run_async(self, query: str) -> Dict[str, Any]:
+    async def run_async(self, query: str,session_id:str=None) -> Dict[str, Any]:
         """Run the LangGraph pipeline for one query asynchronously."""
         if not self.graph:
             await self.setup_graph()
 
         final_state = None
+        if not session_id:
+            session_id = str(uuid.uuid4())
+        print(f"[DEBUG] Running with session ID: {session_id}")
 
         async for event in self.graph.astream_events(
             {
@@ -351,7 +355,7 @@ class AgenticLangGraph:
                 "relevant_node_ids": [],
                 "tool_log": [],
             },
-            config={"configurable": {"thread_id": "session_eval"}},
+            config={"configurable": {"thread_id": session_id}},
             version="v1",
             stream_mode="values",
         ):
@@ -381,6 +385,6 @@ class AgenticLangGraph:
             "tool_log": tool_log,
         }
 
-    def run(self, query: str) -> Dict[str, Any]:
+    def run(self, query: str, session_id:str=None) -> Dict[str, Any]:
         """Synchronous wrapper for compatibility with evaluators."""
-        return asyncio.run(self.run_async(query))
+        return asyncio.run(self.run_async(query, session_id))

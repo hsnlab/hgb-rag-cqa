@@ -1,8 +1,11 @@
 import asyncio
 import json
+import uuid
 from typing import Dict, Any, List
+from pydantic import BaseModel, Field
 
 from langchain_core.documents import Document
+from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import InMemorySaver
@@ -118,39 +121,96 @@ class QdrantSearchWrapper:
 # ============================================================
 # === Node: Qdrant Retrieval (with optional filter builder)
 # ============================================================
+class RetrievalQuery(BaseModel):
+    """The optimized query or queries for vector search."""
+    search_query: str = Field(
+        ...,
+        description="The primary, optimized, technical search query (no conversational filler) derived from the user's request. This must be the best single query for vector search."
+    )
+    # If you wanted multi-query retrieval, you would add a list field here:
+    # secondary_queries: List[str] = Field(..., description="A list of 1-3 additional queries for complex concepts.")
+
+
+# ============================================================
+# === Node: Qdrant Retrieval (with Query Rewriting)
+# ============================================================
 class QdrantRetrievalNode:
-    def __init__(self, qdrant_tool, filter_builder_tool=None):
+    def __init__(self, qdrant_tool, llm, filter_builder_tool=None):
         self.qdrant_tool = qdrant_tool
         self.filter_builder_tool = filter_builder_tool
+        
+        self.query_rewriter_llm = llm.with_structured_output(
+            schema=RetrievalQuery,
+        )
+
 
     async def __call__(self, state: AgenticRAGState):
-        query = state["query"]
-        # The agent or previous node may have provided a filter manually
+        original_query = state["query"]
+        
+        rewritten_query = original_query
+        
+        try:
+            prompt = f"""You are a Query Optimizer. Your job is to transform a conversational user query into a single, highly optimized, technical query that is best suited for dense vector search (semantic similarity).
+            
+            Focus on key entities, function names, class names, and concepts. Remove all conversational fluff ("please," "can you tell me," "I need").
+            
+            Original Query: "{original_query}"
+            
+            Generate the best possible vector search query using the provided JSON schema."""
+            
+            # Note: We use the raw LLM with structured output binding
+            response: RetrievalQuery = await self.query_rewriter_llm.ainvoke(
+                [HumanMessage(content=prompt)]
+            )
+            
+            rewritten_query = response.search_query
+            # print(f"[DEBUG] Query Rewritten:\n  Original: {original_query}\n  Optimized: {rewritten_query}")
+
+        except Exception as e:
+            print(f"[WARN] Query rewriting failed: {e}. Using original query.")
+            rewritten_query = original_query
+        
+       
+        search_query = rewritten_query
         user_filter = state.get("metadata_filter", None)
 
-        # Try to build one if none is provided and the builder exists
         if user_filter:
             metadata_filter = user_filter
         elif self.filter_builder_tool:
             try:
-                metadata_filter = await self.filter_builder_tool.ainvoke({"query": query})
+               metadata_filter = await self.filter_builder_tool.ainvoke({"query": original_query})
             except Exception as e:
                 print(f"[WARN] Filter builder failed, proceeding without filter: {e}")
                 metadata_filter = {}
         else:
             metadata_filter = {}
 
-        args = {"query": query, "metadata_filter": metadata_filter}
+        # --- 2. Perform Retrieval with the Optimized Query ---
+        args = {"query": search_query, "metadata_filter": metadata_filter}
         result, enriched = await self.qdrant_tool.ainvoke(args)
+        
+        # We should also log the optimized query for tracking/debugging
+        enriched["tool_log"].append({
+            "tool": "Query Rewriter",
+            "args": {"original_query": original_query},
+            "result_summary": f"Optimized query used: {search_query[:80]}..."
+        })
+        
         return Command(update=enriched)
 
 
 # ============================================================
 # === Node: Relevancy Checker
 # ============================================================
+class IndicesToKeep(BaseModel):
+    """List of indices of documents that are relevant to the query."""
+    indices: List[int] = Field(
+        description="A list of integer indices (e.g., [0, 2, 5]) corresponding to the relevant documents."
+    )
+
 class RelevancyCheckerNode:
     def __init__(self, llm):
-        self.llm = llm
+        self.structured_llm = llm.with_structured_output(schema=IndicesToKeep)
 
     async def __call__(self, state: AgenticRAGState):
         query = state["query"]
@@ -161,7 +221,7 @@ class RelevancyCheckerNode:
         docs_text = "\n\n".join(f"Doc {i}: {d.page_content}" for i, d in enumerate(docs[:10]))
         system_prompt = """You are a strict relevance filter.
         Given the query and retrieved docs, remove any docs that are not clearly relevant.
-        Respond with a JSON list of indices to keep."""
+        Respond with a JSON list of indices to keep. """
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -169,7 +229,7 @@ class RelevancyCheckerNode:
         ]
 
         try:
-            response = await self.llm.ainvoke(messages)
+            response = await self.structured_llm.ainvoke(messages)
             indices = json.loads(response.content)
             filtered_docs = [docs[i] for i in indices if 0 <= i < len(docs)]
         except Exception as e:
@@ -310,6 +370,45 @@ Graph Context:
 
     return chatbot_node
 
+# ============================================================
+# === Node: Query Planner / Router
+# ============================================================
+class NextAction(BaseModel):
+    """The action the RAG pipeline should take next."""
+    action: str = Field(
+        ...,
+        description="The next action to take. Must be 'rerun_retrieval' to perform another search, or 'proceed_to_synthesis' to generate the final answer."
+    )
+
+class QueryPlannerNode:
+    def __init__(self, llm):
+        self.structured_llm = llm.with_structured_output(schema=NextAction)
+
+    async def __call__(self, state: AgenticRAGState) -> str:
+        query = state["query"]
+        docs = state.get("relevant_docs", [])
+        
+        # Determine the next action based on LLM instruction
+        prompt = f"""You are a pipeline coordinator. Analyze the current state and decide the next step.
+        
+        Original Query: {query}
+        Documents Retrieved So Far: {len(docs)}
+        
+        If you have enough, highly relevant documents (e.g., more than 3) to fully answer the query, choose 'proceed_to_synthesis'.
+        If you have very few documents (e.g., 3 or less) or the existing documents seem insufficient or tangential, choose 'rerun_retrieval'.
+        
+        Note: You cannot modify the query in this step; only decide on the next action.
+        """
+        
+        try:
+            response: NextAction = await self.structured_llm.ainvoke(
+                [{"role": "user", "content": prompt}]
+            )
+            return response.action
+        except Exception as e:
+            print(f"[ERROR] Query planner failed: {e}. Defaulting to synthesis.")
+            # Fallback is crucial: always exit the loop if the LLM fails
+            return "proceed_to_synthesis"
 
 # ============================================================
 # === Agentic LangGraph Setup
@@ -342,10 +441,11 @@ class AgenticLangGraph:
         wrapped_qdrant = QdrantSearchWrapper(qdrant_tool)
         llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434")
 
-        retrieval_node = QdrantRetrievalNode(wrapped_qdrant, filter_builder_tool)
+        retrieval_node = QdrantRetrievalNode(wrapped_qdrant, llm, filter_builder_tool)
         relevancy_node = RelevancyCheckerNode(llm)
         enrichment_node = NodeEnrichmentNode(get_node_info_tool)
         context_builder_node = GraphContextBuilderNode(mst_tool, edge_context_tool)
+        query_planner_node = QueryPlannerNode(llm)
         chatbot_node = make_chatbot_node(llm)
 
         graph_builder = StateGraph(AgenticRAGState)
@@ -353,57 +453,78 @@ class AgenticLangGraph:
         graph_builder.add_node("relevancy", relevancy_node)
         graph_builder.add_node("enrichment", enrichment_node)
         graph_builder.add_node("context_builder", context_builder_node)
+        graph_builder.add_node("query_planner", query_planner_node)
         graph_builder.add_node("chatbot", chatbot_node)
 
         graph_builder.add_edge(START, "retrieval")
         graph_builder.add_edge("retrieval", "relevancy")
         graph_builder.add_edge("relevancy", "enrichment")
         graph_builder.add_edge("enrichment", "context_builder")
-        graph_builder.add_edge("context_builder", "chatbot")
+        graph_builder.add_edge("context_builder", "query_planner")
+        graph_builder.add_conditional_edges(
+            "query_planner", 
+            lambda x: x,
+            {
+                "rerun_retrieval": "retrieval",        
+                "proceed_to_synthesis": "chatbot",     
+            }
+        )
         graph_builder.add_edge("chatbot", END)
 
         self.graph = graph_builder.compile(checkpointer=self.memory)
         print("[INIT] Graph compiled successfully.")
         print(self.graph.get_graph().draw_ascii())
 
-    async def run_async(self, query: str) -> Dict[str, Any]:
+    async def run_async(self, query: str,session_id:str=None) -> Dict[str, Any]:
+        """Run the LangGraph pipeline for one query asynchronously."""
         if not self.graph:
             await self.setup_graph()
 
         final_state = None
+        if not session_id:
+            session_id = str(uuid.uuid4())
+
         async for event in self.graph.astream_events(
             {
                 "query": query,
                 "messages": [{"role": "user", "content": query}],
                 "relevant_docs": [],
-                "relevant_node_ids": {},
-                "context_graph": [],
+                "relevant_node_ids": [],
                 "tool_log": [],
             },
-            config={"configurable": {"thread_id": "session_eval"}},
+            config={"configurable": {"thread_id": session_id}},
             version="v1",
             stream_mode="values",
         ):
             if event["event"] == "on_value":
-                final_state = event["data"]
+                # Each emitted merged state snapshot
+                state = event["data"]
+                #print(f"[DEBUG] on_value — merged state keys: {list(state.keys())}")
+                final_state = state
+            elif event["event"] == "on_chain_end":
+                # Backup — some LangGraph versions emit this too
+                if "data" in event and "output" in event["data"]:
+                    final_state = event["data"]["output"]
 
         if not final_state:
-            raise RuntimeError("Graph did not produce a final state.")
+            raise RuntimeError("Graph did not produce a final state (no on_value or on_chain_end).")
 
         messages = final_state.get("messages", [])
         answer = messages[-1].content if messages else None
+        docs = final_state.get("relevant_docs", [])
+        node_ids = final_state.get("relevant_node_ids", [])
+        tool_log = final_state.get("tool_log", [])
 
         return {
             "answer": answer,
-            "relevant_docs": final_state.get("relevant_docs", []),
-            "relevant_node_ids": final_state.get("relevant_node_ids", {}),
-            "context_graph": final_state.get("context_graph", []),
-            "graph_context_text": final_state.get("graph_context_text", ""),
-            "tool_log": final_state.get("tool_log", []),
+            "relevant_docs": docs,
+            "relevant_node_ids": node_ids,
+            "tool_log": tool_log,
         }
 
-    def run(self, query: str) -> Dict[str, Any]:
-        return asyncio.run(self.run_async(query))
+    def run(self, query: str, session_id:str=None) -> Dict[str, Any]:
+        """Synchronous wrapper for compatibility with evaluators."""
+        return asyncio.run(self.run_async(query, session_id))
 
 
 # ============================================================

@@ -187,7 +187,7 @@ class AgenticRAGEvaluator:
     def __init__(
         self,
         df: pd.DataFrame,
-        agentic_runner,  # a callable or class exposing `run(question)` or similar
+        agentic_runner,
         k_values=[3, 5, 10],
         mlflow_uri: str = None,
         eval_embed_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
@@ -235,7 +235,7 @@ class AgenticRAGEvaluator:
         ]:
             self.df[metric] = None
 
-    def _run_agentic_pipeline(self, question: str):
+    def _run_agentic_pipeline(self, question: str, idx:int = None):
         """
         Run the full LangGraph pipeline and capture all tool calls and outputs.
         The `agentic_runner` should return:
@@ -246,7 +246,8 @@ class AgenticRAGEvaluator:
                 'tool_log': [...],  # list of tool call dicts
             }
         """
-        result = self.agentic_runner.run(question)
+        session_id = f"eval_{idx}"
+        result = self.agentic_runner.run(question, session_id)
         return result
 
     def evaluate_single(self, idx, row):
@@ -255,7 +256,7 @@ class AgenticRAGEvaluator:
         context = row.get(self.context_column, [])
         answer_ref = row.get("answer", "")
 
-        result = self._run_agentic_pipeline(question)
+        result = self._run_agentic_pipeline(question, idx)
         answer_gen = result.get("answer", "")
         retrieved_nodes = result.get("relevant_node_ids", [])
         retrieved_docs = result.get("relevant_docs", [])
