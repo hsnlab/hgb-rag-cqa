@@ -49,7 +49,8 @@ def merge_dict_of_lists(left, right):
 
 class AgenticRAGState(TypedDict):
     query: str
-    relevant_node_ids: Annotated[Dict[str, List[str]], merge_dict_of_lists]
+    relevant_node_ids: Annotated[List[str], add_list]
+    relevant_functions: Annotated[List[str], add_list]
     relevant_docs: Annotated[List[Document], add_list]
     context_graph: Annotated[List[dict], add_list]
     messages: Annotated[list, add_messages]
@@ -230,7 +231,7 @@ class RelevancyCheckerNode:
 
         try:
             response = await self.structured_llm.ainvoke(messages)
-            indices = json.loads(response.content)
+            indices = response.indices
             filtered_docs = [docs[i] for i in indices if 0 <= i < len(docs)]
         except Exception as e:
             print(f"[WARN] relevancy_checker failed: {e}")
@@ -248,70 +249,58 @@ class NodeEnrichmentNode:
     def __init__(self, get_node_info_tool):
         self.get_node_info_tool = get_node_info_tool
 
-    async def __call__(self, state: AgenticRAGState):
+    async def __call__(self, state: AgenticRAGState) -> Command:
         docs = state.get("relevant_docs", [])
         if not docs:
             return Command(update={})
-        enriched_ids = await self._enrich_async(docs)
-        return Command(update={"relevant_node_ids": enriched_ids})
 
-    async def _enrich_async(self, docs: List[Document]) -> Dict[str, List[str]]:
-        function_names, issue_ids, pr_ids = set(), set(), set()
-
-        async def get_info(node_id: str, field: str):
+        async def get_function_name(global_id: str):
+            """Async helper to safely call the tool."""
             try:
-                result = await self.get_node_info_tool.ainvoke({"node_id": node_id, "field": field})
-                print(f"Got result: {result}")
-                if isinstance(result, str):
-                    return result.strip()
-                return str(result)
+                # Call the tool to get the combinedName
+                name = await self.get_node_info_tool.ainvoke({
+                    "node_id": global_id,
+                    "field": "combinedName" # Requesting combinedName
+                })
+                return name.strip() if name else None
             except Exception as e:
-                print(f"[DEBUG] get_node_info failed for {node_id}:{field} → {e}")
-                return ""
+                print(f"[WARN] get_node_info failed for {global_id}: {e}")
+                return None
+        
+        global_ids = set()
+        function_tasks = []
 
         for doc in docs:
             meta = doc.metadata
             doc_type = meta.get("type", "").lower()
             raw_id = meta.get("node_id")
-            if not raw_id:
+
+            if not doc_type or not raw_id:
                 continue
 
-            # This logic for building the global_id looks correct
+            # 1. Always extract the global_id from metadata
             try:
                 node_prefix = doc_type.split('_')[0].upper()
-                node_id_to_pass = f"{node_prefix}:{raw_id}"
+                global_id = f"{node_prefix}:{raw_id}"
+                global_ids.add(global_id)
             except Exception:
-                print(f"[WARN] Could not parse node_type: {doc_type}")
+                print(f"[WARN] Could not parse global_id from doc_type: {doc_type}")
                 continue
 
-            val = None
-            mtype = None
-
+            # 2. If it's a function, create a task to get its name
             if "function" in doc_type:
-                val = await get_info(node_id_to_pass, "combinedName")
-                mtype = "function"
-            elif "issue" in doc_type:
-                val = await get_info(node_id_to_pass, "ID")
-                mtype = "issue"
-            elif "pr" in doc_type:
-                val = await get_info(node_id_to_pass, "ID")
-                mtype = "pr"
+                function_tasks.append(get_function_name(global_id))
 
-            if not val or not mtype:
-                continue
-                
-            if mtype == "function":
-                function_names.add(val)
-            elif mtype == "issue":
-                issue_ids.add(val)
-            elif mtype == "pr":
-                pr_ids.add(val)
-                
-        return {
-            "functions": sorted(list(function_names)),
-            "issues": sorted(list(issue_ids)),
-            "prs": sorted(list(pr_ids)),
-        }
+        # Run all function name lookups in parallel
+        function_names = await asyncio.gather(*function_tasks)
+        
+        # Filter out None values from failed lookups
+        valid_function_names = [name for name in function_names if name]
+
+        return Command(update={
+            "relevant_node_ids": sorted(list(global_ids)),
+            "relevant_functions": sorted(list(valid_function_names))
+        })
 
 
 # ============================================================
@@ -323,11 +312,8 @@ class GraphContextBuilderNode:
         self.edge_context_tool = edge_context_tool
 
     async def __call__(self, state: AgenticRAGState):
-        ids_map = state.get("relevant_node_ids", {})
-        node_ids = []
-        for k, v in ids_map.items():
-            node_ids.extend(v)
-        node_ids = list(set(node_ids))
+        node_ids_list = state.get("relevant_node_ids", [])
+        node_ids = list(set(node_ids_list))
 
         if not node_ids:
             return Command(update={"graph_context_text": "No node IDs found."})
@@ -499,7 +485,8 @@ class AgenticLangGraph:
                 "query": query,
                 "messages": [{"role": "user", "content": query}],
                 "relevant_docs": [],
-                "relevant_node_ids": {},
+                "relevant_node_ids": [],
+                "relevant_functions":[],
                 "tool_log": [],
             },
             config={"configurable": {"thread_id": session_id}},
@@ -525,13 +512,15 @@ class AgenticLangGraph:
         serializable_docs = [
             {"page_content": d.page_content, "metadata": d.metadata} for d in docs
         ]
-        node_ids = final_state.get("relevant_node_ids", {})
+        node_ids = final_state.get("relevant_node_ids", [])
+        functions = final_state.get("relevant_functions",[])
         tool_log = final_state.get("tool_log", [])
 
         return {
             "answer": answer,
             "relevant_docs": serializable_docs,
             "relevant_node_ids": node_ids,
+            "relevant_functions":functions,
             "tool_log": tool_log,
         }
 

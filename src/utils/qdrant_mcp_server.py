@@ -24,10 +24,6 @@ except FileNotFoundError:
 except json.JSONDecodeError:
     print(f"Error: Neo4j config file is not valid JSON: {neo4j_config_path}")
 
-
-print(f"Loaded configs: {qdrant_config}\n{neo4j_config}")
-# Initialize your QdrantStore (read-only)
-
 qdrant_store = QdrantStore(
             model_name=qdrant_config["model_name"],
             qdrant_url=qdrant_config["url"],
