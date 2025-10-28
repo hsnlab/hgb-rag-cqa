@@ -77,16 +77,18 @@ def get_node_info(node_id:str, field:str) -> str:
     node_type = node_type.upper()
     query = f"""
     MATCH (n:{node_type})
-    WHERE n.ID = $node_id
+    WHERE n.global_id = $node_id
     RETURN n.{field} as field
     """
     with driver.session() as session:
         try:
-            result = session.run(query,node_id=node_id)
+            result = session.run(query,node_id=node_id).single()
+            if result:
+              print(f"Got results for node: {node_id}: {result}")
+              return str(result["field"])
         except:
             print(f"[DEBUG] Failed to run get_node_info endpoint for node: {node_id}, field: {field}")
-            result = ""
-    return result
+            return ""
 
 @mcp.tool()
 def minimal_spanning_tree(node_ids: List[str]) -> List[Dict[str, str]]:

@@ -261,6 +261,7 @@ class NodeEnrichmentNode:
         async def get_info(node_id: str, field: str):
             try:
                 result = await self.get_node_info_tool.ainvoke({"node_id": node_id, "field": field})
+                print(f"Got result: {result}")
                 if isinstance(result, str):
                     return result.strip()
                 return str(result)
@@ -268,7 +269,6 @@ class NodeEnrichmentNode:
                 print(f"[DEBUG] get_node_info failed for {node_id}:{field} → {e}")
                 return ""
 
-        tasks, meta_index = [], []
         for doc in docs:
             meta = doc.metadata
             doc_type = meta.get("type", "").lower()
@@ -276,31 +276,41 @@ class NodeEnrichmentNode:
             if not raw_id:
                 continue
 
-            if "function" in doc_type:
-                tasks.append(asyncio.create_task(get_info(f"{doc_type.upper()}:{raw_id}", "combinedName")))
-                meta_index.append(("function",))
-            elif "issue" in doc_type:
-                tasks.append(asyncio.create_task(get_info(f"{doc_type.upper()}:{raw_id}", "ID")))
-                meta_index.append(("issue",))
-            elif "pr" in doc_type:
-                tasks.append(asyncio.create_task(get_info(f"{doc_type.upper()}:{raw_id}", "ID")))
-                meta_index.append(("pr",))
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for (mtype,), val in zip(meta_index, results):
-            if not val or isinstance(val, Exception):
+            # This logic for building the global_id looks correct
+            try:
+                node_prefix = doc_type.split('_')[0].upper()
+                node_id_to_pass = f"{node_prefix}:{raw_id}"
+            except Exception:
+                print(f"[WARN] Could not parse node_type: {doc_type}")
                 continue
+
+            val = None
+            mtype = None
+
+            if "function" in doc_type:
+                val = await get_info(node_id_to_pass, "combinedName")
+                mtype = "function"
+            elif "issue" in doc_type:
+                val = await get_info(node_id_to_pass, "ID")
+                mtype = "issue"
+            elif "pr" in doc_type:
+                val = await get_info(node_id_to_pass, "ID")
+                mtype = "pr"
+
+            if not val or not mtype:
+                continue
+                
             if mtype == "function":
                 function_names.add(val)
             elif mtype == "issue":
                 issue_ids.add(val)
             elif mtype == "pr":
                 pr_ids.add(val)
-
+                
         return {
-            "functions": sorted(function_names),
-            "issues": sorted(issue_ids),
-            "prs": sorted(pr_ids),
+            "functions": sorted(list(function_names)),
+            "issues": sorted(list(issue_ids)),
+            "prs": sorted(list(pr_ids)),
         }
 
 
@@ -460,10 +470,10 @@ class AgenticLangGraph:
         graph_builder.add_edge("retrieval", "relevancy")
         graph_builder.add_edge("relevancy", "enrichment")
         graph_builder.add_edge("enrichment", "context_builder")
-        graph_builder.add_edge("context_builder", "query_planner")
+        #graph_builder.add_edge("context_builder", "query_planner")
         graph_builder.add_conditional_edges(
-            "query_planner", 
-            lambda x: x,
+            "context_builder", 
+            query_planner_node,
             {
                 "rerun_retrieval": "retrieval",        
                 "proceed_to_synthesis": "chatbot",     
@@ -489,7 +499,7 @@ class AgenticLangGraph:
                 "query": query,
                 "messages": [{"role": "user", "content": query}],
                 "relevant_docs": [],
-                "relevant_node_ids": [],
+                "relevant_node_ids": {},
                 "tool_log": [],
             },
             config={"configurable": {"thread_id": session_id}},
@@ -512,12 +522,15 @@ class AgenticLangGraph:
         messages = final_state.get("messages", [])
         answer = messages[-1].content if messages else None
         docs = final_state.get("relevant_docs", [])
-        node_ids = final_state.get("relevant_node_ids", [])
+        serializable_docs = [
+            {"page_content": d.page_content, "metadata": d.metadata} for d in docs
+        ]
+        node_ids = final_state.get("relevant_node_ids", {})
         tool_log = final_state.get("tool_log", [])
 
         return {
             "answer": answer,
-            "relevant_docs": docs,
+            "relevant_docs": serializable_docs,
             "relevant_node_ids": node_ids,
             "tool_log": tool_log,
         }
@@ -531,6 +544,6 @@ class AgenticLangGraph:
 # === Run Example
 # ============================================================
 if __name__ == "__main__":
-    agent = AgenticLangGraph(model_name="mistral:7b")
+    agent = AgenticLangGraph(model_name="gpt-oss:20b")
     result = agent.run("How does pca.fit work?")
     print(json.dumps(result, indent=2))
