@@ -228,6 +228,7 @@ class AgenticRAGEvaluator:
             "bertscore",
             "semantic_similarity",
             "generated_answer",
+            "relevant_functions",
             "retrieved_node_ids",
             "retrieved_docs",
             "tool_log",
@@ -259,23 +260,28 @@ class AgenticRAGEvaluator:
         result = self._run_agentic_pipeline(question, idx)
         answer_gen = result.get("answer", "")
         retrieved_nodes = result.get("relevant_node_ids", [])
+        retrieved_functions = result.get("relevant_functions", [])
         retrieved_docs = result.get("relevant_docs", [])
         tool_log = result.get("tool_log", [])
 
         self.df.at[idx, "generated_answer"] = answer_gen
         self.df.at[idx, "retrieved_node_ids"] = retrieved_nodes
-        self.df.at[idx, "retrieved_docs"] = [d.page_content if hasattr(d, "page_content") else d for d in retrieved_docs]
+        self.df.at[idx, "relevant_functions"] = retrieved_functions
+        if retrieved_docs and isinstance(retrieved_docs[0], dict):
+            self.df.at[idx, "retrieved_docs"] = [d.get("page_content", "") for d in retrieved_docs]
+        else:
+             self.df.at[idx, "retrieved_docs"] = [d.page_content if hasattr(d, "page_content") else d for d in retrieved_docs]
         self.df.at[idx, "tool_log"] = json.dumps(tool_log)
         self.df.at[idx, "tool_count"] = len(tool_log)
 
         # --- Retrieval Metrics ---
         for k in self.k_values:
-            self.df.at[idx, f"precision_{k}"] = calculate_precision_at_k(retrieved_nodes, context, k)
-            self.df.at[idx, f"recall_{k}"] = calculate_recall_at_k(retrieved_nodes, context, k)
-            self.df.at[idx, f"f1_{k}"] = calculate_f1_at_k(retrieved_nodes, context, k)
-            self.df.at[idx, f"iou_{k}"] = calculate_iou(retrieved_nodes, context, k)
+            self.df.at[idx, f"precision_{k}"] = calculate_precision_at_k(retrieved_functions, context, k)
+            self.df.at[idx, f"recall_{k}"] = calculate_recall_at_k(retrieved_functions, context, k)
+            self.df.at[idx, f"f1_{k}"] = calculate_f1_at_k(retrieved_functions, context, k)
+            self.df.at[idx, f"iou_{k}"] = calculate_iou(retrieved_functions, context, k)
 
-        self.df.at[idx, "mrr"] = calculate_rr(retrieved_nodes, context)
+        self.df.at[idx, "mrr"] = calculate_rr(retrieved_functions, context)
 
         # --- Generation Metrics ---
         bleu, meteor = evaluate_answer(answer_ref, answer_gen)

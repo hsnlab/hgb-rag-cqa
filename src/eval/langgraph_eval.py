@@ -57,10 +57,21 @@ def main():
         help="Limit the evaluation dataset to this number of questions",
         required=False
     )
+    parser.add_argument(
+        "--pipeline",
+        choices=["free", "strict"],
+        default="free",
+        type=str,
+        required=False,
+        help="Pipeline version to run: 'free' (src.rag.agentic_langgraph) or 'strict' (src.rag.agentic_langgraph_strict)."
+    )
+
     args = parser.parse_args()
     
     eval_df_path = args.eval_path
     q_limit = args.question_limit
+    model_name = args.model_name
+    pipeline_version = args.pipeline
 
     if not os.path.isfile(eval_df_path):
         print(f"Error: File '{eval_df_path}' does not exist.")
@@ -82,9 +93,17 @@ def main():
     dataset["question"] = dataset["question"].apply(remove_html_tags)
     dataset["answer"] = dataset["answer"].apply(remove_html_tags)
 
-    #sklearn_hier_json = pd.read_pickle("../graph/sklearn/sklearn_with_summaries.pkl")
-    model_name = args.model_name
-    tool = AgenticLangGraph(model_name=model_name)
+    if pipeline_version == "free":
+        print(f"Running with pipeline: free (src.rag.agentic_langgraph)")
+        from src.rag.agentic_langgraph import AgenticLangGraph
+        tool = AgenticLangGraph(model_name=model_name)
+    elif pipeline_version == "strict":
+        print(f"Running with pipeline: strict (src.rag.agentic_langgraph_strict)")
+        from src.rag.agentic_langgraph_strict import StrictAgenticLangGraph
+        tool = StrictAgenticLangGraph(model_name=model_name)
+    else:
+        print(f"Error: Unknown pipeline version '{pipeline_version}'")
+        sys.exit(1)
 
     evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context")
     try:

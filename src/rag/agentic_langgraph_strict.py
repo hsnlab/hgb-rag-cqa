@@ -199,6 +199,81 @@ class QdrantRetrievalNode:
         
         return Command(update=enriched)
 
+class AgenticRetrievalNode:
+    """
+    A more flexible retrieval node that allows the LLM to reason and decide
+    how to query Qdrant multiple times before returning results.
+    """
+
+    def __init__(self, qdrant_tool, llm, max_rounds: int = 3):
+        self.qdrant_tool = qdrant_tool
+        self.llm = llm
+        self.max_rounds = max_rounds
+
+    async def __call__(self, state: AgenticRAGState):
+        query = state["query"]
+        messages = [
+            {"role": "system", "content": """You are an expert retrieval agent.
+You have access to a Qdrant search tool.
+Your goal: find the most relevant technical documents for the user's query.
+You may issue multiple searches to refine your results.
+When confident, summarize what you found and return the documents.
+Use the 'qdrant_search' tool ONLY for searching.
+"""},
+            {"role": "user", "content": query},
+        ]
+
+        # Define a loop: up to N reasoning + tool steps
+        all_docs = []
+        for step in range(self.max_rounds):
+            try:
+                response = await self.llm.ainvoke(messages)
+            except Exception as e:
+                print(f"[WARN] LLM retrieval reasoning failed: {e}")
+                break
+
+            # Parse the LLM response — it might "propose" a query
+            if "search" in response.content.lower():
+                search_query = response.content.split("search", 1)[1].strip(": ").split("\n")[0]
+                print(f"[AGENTIC-RETRIEVAL] Step {step+1}: Searching Qdrant for '{search_query}'")
+
+                try:
+                    docs_result = await self.qdrant_tool.ainvoke({"query": search_query})
+                except Exception as e:
+                    print(f"[ERROR] Qdrant search failed: {e}")
+                    continue
+
+                if isinstance(docs_result, str):
+                    try:
+                        docs_result = json.loads(docs_result)
+                    except json.JSONDecodeError:
+                        docs_result = []
+
+                docs = [
+                    Document(page_content=d["content"], metadata=d["metadata"])
+                    for d in docs_result
+                ]
+                all_docs.extend(docs)
+
+                # Feed back docs into LLM reasoning loop
+                sample_text = "\n\n".join(d.page_content[:300] for d in docs[:3])
+                messages.append({
+                    "role": "system",
+                    "content": f"Retrieved documents:\n{sample_text}\n\nThink about whether to refine or finalize."
+                })
+                continue
+            else:
+                # LLM indicates it’s done
+                print("[AGENTIC-RETRIEVAL] LLM decided to stop searching.")
+                break
+
+        if not all_docs:
+            return Command(update={"relevant_docs": [], "tool_log": [{"tool": "qdrant_search", "args": {"query": query}}]})
+
+        return Command(update={
+            "relevant_docs": all_docs,
+            "tool_log": [{"tool": "agentic_retrieval", "args": {"query": query}, "rounds": len(all_docs)}],
+        })
 
 # ============================================================
 # === Node: Relevancy Checker
@@ -409,7 +484,7 @@ class QueryPlannerNode:
 # ============================================================
 # === Agentic LangGraph Setup
 # ============================================================
-class AgenticLangGraph:
+class StrictAgenticLangGraph:
     def __init__(self, model_name: str = "mistral:7b"):
         self.model_name = model_name
         self.memory = InMemorySaver()
@@ -533,6 +608,6 @@ class AgenticLangGraph:
 # === Run Example
 # ============================================================
 if __name__ == "__main__":
-    agent = AgenticLangGraph(model_name="gpt-oss:20b")
-    result = agent.run("How does pca.fit work?")
+    agent = StrictAgenticLangGraph(model_name="gpt-oss:20b")
+    result = agent.run("What pca variants are there in this repo?")
     print(json.dumps(result, indent=2))

@@ -36,6 +36,7 @@ def add_list(left, right):
 class AgenticRAGState(TypedDict):
     query: str
     relevant_node_ids: Annotated[List[str], add_list]
+    relevant_functions: Annotated[List[str], add_list]
     relevant_docs: Annotated[List[Document], add_list]
     messages: Annotated[list, add_messages]
     tool_log: Annotated[List[dict], add_list]
@@ -138,20 +139,37 @@ class QdrantSearchWrapper:
         # Convert raw dicts → LangChain Documents
         docs = [Document(page_content=r["content"], metadata=r["metadata"]) for r in result]
 
-        # Extract node IDs (adjust key names as needed)
-        node_ids = []
+        # Extract node IDs 
+        node_ids = set()
         for doc in docs:
-            mid = doc.metadata.get("node_id")
-            if mid:
-                node_ids.append(str(mid))
+            meta = doc.metadata
+            doc_type = meta.get("type", "").lower()
+            raw_id = meta.get("node_id")
+
+            if not doc_type or not raw_id:
+                continue
+
+            # 1. Always extract the global_id from metadata
+            try:
+                node_prefix = doc_type.split('_')[0].upper()
+                global_id = f"{node_prefix}:{raw_id}"
+                node_ids.add(global_id)
+            except Exception:
+                print(f"[WARN] Could not parse global_id from doc_type: {doc_type}")
+                continue
 
         enriched_state = {
             "relevant_docs": docs,
-            "relevant_node_ids": node_ids,
+            "relevant_node_ids": sorted(list(node_ids)),
         }
 
         print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
         return result, enriched_state
+
+# ===========================================================
+class GetNodeInfoInput(BaseModel):
+    node_id: str = Field(..., description="The global node ID, e.g. FUNC:12345")
+    field: str = Field(..., description="The property name to retrieve (must be a string).")
 
 
 # ============================================================
@@ -239,6 +257,7 @@ class AgenticLangGraph:
         self.graph = None
         self.model_name = model_name
         self.memory = InMemorySaver()
+        self.get_node_info_tool = None
 
     async def setup_graph(self):
         print("[INIT] Connecting to MCP servers...")
@@ -259,7 +278,6 @@ class AgenticLangGraph:
 
         tools = await client.get_tools()
         print(f"[INIT] Loaded MCP tools: {[t.name for t in tools]}")
-        
 
         # Add filter builder tool
         filter_builder_tool = StructuredTool.from_function(
@@ -278,6 +296,20 @@ class AgenticLangGraph:
         for t in tools:
             if t.name == "qdrant_search":
                 wrapped_tools.append(QdrantSearchWrapper(t))
+            elif t.name == "get_node_info":
+                async def get_node_info_wrapper(node_id: str, field: str, _tool=t):
+                    # Force field to string in case model sends int
+                    field = str(field)
+                    return await _tool.ainvoke({"node_id": node_id, "field": field})
+
+                wrapped_tool = StructuredTool.from_function(
+                    coroutine=get_node_info_wrapper,
+                    name=t.name,
+                    description="Retrieve a specific property field from a Neo4j node (by global_id).",
+                    args_schema=GetNodeInfoInput,
+                )
+                wrapped_tools.append(wrapped_tool)
+                self.get_node_info_tool = wrapped_tool
             else:
                 wrapped_tools.append(t)
 
@@ -337,6 +369,47 @@ class AgenticLangGraph:
         print("[INIT] Graph compiled successfully.")
         print(self.graph.get_graph().draw_ascii())
 
+    async def _enrich_functions_from_docs(self, docs: List[Document]) -> List[str]:
+        """Helper to get function names from docs (logic from V2)."""
+        if not self.get_node_info_tool:
+            print("[WARN] get_node_info_tool not available. Cannot enrich functions.")
+            return []
+
+        async def get_function_name(global_id: str):
+            """Async helper to safely call the tool."""
+            try:
+                # Call the tool to get the combinedName
+                name = await self.get_node_info_tool.ainvoke({
+                    "node_id": global_id,
+                    "field": "combinedName" # Requesting combinedName
+                })
+                return name.strip() if name else None
+            except Exception as e:
+                print(f"[WARN] get_node_info failed for {global_id}: {e}")
+                return None
+        
+        function_tasks = []
+
+        for doc in docs:
+            meta = doc.metadata
+            doc_type = meta.get("type", "").lower()
+            raw_id = meta.get("node_id")
+
+            # 2. If it's a function, create a task to get its name
+            if "function" in doc_type and raw_id:
+                try:
+                    node_prefix = doc_type.split('_')[0].upper()
+                    global_id = f"{node_prefix}:{raw_id}"
+                    function_tasks.append(get_function_name(global_id))
+                except Exception:
+                    continue
+
+        # Run all function name lookups in parallel
+        function_names = await asyncio.gather(*function_tasks)
+        
+        # Filter out None values and duplicates
+        return sorted(list(set(name for name in function_names if name)))
+    
     async def run_async(self, query: str,session_id:str=None) -> Dict[str, Any]:
         """Run the LangGraph pipeline for one query asynchronously."""
         if not self.graph:
@@ -352,6 +425,7 @@ class AgenticLangGraph:
                 "query": query,
                 "messages": [{"role": "user", "content": query}],
                 "relevant_docs": [],
+                "relevant_functions": [],
                 "relevant_node_ids": [],
                 "tool_log": [],
             },
@@ -375,12 +449,18 @@ class AgenticLangGraph:
         messages = final_state.get("messages", [])
         answer = messages[-1].content if messages else None
         docs = final_state.get("relevant_docs", [])
+        serializable_docs = [
+            {"page_content": d.page_content, "metadata": d.metadata} for d in docs
+        ]
         node_ids = final_state.get("relevant_node_ids", [])
         tool_log = final_state.get("tool_log", [])
 
+        functions = await self._enrich_functions_from_docs(docs)
+
         return {
             "answer": answer,
-            "relevant_docs": docs,
+            "relevant_docs": serializable_docs,
+            "relevant_functions": functions,
             "relevant_node_ids": node_ids,
             "tool_log": tool_log,
         }
