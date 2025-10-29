@@ -1,5 +1,7 @@
 import asyncio
 import json
+import torch
+import gc
 import traceback
 import uuid
 from typing import Dict, Any, List
@@ -258,6 +260,36 @@ class AgenticLangGraph:
         self.model_name = model_name
         self.memory = InMemorySaver()
         self.get_node_info_tool = None
+        
+    async def reset_graph(self):
+        """
+        Public method: safely rebuild the LangGraph instance and free memory.
+        Can be called by evaluators or orchestrators between long runs.
+        """
+        import gc, torch
+
+        print("[RESET] Rebuilding Agentic LangGraph and clearing memory...")
+
+        try:
+            # Step 1: Explicitly delete large objects
+            if hasattr(self, "graph"):
+                del self.graph
+            if hasattr(self, "memory"):
+                del self.memory
+
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            # Step 2: Recreate clean memory and rebuild the graph
+            from langgraph.checkpoint.memory import InMemorySaver
+            self.memory = InMemorySaver()
+            await self.setup_graph()
+
+            print("[RESET] Graph successfully rebuilt.")
+        except Exception as e:
+            print(f"[WARN] Graph reset failed: {e}")
+            
 
     async def setup_graph(self):
         print("[INIT] Connecting to MCP servers...")

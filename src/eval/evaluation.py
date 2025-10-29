@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 import mlflow
+import torch
+import gc
+import asyncio
 from tqdm import tqdm
 import sys
 from src.rag.config import PipelineConfig
@@ -141,6 +144,8 @@ class RAGEvaluator:
             for idx in pbar:
                 row = self.df.iloc[idx]
                 self.evaluate_single(idx, row, config)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 summary = self.get_live_summary(idx)
                 pbar.set_postfix(summary)
 
@@ -192,11 +197,13 @@ class AgenticRAGEvaluator:
         mlflow_uri: str = None,
         eval_embed_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         context_column: str = "edit_functions",
+        gpu_cleanup_every: int | None = None,
     ):
         self.df = df.copy()
         self.agentic_runner = agentic_runner
         self.k_values = k_values
         self.context_column = context_column
+        self.gpu_cleanup_every = gpu_cleanup_every
 
         if mlflow_uri:
             current = mlflow.get_tracking_uri()
@@ -208,11 +215,32 @@ class AgenticRAGEvaluator:
             model_type="microsoft/deberta-xlarge-mnli",
             lang="en",
             rescale_with_baseline=True,
+            device="cpu",
         )
-        self.eval_embeddings = SentenceTransformer(eval_embed_model_name)
+        self.eval_embeddings = SentenceTransformer(eval_embed_model_name, device="cpu")
 
         self._prepare_columns()
+        
+    def _gpu_cleanup(self):
+        """Private helper to clear GPU memory and reinitialize the agentic runner."""
+        print("\n[GPU CLEANUP] Releasing GPU memory and rebuilding agentic runner...\n")
 
+        try:
+            # Step 1: Run garbage collection and free CUDA memory
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            print("[GPU CLEANUP] Memory cleared successfully.")
+    
+            # Step 2: If the agentic runner supports graph rebuilding, trigger it
+            if hasattr(self.agentic_runner, "reset_graph"):
+                print("[GPU CLEANUP] Rebuilding agentic graph...")
+                asyncio.run(self.agentic_runner.reset_graph())
+                print("[GPU CLEANUP] Graph rebuilt successfully.")
+            else:
+                print("[GPU CLEANUP] Agentic runner does not support graph reset - skipping rebuild.")
+        except Exception as e:
+            print(f"[WARN] GPU cleanup failed: {e}\n")
     def _prepare_columns(self):
         """Initialize columns for metrics and logs."""
         for k in self.k_values:
@@ -311,8 +339,11 @@ class AgenticRAGEvaluator:
             for idx in pbar:
                 row = self.df.iloc[idx]
                 self.evaluate_single(idx, row)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 pbar.set_postfix(self.get_live_summary(idx))
-
+            if self.gpu_cleanup_every is not None and (idx + 1) % self.gpu_cleanup_every == 0:
+                    self._gpu_cleanup()
             # Aggregate metrics
             metrics = {
                 "bleu_mean": float(self.df["bleu"].mean()),

@@ -1,5 +1,9 @@
 import asyncio
 import json
+import os
+import torch
+import gc
+import httpx
 import uuid
 from typing import Dict, Any, List
 from pydantic import BaseModel, Field
@@ -475,7 +479,10 @@ class QueryPlannerNode:
             response: NextAction = await self.structured_llm.ainvoke(
                 [{"role": "user", "content": prompt}]
             )
-            return response.action
+            if response.action not in ["proceed_to_synthesis", "rerun_retrieval"]:
+                return "proceed_to_synthesis"
+            else:
+                return response.action
         except Exception as e:
             print(f"[ERROR] Query planner failed: {e}. Defaulting to synthesis.")
             # Fallback is crucial: always exit the loop if the LLM fails
@@ -489,6 +496,35 @@ class StrictAgenticLangGraph:
         self.model_name = model_name
         self.memory = InMemorySaver()
         self.graph = None
+        
+    async def reset_graph(self):
+        """
+        Public method: safely rebuild the LangGraph instance and free memory.
+        Can be called by evaluators or orchestrators between long runs.
+        """
+        import gc, torch
+
+        print("[RESET] Rebuilding Agentic LangGraph and clearing memory...")
+
+        try:
+            # Step 1: Explicitly delete large objects
+            if hasattr(self, "graph"):
+                del self.graph
+            if hasattr(self, "memory"):
+                del self.memory
+
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            # Step 2: Recreate clean memory and rebuild the graph
+            from langgraph.checkpoint.memory import InMemorySaver
+            self.memory = InMemorySaver()
+            await self.setup_graph()
+
+            print("[RESET] Graph successfully rebuilt.")
+        except Exception as e:
+            print(f"[WARN] Graph reset failed: {e}")
 
     async def setup_graph(self):
         print("[INIT] Connecting to MCP servers...")
@@ -510,7 +546,19 @@ class StrictAgenticLangGraph:
         filter_builder_tool = next((t for t in tools if t.name == "filter_builder"), None)
 
         wrapped_qdrant = QdrantSearchWrapper(qdrant_tool)
-        llm = ChatOllama(model=self.model_name, base_url="http://localhost:11434")
+        os.environ["OLLAMA_KEEP_ALIVE"] = "0"
+        llm = ChatOllama(
+            model=self.model_name, 
+            base_url="http://localhost:11434", 
+            async_client_kwargs={
+                "headers": {"Connection": "close"},
+                "timeout": 120,
+                "limits": httpx.Limits(
+                    max_keepalive_connections=0, 
+                    max_connections=10,           
+                ),
+            },
+        )
 
         retrieval_node = QdrantRetrievalNode(wrapped_qdrant, llm, filter_builder_tool)
         relevancy_node = RelevancyCheckerNode(llm)

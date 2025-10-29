@@ -105,7 +105,7 @@ def main():
         print(f"Error: Unknown pipeline version '{pipeline_version}'")
         sys.exit(1)
 
-    evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context")
+    evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context", gpu_cleanup_every=10)
     try:
         evaluator.evaluate(verbose=True)
     except Exception as e:
