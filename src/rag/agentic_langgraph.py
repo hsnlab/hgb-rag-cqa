@@ -87,7 +87,7 @@ async def build_qdrant_metadata_type_filter(query: str) -> models.Filter:
 
     qdrant_filter = models.Filter(must=[condition])
 
-    print(f"[DEBUG] Built Qdrant filter for '{query}': {qdrant_filter}")
+    #print(f"[DEBUG] Built Qdrant filter for '{query}': {qdrant_filter}")
 
     return qdrant_filter.model_dump()
 
@@ -108,7 +108,7 @@ class QdrantSearchWrapper:
         """
         Run the wrapped MCP tool asynchronously and enrich the result.
         """
-        print(f"[DEBUG] Calling wrapped qdrant_search with args={args}")
+        #print(f"[DEBUG] Calling wrapped qdrant_search with args={args}")
         try:
             result = await self.tool.ainvoke(args, **kwargs)
         except Exception as e:
@@ -165,7 +165,7 @@ class QdrantSearchWrapper:
             "relevant_node_ids": sorted(list(node_ids)),
         }
 
-        print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
+        #print(f"[DEBUG] Wrapped qdrant_search returned {len(docs)} docs and {len(node_ids)} node IDs.")
         return result, enriched_state
 
 # ===========================================================
@@ -195,12 +195,52 @@ class BasicToolNode:
         for tool_call in message.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]
+            
+            if tool_name not in self.tools_by_name:
+                warn_msg = f"[WARN] LLM requested unknown tool '{tool_name}'. Skipping this call."
+                print(warn_msg)
+
+                updated_state["tool_log"].append({
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "result_summary": "Invalid tool name"
+                })
+
+                outputs.append(
+                    ToolMessage(
+                        content=json.dumps({"error": f"Unknown tool: {tool_name}"}),
+                        name=tool_name,
+                        tool_call_id=tool_call["id"],
+                    )
+                )
+                continue
+            
             tool = self.tools_by_name[tool_name]
 
-            print(f"[DEBUG] Executing tool: {tool_name} with args={tool_args}")
-            tool_result = await tool.ainvoke(tool_args)
+            #print(f"[DEBUG] Executing tool: {tool_name} with args={tool_args}")
+            try:
+                tool_result = await tool.ainvoke(tool_args)
+            except Exception as e:
+                err_msg = f"[ERROR] Tool '{tool_name}' failed with exception: {e}"
+                print(err_msg)
+                traceback.print_exc()
 
+                outputs.append(
+                    ToolMessage(
+                        content=json.dumps({"error": str(e)}),
+                        name=tool_name,
+                        tool_call_id=tool_call["id"],
+                    )
+                )
 
+                updated_state["tool_log"].append({
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "result_summary": f"Error: {e}"
+                })
+
+                continue
+            
             # Handle wrapped tools that return (result, state_updates)
             state_updates = {}
             if isinstance(tool_result, tuple) and len(tool_result) == 2:
@@ -238,7 +278,11 @@ def route_tools(state: AgenticRAGState):
         ai_message = messages[-1]
     else:
         raise ValueError("No messages found in state")
-
+    
+    if len(state.get("tool_log", [])) > 10:
+        print("[STOP] Too many tool calls; ending early.")
+        return END
+    
     if hasattr(ai_message, "tool_calls") and ai_message.tool_calls:
         return "tools"
     return END
@@ -313,7 +357,7 @@ class AgenticLangGraph:
 
         # Add filter builder tool
         filter_builder_tool = StructuredTool.from_function(
-                func=build_qdrant_metadata_type_filter,
+                coroutine=build_qdrant_metadata_type_filter,
                 name="filter_builder",
                 description=(
                     "Builds a Qdrant filter (qdrant_client.models.Filter) from a natural-language description. "
@@ -413,7 +457,7 @@ class AgenticLangGraph:
                 # Call the tool to get the combinedName
                 name = await self.get_node_info_tool.ainvoke({
                     "node_id": global_id,
-                    "field": "combinedName" # Requesting combinedName
+                    "field": "combinedName"
                 })
                 return name.strip() if name else None
             except Exception as e:
@@ -423,7 +467,9 @@ class AgenticLangGraph:
         function_tasks = []
 
         for doc in docs:
-            meta = doc.metadata
+            meta = getattr(doc, "metadata", {}) or {}
+            if not isinstance(meta, dict):
+                continue
             doc_type = meta.get("type", "").lower()
             raw_id = meta.get("node_id")
 
@@ -438,6 +484,7 @@ class AgenticLangGraph:
 
         # Run all function name lookups in parallel
         function_names = await asyncio.gather(*function_tasks)
+        function_names = [f for f in function_names if isinstance(f, str)]
         
         # Filter out None values and duplicates
         return sorted(list(set(name for name in function_names if name)))
@@ -450,7 +497,7 @@ class AgenticLangGraph:
         final_state = None
         if not session_id:
             session_id = str(uuid.uuid4())
-        print(f"[DEBUG] Running with session ID: {session_id}")
+        #print(f"[DEBUG] Running with session ID: {session_id}")
 
         async for event in self.graph.astream_events(
             {
@@ -479,7 +526,14 @@ class AgenticLangGraph:
             raise RuntimeError("Graph did not produce a final state (no on_value or on_chain_end).")
 
         messages = final_state.get("messages", [])
-        answer = messages[-1].content if messages else None
+        answer = ""
+        if messages:
+            last = messages[-1]
+            if hasattr(last, "content"):
+                answer = last.content
+            elif isinstance(last, dict) and "content" in last:
+                answer = last["content"]
+
         docs = final_state.get("relevant_docs", [])
         serializable_docs = [
             {"page_content": d.page_content, "metadata": d.metadata} for d in docs

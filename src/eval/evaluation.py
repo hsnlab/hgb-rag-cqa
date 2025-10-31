@@ -221,7 +221,7 @@ class AgenticRAGEvaluator:
 
         self._prepare_columns()
         
-    def _gpu_cleanup(self):
+    async def _gpu_cleanup(self):
         """Private helper to clear GPU memory and reinitialize the agentic runner."""
         print("\n[GPU CLEANUP] Releasing GPU memory and rebuilding agentic runner...\n")
 
@@ -235,7 +235,7 @@ class AgenticRAGEvaluator:
             # Step 2: If the agentic runner supports graph rebuilding, trigger it
             if hasattr(self.agentic_runner, "reset_graph"):
                 print("[GPU CLEANUP] Rebuilding agentic graph...")
-                asyncio.run(self.agentic_runner.reset_graph())
+                await self.agentic_runner.reset_graph()
                 print("[GPU CLEANUP] Graph rebuilt successfully.")
             else:
                 print("[GPU CLEANUP] Agentic runner does not support graph reset - skipping rebuild.")
@@ -264,7 +264,7 @@ class AgenticRAGEvaluator:
         ]:
             self.df[metric] = None
 
-    def _run_agentic_pipeline(self, question: str, idx:int = None):
+    async def _run_agentic_pipeline(self, question: str, idx:int = None):
         """
         Run the full LangGraph pipeline and capture all tool calls and outputs.
         The `agentic_runner` should return:
@@ -276,16 +276,16 @@ class AgenticRAGEvaluator:
             }
         """
         session_id = f"eval_{idx}"
-        result = self.agentic_runner.run(question, session_id)
+        result = await self.agentic_runner.run_async(question, session_id)
         return result
 
-    def evaluate_single(self, idx, row):
+    async def evaluate_single(self, idx, row):
         """Run one evaluation example."""
         question = row.get("question", "")
         context = row.get(self.context_column, [])
         answer_ref = row.get("answer", "")
 
-        result = self._run_agentic_pipeline(question, idx)
+        result = await self._run_agentic_pipeline(question, idx)
         answer_gen = result.get("answer", "")
         retrieved_nodes = result.get("relevant_node_ids", [])
         retrieved_functions = result.get("relevant_functions", [])
@@ -331,19 +331,19 @@ class AgenticRAGEvaluator:
             "SemSim": round(df_slice["semantic_similarity"].mean(), 3),
         }
 
-    def evaluate(self, run_name: str = None, verbose=True):
+    async def evaluate(self, run_name: str = None, verbose=True):
         """Main evaluation loop."""
         with mlflow.start_run(run_name=run_name):
             pbar = tqdm(range(len(self.df)), desc="Evaluating Agentic RAG", unit="item")
 
             for idx in pbar:
                 row = self.df.iloc[idx]
-                self.evaluate_single(idx, row)
+                await self.evaluate_single(idx, row)
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                 pbar.set_postfix(self.get_live_summary(idx))
             if self.gpu_cleanup_every is not None and (idx + 1) % self.gpu_cleanup_every == 0:
-                    self._gpu_cleanup()
+                    await self._gpu_cleanup()
             # Aggregate metrics
             metrics = {
                 "bleu_mean": float(self.df["bleu"].mean()),

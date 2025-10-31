@@ -104,6 +104,9 @@ class QdrantSearchWrapper:
     async def ainvoke(self, args, **kwargs):
         try:
             result = await self.tool.ainvoke(args, **kwargs)
+            if asyncio.iscoroutine(result):
+                print("[WARN] qdrant_search returned coroutine — awaiting it.")
+                result = await result
         except Exception as e:
             print(f"[ERROR] qdrant_search failed: {e}")
             return [], {}
@@ -602,30 +605,39 @@ class StrictAgenticLangGraph:
         final_state = None
         if not session_id:
             session_id = str(uuid.uuid4())
-
-        async for event in self.graph.astream_events(
-            {
-                "query": query,
-                "messages": [{"role": "user", "content": query}],
+        try:
+            async for event in self.graph.astream_events(
+                {
+                    "query": query,
+                    "messages": [{"role": "user", "content": query}],
+                    "relevant_docs": [],
+                    "relevant_node_ids": [],
+                    "relevant_functions":[],
+                    "tool_log": [],
+                },
+                config={"configurable": {"thread_id": session_id}},
+                version="v1",
+                stream_mode="values",
+            ):
+                if event["event"] == "on_value":
+                    # Each emitted merged state snapshot
+                    state = event["data"]
+                    #print(f"[DEBUG] on_value — merged state keys: {list(state.keys())}")
+                    final_state = state
+                elif event["event"] == "on_chain_end":
+                    # Backup — some LangGraph versions emit this too
+                    if "data" in event and "output" in event["data"]:
+                        final_state = event["data"]["output"]
+        except Exception as e:
+            print(f"[ERROR] Graph streaming failed: {e}")
+            traceback.print_exc()
+            return {
+                "answer": None,
                 "relevant_docs": [],
                 "relevant_node_ids": [],
-                "relevant_functions":[],
-                "tool_log": [],
-            },
-            config={"configurable": {"thread_id": session_id}},
-            version="v1",
-            stream_mode="values",
-        ):
-            if event["event"] == "on_value":
-                # Each emitted merged state snapshot
-                state = event["data"]
-                #print(f"[DEBUG] on_value — merged state keys: {list(state.keys())}")
-                final_state = state
-            elif event["event"] == "on_chain_end":
-                # Backup — some LangGraph versions emit this too
-                if "data" in event and "output" in event["data"]:
-                    final_state = event["data"]["output"]
-
+                "relevant_functions": [],
+                "tool_log": [{"error": str(e)}],
+            }
         if not final_state:
             raise RuntimeError("Graph did not produce a final state (no on_value or on_chain_end).")
 
@@ -638,7 +650,11 @@ class StrictAgenticLangGraph:
         node_ids = final_state.get("relevant_node_ids", [])
         functions = final_state.get("relevant_functions",[])
         tool_log = final_state.get("tool_log", [])
-
+        
+        
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return {
             "answer": answer,
             "relevant_docs": serializable_docs,

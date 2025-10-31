@@ -10,32 +10,25 @@ import sys
 from src.rag.agentic_langgraph import AgenticLangGraph
 from .evaluation import AgenticRAGEvaluator
 import time
+import asyncio
 
 def remove_html_tags(text):
-  """
-  Removes HTML tags from a string and unescapes HTML entities.
-
-  Args:
-    text: The input string containing HTML.
-
-  Returns:
-    The cleaned string without HTML tags or entities.
-  """
-  # 1. Compile a regular expression to find all HTML tags
-  # This pattern '<[^>]+>' matches '<', followed by one or more characters
-  # that are NOT '>', and then matches '>'.
-  tag_re = re.compile('<[^>]+>')
+    """
+    Removes HTML tags from a string and unescapes HTML entities.
   
-  # 2. Use re.sub() to replace all matches of the pattern with an empty string
-  no_tags = tag_re.sub('', text)
+    Args:
+      text: The input string containing HTML.
   
-  # 3. Use html.unescape() to convert HTML entities (like &quot;, &lt;, &amp;)
-  # back into their corresponding characters (", <, &)
-  cleaned_text = html.unescape(no_tags)
+    Returns:
+      The cleaned string without HTML tags or entities.
+    """
+    tag_re = re.compile('<[^>]+>')
+    no_tags = tag_re.sub('', text)
+    cleaned_text = html.unescape(no_tags)
   
-  return cleaned_text.strip()
+    return cleaned_text.strip()
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(description="Evaluate a RAG model using a test DataFrame.")
     parser.add_argument(
             "--eval-path",
@@ -107,7 +100,7 @@ def main():
 
     evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context", gpu_cleanup_every=10)
     try:
-        evaluator.evaluate(verbose=True)
+        await evaluator.evaluate(verbose=True)
     except Exception as e:
         print("-" * 50)
         print(f"[ERROR] Evaluation halted on an exception: {e}")
@@ -124,4 +117,4 @@ def main():
     output_path = f"{base_path}_w_metrics_langgraph_{model_name.replace(':', '_')}_{finish_time}.csv"
     df_with_eval.to_csv(output_path, index=False)
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
