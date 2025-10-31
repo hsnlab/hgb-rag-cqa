@@ -107,10 +107,8 @@ def search(rag, config):
                 print(f"\nRetrieved {len(result['top_docs'])} documents.")
                 if top_functions:
                     print(f"\nTop functions: {top_functions}")
-                if top_nodes["issues"]:
-                    print(f"\nTop issue numbers: {top_nodes['issues']}")
-                if top_nodes["prs"]:
-                    print(f"\nTop PR numbers: {top_nodes['prs']}")
+                if top_nodes:
+                    print(f"\nTop nodes retrieved (neo4j global ids): {top_nodes}")
                 print("\nAnswer:", answer)
 
         except (KeyboardInterrupt, EOFError):
@@ -151,21 +149,7 @@ def main():
         print(f"Error: RAG config file is not valid JSON: {rag_config_path}")
     
     # Configuration
-    config = PipelineConfig(
-        verbose=True,
-        retriever="kg",
-        top_k=10,
-        llm_max_tokens=200,
-        deduplicate=True,
-        dedup_use_minhash=True,
-        dedup_use_semantic=False,
-        rerank=True,
-        rerank_use_graph=True,
-        rerank_use_popularity=True,
-        over_retrieve_factor=10,
-        over_retrieve_cap=200,
-        rerank_candidate_cap=200,
-    )
+    config = PipelineConfig(**rag_config)
     
     # Instantiate backend components
     vectorstore = QdrantStore(
@@ -195,6 +179,7 @@ def main():
         llm=gen,
         neo4j_auth=(neo4j_config["user"], neo4j_config["password"]),
         neo4j_uri=neo4j_config["url"],
+        classifier_model = "facebook/bart-large-mnli"
     )
 
     # Start interactive search

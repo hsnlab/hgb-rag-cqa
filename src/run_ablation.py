@@ -11,14 +11,15 @@ from typing import Tuple
 from transformers import BitsAndBytesConfig
 import warnings
 
-from rag.config import PipelineConfig
-from rag.simple_rag import SimpleRAG
-from rag.repo_rag import RepositoryRAG
-from eval.evaluation import RAGEvaluator
-from utils.deduplicator import Deduplicator
-from utils.reranker import Reranker
-from utils.qdrant_store import QdrantStore
-from utils.retrieval import KnowledgeGraphRetriever
+from src.rag.config import PipelineConfig
+from src.utils.config_loader import load_all_configs
+from src.rag.simple_rag import SimpleRAG
+from src.rag.repo_rag import RepositoryRAG
+from src.eval.evaluation import RAGEvaluator
+from src.utils.deduplicator import Deduplicator
+from src.utils.reranker import Reranker
+from src.utils.qdrant_store import QdrantStore
+from src.utils.retrieval import KnowledgeGraphRetriever
 
 def build_llm(
     llm_model: str,
@@ -104,30 +105,6 @@ def main():
     parser.add_argument("--eval_data_path",type=str,required=True,
         help="Path to evaluation dataset (CSV file)."
     )
-    parser.add_argument("--qdrant_url",type=str,default="http://localhost:6333",
-        help="Qdrant URL for vector store."
-    )
-    parser.add_argument("--qdrant_collection",type=str,required=True,
-        help="Qdrant collection name."
-    )
-    parser.add_argument("--qdrant_embedding_model",type=str,default="microsoft/codebert-base",
-        help="Embedding model for Qdrant."
-    )
-    parser.add_argument("--qdrant_dist_type",type=str,default="cosine",
-        help="Distance type for Qdrant (cosine, euclidean, or dot)."
-    )
-    parser.add_argument("--qdrant_api_key",type=str,required=True,default=None,
-        help="Qdrant API key if needed."
-    )
-    parser.add_argument("--neo4j_uri",type=str,default="bolt://localhost:7687",
-        help="Neo4j URI for knowledge graph."
-    )
-    parser.add_argument("--neo4j_user",type=str,default="neo4j",
-        help="Neo4j username."
-    )
-    parser.add_argument("--neo4j_password",type=str,default="password",
-        help="Neo4j password."
-    )
     parser.add_argument("--llm_model",type=str,default="mistralai/mistral-7b-instruct-v0.3",
         help="LLM model for RAG."
     )
@@ -144,53 +121,52 @@ def main():
     import os 
     print(os.getenv("HF_HOME"))
     args = parser.parse_args()
-    eval_data_apth = args.eval_data_path
-    qdrant_url = args.qdrant_url
-    qdrant_collection = args.qdrant_collection
-    qdrant_dist_type = args.qdrant_dist_type
-    qdrant_api_key = args.qdrant_api_key
-    model_name = args.qdrant_embedding_model
-    neo4j_uri = args.neo4j_uri
-    neo4j_user = args.neo4j_user
-    neo4j_password = args.neo4j_password
-    neo4j_auth = (neo4j_user, neo4j_password)
-    llm_model = args.llm_model
-    quantize = args.quantize_llm
-    mlflow_uri = args.mlflow_uri
-    experiment_name = args.mlflow_experiment
+    # -----------------------------------------------------
+    # Load configs (HuggingFace, Qdrant, Neo4j, RAG)
+    # -----------------------------------------------------
+    qdrant_cfg, neo4j_cfg, _, base_rag_cfg = load_all_configs()
+    login(open("./_/hf_token.txt").read().strip())
 
-    # Load huggingface API key
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    token_path = os.path.abspath(os.path.join(script_dir, "..", "_", "hf_token.txt"))
-    with open(token_path, "r") as f:
-        huggingface_apikey = f.read().strip()
-
-    login(huggingface_apikey)
-
+    # -----------------------------------------------------
     # Load dataset
-    df = pd.read_csv(eval_data_apth)  
+    # -----------------------------------------------------
+    df = pd.read_csv(args.eval_data_path)
     df["edit_functions"] = df["edit_functions"].apply(literal_eval)
 
-    # Instantiate backend components
+    # -----------------------------------------------------
+    # Build backend components
+    # -----------------------------------------------------
     vectorstore = QdrantStore(
-            model_name=model_name,
-            qdrant_url=qdrant_url,
-            collection_name=qdrant_collection,
-            api_key=qdrant_api_key,
-            distance_type=qdrant_dist_type
-        )
-    kg_retriever = KnowledgeGraphRetriever(vector_store=vectorstore, neo4j_url =neo4j_uri, neo4j_username=neo4j_user, neo4j_password =neo4j_password, database= "neo4j")
+        model_name=qdrant_cfg["model_name"],
+        qdrant_url=qdrant_cfg["url"],
+        collection_name=qdrant_cfg["collection"],
+        api_key=qdrant_cfg["api_key"],
+        distance_type=qdrant_cfg["distance"],
+    )
+    kg_retriever = KnowledgeGraphRetriever(
+        vector_store=vectorstore,
+        neo4j_url=neo4j_cfg["url"],
+        neo4j_username=neo4j_cfg["user"],
+        neo4j_password=neo4j_cfg["password"],
+        database="neo4j",
+    )
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
     reranker = Reranker()
 
-    # Build LLM
-    llm, tokenizer, gen = build_llm(llm_model,quantize=quantize,use_8bit=True)
+    # -----------------------------------------------------
+    # Build LLM (respects CLI args)
+    # -----------------------------------------------------
+    print(f"Loading LLM: {args.llm_model} - Quantized={args.quantize_llm}")
+    _, _, gen = build_llm(args.llm_model, quantize=args.quantize_llm, use_8bit=True)
+
+    # -----------------------------------------------------
     # Instantiate both RAG variants
+    # -----------------------------------------------------
     simple_rag = SimpleRAG(
         vectorstore,
-        neo4j_uri=neo4j_uri,
-        neo4j_auth=neo4j_auth,
-        llm=gen
+        neo4j_uri=neo4j_cfg["url"],
+        neo4j_auth=(neo4j_cfg["user"], neo4j_cfg["password"]),
+        llm=gen,
     )
     repo_rag = RepositoryRAG(
         vectorstore,
@@ -198,53 +174,44 @@ def main():
         deduplicator=deduplicator,
         reranker=reranker,
         llm=gen,
-        neo4j_auth=neo4j_auth,
-        neo4j_uri=neo4j_uri,
+        neo4j_uri=neo4j_cfg["url"],
+        neo4j_auth=(neo4j_cfg["user"], neo4j_cfg["password"]),
     )
 
-    # Hyperparameter sweeps
-    retrievers = ["simple","kg"]
-    dedups = [True, False]
-    reranks = [True, False]
-    over_retrieve_factor = [15]            
-    over_retrieve_cap=[300]              
-    rerank_candidate_cap = [300]
+    # -----------------------------------------------------
+    # MLflow setup
+    # -----------------------------------------------------
+    mlflow.set_tracking_uri(args.mlflow_uri)
+    mlflow.set_experiment(args.mlflow_experiment)
+    experiment = mlflow.get_experiment_by_name(args.mlflow_experiment)
+    runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id]) if experiment else pd.DataFrame()
+    done_runs = set(runs["tags.mlflow.runName"]) if not runs.empty else set()
 
-    if mlflow_uri:
-        mlflow.set_tracking_uri(mlflow_uri)
-    mlflow.set_experiment(experiment_name)
-    experiment = mlflow.get_experiment_by_name(experiment_name)
-    runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-    if not runs.empty:
-        done_runs = list(set(runs["tags.mlflow.runName"]))
-    else:
-        done_runs = []
-    run_counter = 0
-
-    # dry run too test everything works
+    # -----------------------------------------------------
+    # Dry run (quick smoke test)
+    # -----------------------------------------------------
     if args.dry_run:
-        # run only a single small job on the first row for quick smoke testing
+        print("[DRY RUN] Running quick 2-row test with simple retriever...")
         sample_df = df.head(2).copy()
-        cfg = PipelineConfig(
-            retriever="simple",
-            deduplicate=False,
-            dedup_use_minhash=False,
-            dedup_use_semantic=False,
-            rerank=False,
-            rerank_use_graph=False,
-            top_k=3,
-            llm_max_tokens=64,
-            over_retrieve=False
-        )
-        print("Dry run: running a single quick job using 'simple' retriever on 2 rows")
+        cfg = PipelineConfig(retriever="simple", top_k=3, llm_max_tokens=64, deduplicate=False, rerank=False)
         evaluator = RAGEvaluator(sample_df, simple_rag, k_values=[1, 3])
         evaluator.evaluate(cfg, run_name="dry_run_simple", verbose=True)
         return
 
-    # Iterate over all retrievers and run evaluations
+    # -----------------------------------------------------
+    # Define ablation grid (smart dependency control)
+    # -----------------------------------------------------
+    retrievers = ["simple", "kg"]
+    dedup_flags = [True, False]
+    rerank_flags = [True, False]
+    over_retrieve_factor = [15]
+    over_retrieve_cap = [300]
+    rerank_candidate_cap = [300]
+
+    run_counter = 0
+
     for retr in retrievers:
         if retr == "simple":
-            # Single, minimal config for simple retriever
             cfg = PipelineConfig(
                 retriever="simple",
                 deduplicate=False,
@@ -253,45 +220,46 @@ def main():
                 rerank=False,
                 rerank_use_graph=False,
                 top_k=10,
-                llm_max_tokens=200,
-                over_retrieve=False
+                llm_max_tokens=150,
+                over_retrieve=False,
             )
-            rag_impl = simple_rag
             run_name = safe_run_name(f"exp_{run_counter}_retr-simple_minimal")
             if run_name in done_runs:
                 print(f"[{run_counter}] Skipping {run_name} (already done)")
                 run_counter += 1
                 continue
-            print(f"[{run_counter}] Starting {run_name}")
-            evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
+            print(f"[{run_counter}] Running {run_name}")
+            evaluator = RAGEvaluator(df.copy(), simple_rag, k_values=[3, 5, 10])
             evaluator.evaluate(cfg, run_name=run_name, verbose=False)
-            print(f"[{run_counter}] Finished {run_name}")
             run_counter += 1
 
-        else:
-            # For "kg" retriever, only iterate flags if the parent feature is enabled
-            for dedup, rr in itertools.product(dedups, reranks):
-                # dependent flags
-                minhash_iter = [True, False] if dedup else [False]
-                semd_iter = [True, False] if dedup else [False]
-                rrgraph_iter = [True, False] if rr else [False]
-                rrpop_iter = [True, False] if rr else [False]
+        elif retr == "kg":
+            for dedup, rerank in itertools.product(dedup_flags, rerank_flags):
+                minhash_opts = [True, False] if dedup else [False]
+                semantic_opts = [True, False] if dedup else [False]
+                graph_opts = [True, False] if rerank else [False]
+                pop_opts = [True, False] if rerank else [False]
 
                 for mh, semd, rrgraph, rrpop, orf, orc, rcc in itertools.product(
-                    minhash_iter,
-                    semd_iter,
-                    rrgraph_iter,
-                    rrpop_iter,
+                    minhash_opts,
+                    semantic_opts,
+                    graph_opts,
+                    pop_opts,
                     over_retrieve_factor,
                     over_retrieve_cap,
-                    rerank_candidate_cap
+                    rerank_candidate_cap,
                 ):
+                    if not dedup and (mh or semd):
+                        continue
+                    if not rerank and (rrgraph or rrpop):
+                        continue
+
                     cfg = PipelineConfig(
                         retriever="kg",
                         deduplicate=dedup,
                         dedup_use_minhash=mh,
                         dedup_use_semantic=semd,
-                        rerank=rr,
+                        rerank=rerank,
                         rerank_use_graph=rrgraph,
                         rerank_use_popularity=rrpop,
                         top_k=10,
@@ -299,24 +267,23 @@ def main():
                         over_retrieve=True,
                         over_retrieve_factor=orf,
                         over_retrieve_cap=orc,
-                        rerank_candidate_cap=rcc
+                        rerank_candidate_cap=rcc,
                     )
-                    rag_impl = repo_rag
+
                     run_name = safe_run_name(
-                        f"exp_{run_counter}_retr-kg_dedup-{dedup}_minhash-{mh}_semdep-{semd}_rr-{rr}_rrgraph-{rrgraph}_rrpop-{rrpop}_orf-{orf}_orc-{orc}_rcc-{rcc}"
+                        f"exp_{run_counter}_retr-kg_dedup-{dedup}_mh-{mh}_sem-{semd}_rr-{rerank}_graph-{rrgraph}_pop-{rrpop}_orf-{orf}_orc-{orc}_rcc-{rcc}"
                     )
                     if run_name in done_runs:
                         print(f"[{run_counter}] Skipping {run_name} (already done)")
                         run_counter += 1
                         continue
-                    print(f"[{run_counter}] Starting {run_name}")
-                    evaluator = RAGEvaluator(df.copy(), rag_impl, k_values=[3, 5, 10])
+
+                    print(f"[{run_counter}] Running {run_name}")
+                    evaluator = RAGEvaluator(df.copy(), repo_rag, k_values=[3, 5, 10])
                     evaluator.evaluate(cfg, run_name=run_name, verbose=False)
-                    print(f"[{run_counter}] Finished {run_name}")
                     run_counter += 1
 
-
-    print(f"All done — total runs: {run_counter}")
+    print(f"All done - total executed runs: {run_counter}")
 
 
 if __name__ == "__main__":

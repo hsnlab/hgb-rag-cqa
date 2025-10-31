@@ -19,13 +19,14 @@ class QdrantStore:
                  collection_name="rag_collection",
                  api_key=None,
                  neo4j_uri=None,
-                 neo4j_auth=None):
+                 neo4j_auth=None,
+                 kwargs={}):
         
-        self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+        self.embeddings = HuggingFaceEmbeddings(model_name=model_name,**kwargs)
         self.collection_name = collection_name
         
         # Initialize Qdrant client
-        self.client = QdrantClient(url=qdrant_url, api_key=api_key)
+        self.client = QdrantClient(url=qdrant_url, api_key=api_key,timeout=30.0)
         print("Successfully connected to Qdrant")
         
         # Get embedding dimension

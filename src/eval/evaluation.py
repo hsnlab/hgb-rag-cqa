@@ -53,8 +53,9 @@ class RAGEvaluator:
             model_type="microsoft/deberta-xlarge-mnli",
             lang="en",
             rescale_with_baseline=True,
+            device="cpu"
         )
-        self.eval_embeddings = SentenceTransformer(eval_embed_model_name)
+        self.eval_embeddings = SentenceTransformer(eval_embed_model_name, device="cpu")
 
         self._prepare_columns()
 
@@ -342,6 +343,7 @@ class AgenticRAGEvaluator:
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                 pbar.set_postfix(self.get_live_summary(idx))
+                
             if self.gpu_cleanup_every is not None and (idx + 1) % self.gpu_cleanup_every == 0:
                     await self._gpu_cleanup()
             # Aggregate metrics

@@ -533,7 +533,6 @@ class AgenticLangGraph:
                 answer = last.content
             elif isinstance(last, dict) and "content" in last:
                 answer = last["content"]
-
         docs = final_state.get("relevant_docs", [])
         serializable_docs = [
             {"page_content": d.page_content, "metadata": d.metadata} for d in docs
