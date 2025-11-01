@@ -1,15 +1,11 @@
 import itertools
-import os
+import os, re, html, httpx, gc, torch
 import pandas as pd
 from ast import literal_eval
 import mlflow
 import argparse
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from huggingface_hub import login
-import torch
-from typing import Tuple
-from transformers import BitsAndBytesConfig
-import warnings
+from langchain_ollama import ChatOllama
 
 from src.rag.config import PipelineConfig
 from src.utils.config_loader import load_all_configs
@@ -21,80 +17,45 @@ from src.utils.reranker import Reranker
 from src.utils.qdrant_store import QdrantStore
 from src.utils.retrieval import KnowledgeGraphRetriever
 
-def build_llm(
-    llm_model: str,
-    quantize: bool = False,
-    use_4bit: bool = True,
-    bnb_4bit_use_double_quant: bool = True,
-    bnb_4bit_quant_type: str = "nf4",
-    bnb_4bit_compute_dtype = torch.bfloat16,
-    use_8bit: bool = False,
-) -> Tuple[AutoModelForCausalLM, AutoTokenizer, pipeline]:
+def remove_html_tags(text):
+  """
+  Removes HTML tags from a string and unescapes HTML entities.
+
+  Args:
+    text: The input string containing HTML.
+
+  Returns:
+    The cleaned string without HTML tags or entities.
+  """
+  tag_re = re.compile('<[^>]+>')
+  
+  no_tags = tag_re.sub('', text)
+  cleaned_text = html.unescape(no_tags)
+  
+  return cleaned_text.strip()
+
+def build_llm(llm_model: str):
     """
-    Build (optionally quantized) LLM + tokenizer + generation pipeline.
-
-    Args:
-      llm_model: HF model id
-      quantize: whether to load a quantized model
-      use_4bit: if quantize=True, prefer 4-bit (nf4) quantization. If False and quantize=True, will try 8-bit
-      bnb_4bit_*: bitsandbytes config options for 4-bit
-      use_8bit: explicit 8-bit flag (overrides use_4bit when quantize=True)
-
-    Returns:
-      (model, tokenizer, gen_pipeline)
+    Build an Ollama-based LLM client for generation.
+    Supports models served by the local Ollama daemon, e.g. mistral:7b-instruct.
     """
+    if not llm_model:
+        raise ValueError("llm_model must be provided (e.g., mistral:7b-instruct)")
 
-    # tokenizer (safe to always load)
-    tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left", use_fast=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # decide device availability
-    has_cuda = torch.cuda.is_available()
-    if quantize and not has_cuda:
-        raise RuntimeError("Quantization (bitsandbytes) requires CUDA. Set quantize=False or run on GPU.")
-
-    model = None
-
-    if quantize:
-        # prefer explicit 4-bit if use_4bit True and use_8bit False
-        if use_4bit and not use_8bit:
-            # 4-bit config using BitsAndBytesConfig
-            bnb_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_use_double_quant=bnb_4bit_use_double_quant,
-                bnb_4bit_quant_type=bnb_4bit_quant_type,
-                bnb_4bit_compute_dtype=bnb_4bit_compute_dtype,
-            )
-        
-        else:
-            # fallback to 8-bit (older but widely supported)
-            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            llm_model,
-            device_map="auto",
-            quantization_config=bnb_config,
-            torch_dtype=torch.float16
-        )
-
-    else:
-        # Full precision or mixed precision (let transformers pick optimal device_map)
-        # If CUDA present, we request float16 for speed; otherwise default dtype.
-        if has_cuda:
-            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto", torch_dtype=torch.float16)
-        else:
-            # CPU fallback (may be slow)
-            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto")
-
-    # Build generation pipeline. We pass the already loaded model + tokenizer.
-    gen = pipeline(
-        "text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        device_map="auto"  # keep this consistent with model device_map
+    os.environ["OLLAMA_KEEP_ALIVE"] = "0"
+    llm = ChatOllama(
+        model=llm_model, 
+        base_url="http://localhost:11434", 
+        async_client_kwargs={
+            "headers": {"Connection": "close"},
+            "timeout": 120,
+            "limits": httpx.Limits(
+                max_keepalive_connections=0, 
+                max_connections=10,           
+            ),
+        },
     )
-
-    return model, tokenizer, gen
+    return llm
 
 def safe_run_name(base: str) -> str:
     """Ensure run_name is filesystem/MLflow safe (no spaces)."""
@@ -105,11 +66,16 @@ def main():
     parser.add_argument("--eval_data_path",type=str,required=True,
         help="Path to evaluation dataset (CSV file)."
     )
-    parser.add_argument("--llm_model",type=str,default="mistralai/mistral-7b-instruct-v0.3",
+    parser.add_argument("--llm_model",type=str,default="mistral:7b",
         help="LLM model for RAG."
     )
-    parser.add_argument("--quantize_llm", action="store_true",
-                        help="If set, load the LLM in quantized mode (requires GPU).")
+    parser.add_argument(
+        "--question-limit", "-ql",
+        default=None,
+        type=int,
+        help="Limit the evaluation dataset to this number of questions",
+        required=False
+    )
     parser.add_argument("--mlflow_uri", type=str, default="http://127.0.0.1:5000",
                     help="MLflow tracking URI (e.g., http://mlflow-server:5000 or file:///path/to/mlruns)."
     )
@@ -118,8 +84,6 @@ def main():
     parser.add_argument("--dry_run", action="store_true",
                         help="If set, run only a single quick experiment on a small slice (for smoke test).")
 
-    import os 
-    print(os.getenv("HF_HOME"))
     args = parser.parse_args()
     # -----------------------------------------------------
     # Load configs (HuggingFace, Qdrant, Neo4j, RAG)
@@ -130,8 +94,24 @@ def main():
     # -----------------------------------------------------
     # Load dataset
     # -----------------------------------------------------
-    df = pd.read_csv(args.eval_data_path)
-    df["edit_functions"] = df["edit_functions"].apply(literal_eval)
+    eval_df_path = args.eval_data_path
+    q_limit = args.question_limit
+    print(f"Loading dataset from: {eval_df_path}")
+    try:
+        dataset = pd.read_csv(eval_df_path)
+    except:
+        dataset = pd.read_csv(eval_df_path, sep="\t")
+    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
+                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context"})
+    dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
+    dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
+    
+    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 550)]
+
+    if q_limit:
+        dataset = dataset.iloc[:min(q_limit,len(dataset))]
+    dataset["question"] = dataset["question"].apply(remove_html_tags)
+    dataset["answer"] = dataset["answer"].apply(remove_html_tags)
 
     # -----------------------------------------------------
     # Build backend components
@@ -156,8 +136,8 @@ def main():
     # -----------------------------------------------------
     # Build LLM (respects CLI args)
     # -----------------------------------------------------
-    print(f"Loading LLM: {args.llm_model} - Quantized={args.quantize_llm}")
-    _, _, gen = build_llm(args.llm_model, quantize=args.quantize_llm, use_8bit=True)
+    print(f"Loading Ollama model: {args.llm_model}")
+    gen = build_llm(args.llm_model)
 
     # -----------------------------------------------------
     # Instantiate both RAG variants
@@ -167,6 +147,7 @@ def main():
         neo4j_uri=neo4j_cfg["url"],
         neo4j_auth=(neo4j_cfg["user"], neo4j_cfg["password"]),
         llm=gen,
+        classifier_model = "facebook/bart-large-mnli"
     )
     repo_rag = RepositoryRAG(
         vectorstore,
@@ -176,6 +157,7 @@ def main():
         llm=gen,
         neo4j_uri=neo4j_cfg["url"],
         neo4j_auth=(neo4j_cfg["user"], neo4j_cfg["password"]),
+        classifier_model = "facebook/bart-large-mnli"
     )
 
     # -----------------------------------------------------
@@ -192,7 +174,7 @@ def main():
     # -----------------------------------------------------
     if args.dry_run:
         print("[DRY RUN] Running quick 2-row test with simple retriever...")
-        sample_df = df.head(2).copy()
+        sample_df = dataset.head(2).copy()
         cfg = PipelineConfig(retriever="simple", top_k=3, llm_max_tokens=64, deduplicate=False, rerank=False)
         evaluator = RAGEvaluator(sample_df, simple_rag, k_values=[1, 3])
         evaluator.evaluate(cfg, run_name="dry_run_simple", verbose=True)
@@ -202,11 +184,12 @@ def main():
     # Define ablation grid (smart dependency control)
     # -----------------------------------------------------
     retrievers = ["simple", "kg"]
-    dedup_flags = [True, False]
-    rerank_flags = [True, False]
-    over_retrieve_factor = [15]
-    over_retrieve_cap = [300]
-    rerank_candidate_cap = [300]
+    dedup_flags = [False, True]
+    rerank_flags = [False, True]
+    shortest_path_flags = [False, True]  
+    over_retrieve_factors = [5, 10]      
+    over_retrieve_caps = [100, 200]
+    rerank_candidate_caps = [50, 100]
 
     run_counter = 0
 
@@ -215,26 +198,30 @@ def main():
             cfg = PipelineConfig(
                 retriever="simple",
                 deduplicate=False,
-                dedup_use_minhash=False,
-                dedup_use_semantic=False,
                 rerank=False,
-                rerank_use_graph=False,
                 top_k=10,
-                llm_max_tokens=150,
+                llm_max_tokens=200,
                 over_retrieve=False,
+                use_query_expansion=True,
+                use_shortest_path_context=False,
             )
-            run_name = safe_run_name(f"exp_{run_counter}_retr-simple_minimal")
+            run_name = safe_run_name(f"exp_{run_counter}_retr-simple_base")
             if run_name in done_runs:
                 print(f"[{run_counter}] Skipping {run_name} (already done)")
                 run_counter += 1
                 continue
+
             print(f"[{run_counter}] Running {run_name}")
-            evaluator = RAGEvaluator(df.copy(), simple_rag, k_values=[3, 5, 10])
+            evaluator = RAGEvaluator(dataset.copy(), simple_rag, k_values=[3, 5, 10])
             evaluator.evaluate(cfg, run_name=run_name, verbose=False)
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             run_counter += 1
 
         elif retr == "kg":
-            for dedup, rerank in itertools.product(dedup_flags, rerank_flags):
+            for dedup, rerank, sp_flag in itertools.product(dedup_flags, rerank_flags, shortest_path_flags):
+                # handle sub-options only when relevant
                 minhash_opts = [True, False] if dedup else [False]
                 semantic_opts = [True, False] if dedup else [False]
                 graph_opts = [True, False] if rerank else [False]
@@ -245,10 +232,11 @@ def main():
                     semantic_opts,
                     graph_opts,
                     pop_opts,
-                    over_retrieve_factor,
-                    over_retrieve_cap,
-                    rerank_candidate_cap,
+                    over_retrieve_factors,
+                    over_retrieve_caps,
+                    rerank_candidate_caps,
                 ):
+                    # prune irrelevant combos
                     if not dedup and (mh or semd):
                         continue
                     if not rerank and (rrgraph or rrpop):
@@ -263,15 +251,18 @@ def main():
                         rerank_use_graph=rrgraph,
                         rerank_use_popularity=rrpop,
                         top_k=10,
-                        llm_max_tokens=150,
+                        llm_max_tokens=200,
                         over_retrieve=True,
                         over_retrieve_factor=orf,
                         over_retrieve_cap=orc,
                         rerank_candidate_cap=rcc,
+                        use_shortest_path_context=sp_flag,
+                        use_query_expansion=True,
                     )
 
                     run_name = safe_run_name(
-                        f"exp_{run_counter}_retr-kg_dedup-{dedup}_mh-{mh}_sem-{semd}_rr-{rerank}_graph-{rrgraph}_pop-{rrpop}_orf-{orf}_orc-{orc}_rcc-{rcc}"
+                        f"exp_{run_counter}_retr-kg_dedup-{dedup}_mh-{mh}_sem-{semd}_"
+                        f"rr-{rerank}_graph-{rrgraph}_pop-{rrpop}_sp-{sp_flag}_orf-{orf}_orc-{orc}_rcc-{rcc}"
                     )
                     if run_name in done_runs:
                         print(f"[{run_counter}] Skipping {run_name} (already done)")
@@ -279,8 +270,11 @@ def main():
                         continue
 
                     print(f"[{run_counter}] Running {run_name}")
-                    evaluator = RAGEvaluator(df.copy(), repo_rag, k_values=[3, 5, 10])
+                    evaluator = RAGEvaluator(dataset.copy(), repo_rag, k_values=[3, 5, 10])
                     evaluator.evaluate(cfg, run_name=run_name, verbose=False)
+                    gc.collect()
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                     run_counter += 1
 
     print(f"All done - total executed runs: {run_counter}")

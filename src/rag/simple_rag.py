@@ -2,8 +2,10 @@ from typing import List, Dict, Any, Tuple
 from .config import PipelineConfig
 from .base_rag import BaseRAG
 from langchain_core.documents import Document
+from langchain_ollama import ChatOllama
 from transformers import pipeline
 from neo4j import GraphDatabase
+import os, httpx
 
 class SimpleRAG(BaseRAG):
     def __init__(self, vectorstore, neo4j_uri, neo4j_auth, llm=None, llm_model: str = None, classifier=None, classifier_model: str = None):
@@ -31,7 +33,19 @@ class SimpleRAG(BaseRAG):
         if llm is not None:
             self.llm = llm
         elif llm_model is not None:
-            self.llm = pipeline("text-generation", model=llm_model, device=0)
+            os.environ["OLLAMA_KEEP_ALIVE"] = "0"
+            self.llm = ChatOllama(
+                model=self.model_name, 
+                base_url="http://localhost:11434", 
+                async_client_kwargs={
+                    "headers": {"Connection": "close"},
+                    "timeout": 120,
+                    "limits": httpx.Limits(
+                        max_keepalive_connections=0, 
+                        max_connections=10,           
+                    ),
+                },
+            )
         else:
             raise ValueError("Either llm or llm_model must be provided")
 
@@ -69,8 +83,13 @@ Use the context below to answer the question. If unsure, say you don’t know.
 
 ### Answer
 [/INST]"""
-        response = self.llm(prompt, max_new_tokens=config.llm_max_tokens, return_full_text=False)
-        return response[0]["generated_text"].strip()
+        try:
+            response = self.llm.invoke(prompt)
+            return response.content.strip()
+        except Exception as e:
+            if config.verbose:
+                print(f"[WARN] LLM generation failed: {e}")
+            return "I don't know."
     
     def classify_query(self, query: str) -> str:
         labels = ["general_question", "bug_report", "feature_request", "performance_issue"]
@@ -79,20 +98,18 @@ Use the context below to answer the question. If unsure, say you don’t know.
 
     def _expand_query_with_llm(self, query: str, config: PipelineConfig) -> list[str]:
         """Use the existing LLM to produce a few alternative search queries."""
-        queries = [query]
+        queries = []
         prompt = (
-            f"Generate {getattr(config, 'query_expansion_variants', 3)} short alternative search queries "
-            f"that could retrieve relevant code or documentation for:\n\"{query}\"\n"
-            f"Return each query on a new line, under 8 words each."
+            f"Generate {getattr(config, 'query_expansion_variants', 3)} concise alternative search queries "
+            f"to help retrieve relevant code snippets or technical documentation related to:\n\"{query}\"\n\n"
+            f"- Focus on code elements explicitly mentioned (functions, classes, APIs, variables, libraries).\n"
+            f"- Keep each query under 8 words.\n"
+            f"- Prefer specific identifiers over generic terms.\n"
+            f"- Return each query on a new line, without numbering or punctuation."
         )
         try:
-            outputs = self.llm(
-                prompt,
-                max_new_tokens=60,
-                num_return_sequences=1,
-                return_full_text=False,
-            )
-            text = outputs[0]["generated_text"].strip()
+            response = self.llm.invoke(prompt)
+            text = response.content.strip()
             variants = [ln.strip("-• ").strip() for ln in text.split("\n") if ln.strip()]
             variants = [v for v in variants if len(v.split()) > 1]
             queries.extend(variants)
@@ -101,6 +118,7 @@ Use the context below to answer the question. If unsure, say you don’t know.
         except Exception as e:
             if config.verbose:
                 print(f"[WARN] Query expansion failed: {e}")
+            return [query]
         return list(dict.fromkeys(queries))
 
     def _get_function_names(self, node_ids: list[str]) -> list[str]:

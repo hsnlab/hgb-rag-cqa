@@ -59,6 +59,15 @@ class RAGEvaluator:
 
         self._prepare_columns()
 
+    def _gpu_cleanup(self):
+        """Private helper to clear GPU memory and reinitialize the agentic runner."""
+        try:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()  
+        except Exception as e:
+            print(f"[WARN] GPU cleanup failed: {e}\n")
+
     def _prepare_columns(self):
         for k in self.k_values:
             self.df[f"precision_{k}"] = None
@@ -145,8 +154,9 @@ class RAGEvaluator:
             for idx in pbar:
                 row = self.df.iloc[idx]
                 self.evaluate_single(idx, row, config)
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+                self._gpu_cleanup()
+                if config.verbose:
+                    print("[GPU CLEANUP] Memory cleared successfully.")
                 summary = self.get_live_summary(idx)
                 pbar.set_postfix(summary)
 
@@ -168,7 +178,18 @@ class RAGEvaluator:
 
             # Save results to CSV + log artifact
             out_path = "evaluation_results.csv"
-            self.df.to_csv(out_path, index=False)
+            cols_tolog= [
+                "question","pred_query_class","generated_answer", "retrieved_functions", "retrieved_docs",
+                "mrr", "bleu","bertscore","semantic_similarity"
+            ]
+            for k in self.k_values:
+                cols_tolog.extend([
+                    f"precision_{k}",
+                    f"recall_{k}",
+                    f"f1_{k}",
+                    f"iou_{k}",
+                ])
+            self.df[cols_tolog].to_csv(out_path, index=False)
             mlflow.log_artifact(out_path)
 
             # Save config used
@@ -344,7 +365,7 @@ class AgenticRAGEvaluator:
                     torch.cuda.empty_cache()
                 pbar.set_postfix(self.get_live_summary(idx))
                 
-            if self.gpu_cleanup_every is not None and (idx + 1) % self.gpu_cleanup_every == 0:
+                if self.gpu_cleanup_every is not None and (idx + 1) % self.gpu_cleanup_every == 0:
                     await self._gpu_cleanup()
             # Aggregate metrics
             metrics = {

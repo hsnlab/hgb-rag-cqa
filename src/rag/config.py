@@ -22,6 +22,6 @@ class PipelineConfig:
     over_retrieve_factor: int = 10            
     over_retrieve_cap: int = 200              
     rerank_candidate_cap: int = 50
-    use_shortest_path_context: bool = True,
-    top_k_paths: int = 10,
+    use_shortest_path_context: bool = True
+    top_k_paths: int = 10
     top_k_docs_per_path: int = 10          

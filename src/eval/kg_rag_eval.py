@@ -1,4 +1,4 @@
-import os, html, re, torch, sys, traceback, time, mlflow
+import os, html, re, httpx, sys, traceback, time, mlflow
 import pandas as pd
 from ast import literal_eval
 from transformers import pipeline
@@ -13,7 +13,7 @@ from src.utils.reranker import Reranker
 from src.rag.repo_rag import RepositoryRAG
 from src.rag.config import PipelineConfig
 from src.eval.evaluation import RAGEvaluator
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, pipeline
+from langchain_ollama import ChatOllama
 
 def remove_html_tags(text):
   """
@@ -32,72 +32,28 @@ def remove_html_tags(text):
   
   return cleaned_text.strip()
 
-def build_llm(
-    llm_model: str,
-    quantize: bool = False,
-    use_4bit: bool = True,
-    bnb_4bit_use_double_quant: bool = True,
-    bnb_4bit_quant_type: str = "nf4",
-    bnb_4bit_compute_dtype = torch.bfloat16,
-    use_8bit: bool = False,
-) -> Tuple[AutoModelForCausalLM, AutoTokenizer, pipeline]:
+def build_llm(llm_model: str):
     """
-    Build (optionally quantized) LLM + tokenizer + generation pipeline.
-
-    Args:
-      llm_model: HF model id
-      quantize: whether to load a quantized model
-      use_4bit: if quantize=True, prefer 4-bit (nf4) quantization. If False and quantize=True, will try 8-bit
-      bnb_4bit_*: bitsandbytes config options for 4-bit
-      use_8bit: explicit 8-bit flag (overrides use_4bit when quantize=True)
-
-    Returns:
-      (model, tokenizer, gen_pipeline)
+    Build an Ollama-based LLM client for generation.
+    Supports models served by the local Ollama daemon, e.g. mistral:7b-instruct.
     """
+    if not llm_model:
+        raise ValueError("llm_model must be provided (e.g., mistral:7b-instruct)")
 
-    tokenizer = AutoTokenizer.from_pretrained(llm_model, padding_side="left", use_fast=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    has_cuda = torch.cuda.is_available()
-    if quantize and not has_cuda:
-        raise RuntimeError("Quantization (bitsandbytes) requires CUDA. Set quantize=False or run on GPU.")
-
-    model = None
-
-    if quantize:
-        if use_4bit and not use_8bit:
-            bnb_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_use_double_quant=bnb_4bit_use_double_quant,
-                bnb_4bit_quant_type=bnb_4bit_quant_type,
-                bnb_4bit_compute_dtype=bnb_4bit_compute_dtype,
-            )
-        
-        else:
-            # fallback to 8-bit (older but widely supported)
-            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            llm_model,
-            device_map="auto",
-            quantization_config=bnb_config,
-            dtype=torch.float16
-        )
-
-    else:
-        if has_cuda:
-            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto", torch_dtype=torch.float16)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(llm_model, device_map="auto")
-
-    gen = pipeline(
-        "text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        device_map="auto"  
+    os.environ["OLLAMA_KEEP_ALIVE"] = "0"
+    llm = ChatOllama(
+        model=llm_model, 
+        base_url="http://localhost:11434", 
+        async_client_kwargs={
+            "headers": {"Connection": "close"},
+            "timeout": 120,
+            "limits": httpx.Limits(
+                max_keepalive_connections=0, 
+                max_connections=10,           
+            ),
+        },
     )
-
-    return model, tokenizer, gen
+    return llm
 
 def main():
     import argparse
@@ -105,7 +61,7 @@ def main():
     parser.add_argument("--eval-path", required=True, help="Path to eval dataset CSV")
     parser.add_argument(
         "--model-name", "-ml",
-        default="mistralai/mistral-7b-instruct-v0.3",
+        default="mistral:7b",
         type=str,
         help="Name of Ollama model to use for agents.",
         required=False
@@ -160,7 +116,7 @@ def main():
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     
-    dataset = dataset.loc[dataset["golden_context"].str.len() > 0]
+    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 300)]
 
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
@@ -192,7 +148,7 @@ def main():
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
     reranker = Reranker()
 
-    _, _, gen = build_llm(model_name, quantize=True, use_8bit=True)
+    gen = build_llm(model_name)
 
     rag = RepositoryRAG(
         vectorstore,

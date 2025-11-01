@@ -28,11 +28,12 @@ class BaseRAG(ABC):
             print(f"[DEBUG] Query classified as: {query_type}")
         
         # optional query expansion
-        queries = [query]
         if getattr(config, "use_query_expansion", True) and hasattr(self, "_expand_query_with_llm"):
             queries = self._expand_query_with_llm(query, config)
+        else: 
+            queries = [query]
         if config.verbose:
-            print(f"[DEBUG] Expanded into {len(queries)} subqueries.")
+            print(f"[DEBUG] Expanded into {len(queries)} subqueries: {queries}")
 
         
 
