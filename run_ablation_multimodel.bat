@@ -21,7 +21,7 @@ start "MLflow Server" cmd /k mlflow server ^
 timeout /t 10 >nul
 
 :: Define common args
-set COMMON_ARGS=--eval_data_path %DATA_PATH% --question-limit 50 --mlflow_uri http://127.0.0.1:%MLFLOW_PORT% --mlflow_experiment rag_ablation_study
+set COMMON_ARGS=--eval_data_path %DATA_PATH% --question-limit 300 --mlflow_uri http://127.0.0.1:%MLFLOW_PORT% --mlflow_experiment rag_ablation_study
 
 :: Run ablations for each model
 echo ===== Starting ablation: mistral:7b =====

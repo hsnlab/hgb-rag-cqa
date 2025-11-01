@@ -106,7 +106,7 @@ def main():
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     
-    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 550)]
+    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 1000)]
 
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
@@ -187,11 +187,10 @@ def main():
     dedup_flags = [False, True]
     rerank_flags = [False, True]
     shortest_path_flags = [False, True]  
-    over_retrieve_factors = [5, 10]      
-    over_retrieve_caps = [100, 200]
-    rerank_candidate_caps = [50, 100]
+    over_retrieve_flags = [False, True]
 
     run_counter = 0
+    seen_configs = set()
 
     for retr in retrievers:
         if retr == "simple":
@@ -220,13 +219,15 @@ def main():
             run_counter += 1
 
         elif retr == "kg":
-            for dedup, rerank, sp_flag in itertools.product(dedup_flags, rerank_flags, shortest_path_flags):
+            for dedup, rerank, overr, sp_flag in itertools.product(dedup_flags, rerank_flags, over_retrieve_flags, shortest_path_flags):
                 # handle sub-options only when relevant
                 minhash_opts = [True, False] if dedup else [False]
                 semantic_opts = [True, False] if dedup else [False]
                 graph_opts = [True, False] if rerank else [False]
                 pop_opts = [True, False] if rerank else [False]
-
+                rerank_candidate_caps = [50, 100] if rerank else [0]
+                over_retrieve_factors = [5, 10] if overr else [0]
+                over_retrieve_caps = [100, 200] if overr else [0]
                 for mh, semd, rrgraph, rrpop, orf, orc, rcc in itertools.product(
                     minhash_opts,
                     semantic_opts,
@@ -241,6 +242,14 @@ def main():
                         continue
                     if not rerank and (rrgraph or rrpop):
                         continue
+
+                    config_signature = (
+                        dedup, mh, semd, rerank, rrgraph, rrpop,
+                        overr, orf, orc, rcc, sp_flag
+                    )
+                    if config_signature in seen_configs:
+                        continue
+                    seen_configs.add(config_signature)
 
                     cfg = PipelineConfig(
                         retriever="kg",

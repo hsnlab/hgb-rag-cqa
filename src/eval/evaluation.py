@@ -1,13 +1,10 @@
-import os
 import pandas as pd
 import mlflow
 import torch
 import gc
-import asyncio
 from tqdm import tqdm
-import sys
+import io, math
 from src.rag.config import PipelineConfig
-from huggingface_hub import login
 from .metrics import ( 
     calculate_precision_at_k,
     calculate_recall_at_k,
@@ -31,7 +28,7 @@ class RAGEvaluator:
         rag_model,
         k_values=[3, 5, 10],
         mlflow_uri: str = None,
-        huggingface_apikey: str = "",
+        save_df_every: int = 50,
         eval_embed_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         context_column: str = "edit_functions",
     ):
@@ -45,8 +42,7 @@ class RAGEvaluator:
             if mlflow_uri != current:
                 mlflow.set_tracking_uri(mlflow_uri)
 
-        # Set HF tokens
-        #login(huggingface_apikey)
+        self.save_df_every = save_df_every
 
         # Models for answer evaluation
         self.bert_scorer = BERTScorer(
@@ -189,8 +185,13 @@ class RAGEvaluator:
                     f"f1_{k}",
                     f"iou_{k}",
                 ])
-            self.df[cols_tolog].to_csv(out_path, index=False)
-            mlflow.log_artifact(out_path)
+            
+            if (idx + 1) % self.save_df_every == 0 or (idx + 1) == len(self.df):
+                batch_id = math.ceil((idx + 1) / self.save_df_every)
+                buffer = io.StringIO()
+                self.df.iloc[:idx+1][cols_tolog].to_csv(buffer, index=False)
+                mlflow.log_text(buffer.getvalue(), artifact_file=f"{run_name}_part_{batch_id}.csv")
+                print(f"[INFO] Logged partial artifact: {run_name}_part_{batch_id}.csv")
 
             # Save config used
             with open("config_used.txt", "w") as f:
