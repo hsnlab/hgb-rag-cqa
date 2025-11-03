@@ -116,7 +116,7 @@ def main():
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     
-    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 300)]
+    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 850) & (dataset["answer"].str.len() <= 850)]
 
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
@@ -167,17 +167,11 @@ def main():
 
     evaluator = RAGEvaluator(dataset, rag, k_values=[3, 5, 10])
     try:
-        evaluator.evaluate(rag_config, run_name=os.path.splitext(rag_config_name)[0], verbose=True)
+        config_base = os.path.splitext(os.path.basename(rag_config_name))[0]
+        run_name = f"{config_base}_{model_name.replace(':', '-')}"
+        evaluator.evaluate(rag_config, run_name=run_name, verbose=True)
     except Exception as e:
         traceback.print_exc()
-    df_with_eval = evaluator.df
-    base_path, _ = os.path.splitext(eval_df_path)
-    finish_time = time.time()
-    model_id = model_name.replace(":", "_")
-    model_id = model_id.split("/")[-1]  # safely get last part even if no slash
-    output_path = f"{base_path}_w_metrics_{os.path.splitext(rag_config_name)[0]}_{model_id}_{int(finish_time)}.csv"
-    df_with_eval.to_csv(output_path, index=False)
-    print(f"Saved evaluation results to {output_path}")    
 
 if __name__ == "__main__":
     main()

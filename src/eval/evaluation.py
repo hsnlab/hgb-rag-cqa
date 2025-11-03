@@ -3,7 +3,7 @@ import mlflow
 import torch
 import gc
 from tqdm import tqdm
-import io, math
+import io, math, os
 from src.rag.config import PipelineConfig
 from .metrics import ( 
     calculate_precision_at_k,
@@ -188,15 +188,18 @@ class RAGEvaluator:
             
             if (idx + 1) % self.save_df_every == 0 or (idx + 1) == len(self.df):
                 batch_id = math.ceil((idx + 1) / self.save_df_every)
-                buffer = io.StringIO()
-                self.df.iloc[:idx+1][cols_tolog].to_csv(buffer, index=False)
-                mlflow.log_text(buffer.getvalue(), artifact_file=f"{run_name}_part_{batch_id}.csv")
-                print(f"[INFO] Logged partial artifact: {run_name}_part_{batch_id}.csv")
+                os.makedirs("./data", exist_ok=True)
+                out_file = f"./data/{run_name}_part_{batch_id}.csv"
+                self.df.iloc[:idx+1][cols_tolog].to_csv(out_file, index=False)
+                mlflow.log_artifact(out_file)
+                print(f"[INFO] Saved and logged partial artifact: {out_file}")
 
             # Save config used
-            with open("config_used.txt", "w") as f:
+            os.makedirs("./data", exist_ok=True)
+            config_path = "./data/config_used.txt"
+            with open(config_path, "w") as f: 
                 f.write(str(config))
-            mlflow.log_artifact("config_used.txt")
+            mlflow.log_artifact(config_path)
 
             if verbose:
                 print("Evaluation complete. Aggregate metrics:")
