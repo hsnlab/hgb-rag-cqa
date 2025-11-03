@@ -32,7 +32,7 @@ class RAGEvaluator:
         eval_embed_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         context_column: str = "edit_functions",
     ):
-        self.df = df.copy()
+        self.df = df.reset_index(drop=True).copy()
         self.rag = rag_model
         self.k_values = k_values
         self.context_column = context_column
@@ -174,32 +174,13 @@ class RAGEvaluator:
 
             # Save results to CSV + log artifact
             out_path = "evaluation_results.csv"
-            cols_tolog= [
-                "question","pred_query_class","generated_answer", "retrieved_functions", "retrieved_docs",
-                "mrr", "bleu","bertscore","semantic_similarity"
-            ]
-            for k in self.k_values:
-                cols_tolog.extend([
-                    f"precision_{k}",
-                    f"recall_{k}",
-                    f"f1_{k}",
-                    f"iou_{k}",
-                ])
-            
-            if (idx + 1) % self.save_df_every == 0 or (idx + 1) == len(self.df):
-                batch_id = math.ceil((idx + 1) / self.save_df_every)
-                os.makedirs("./data", exist_ok=True)
-                out_file = f"./data/{run_name}_part_{batch_id}.csv"
-                self.df.iloc[:idx+1][cols_tolog].to_csv(out_file, index=False)
-                mlflow.log_artifact(out_file)
-                print(f"[INFO] Saved and logged partial artifact: {out_file}")
+            self.df.to_csv(out_path, index=False)
+            mlflow.log_artifact(out_path)
 
             # Save config used
-            os.makedirs("./data", exist_ok=True)
-            config_path = "./data/config_used.txt"
-            with open(config_path, "w") as f: 
+            with open("config_used.txt", "w") as f:
                 f.write(str(config))
-            mlflow.log_artifact(config_path)
+            mlflow.log_artifact("config_used.txt")
 
             if verbose:
                 print("Evaluation complete. Aggregate metrics:")
