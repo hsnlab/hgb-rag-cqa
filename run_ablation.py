@@ -221,13 +221,13 @@ def main():
         elif retr == "kg":
             for dedup, rerank, overr, sp_flag in itertools.product(dedup_flags, rerank_flags, over_retrieve_flags, shortest_path_flags):
                 # handle sub-options only when relevant
-                minhash_opts = [True, False] if dedup else [False]
-                semantic_opts = [True, False] if dedup else [False]
+                minhash_opts = [True] if dedup else [False]
+                semantic_opts = [True] if dedup else [False]
                 graph_opts = [True, False] if rerank else [False]
                 pop_opts = [True, False] if rerank else [False]
-                rerank_candidate_caps = [50, 100] if rerank else [0]
-                over_retrieve_factors = [5, 10] if overr else [0]
-                over_retrieve_caps = [100, 200] if overr else [0]
+                rerank_candidate_caps = [100] if rerank else [0]
+                over_retrieve_factors = [10] if overr else [0]
+                over_retrieve_caps = [200] if overr else [0]
                 for mh, semd, rrgraph, rrpop, orf, orc, rcc in itertools.product(
                     minhash_opts,
                     semantic_opts,
