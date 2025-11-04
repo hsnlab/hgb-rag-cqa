@@ -112,7 +112,7 @@ def main():
     except:
         dataset = pd.read_csv(eval_df_path, sep="\t")
     dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
-                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context"})
+                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context","edit_functions":"golden_context"})
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     

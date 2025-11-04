@@ -10,7 +10,7 @@ import html
 import sys
 from src.rag.agentic_langgraph import AgenticLangGraph
 from .evaluation import AgenticRAGEvaluator
-import time
+import time, mlflow
 import asyncio
 
 def remove_html_tags(text):
@@ -59,6 +59,18 @@ async def main():
         required=False,
         help="Pipeline version to run: 'free' (src.rag.agentic_langgraph) or 'strict' (src.rag.agentic_langgraph_strict)."
     )
+    parser.add_argument(
+        "--mlflow-uri", "-mu", 
+        default="http://127.0.0.1:5000", 
+        type=str,
+        required=False
+    )
+    parser.add_argument(
+        "--mlflow-exp", "-me", 
+        default="rag_eval_experiments", 
+        type=str,
+        required=False
+    )
 
     args = parser.parse_args()
     
@@ -66,6 +78,8 @@ async def main():
     q_limit = args.question_limit
     model_name = args.model_name
     pipeline_version = args.pipeline
+    mlflow_uri = args.mlflow_uri
+    mlflow_exp = args.mlflow_exp
 
     if not os.path.isfile(eval_df_path):
         print(f"Error: File '{eval_df_path}' does not exist.")
@@ -77,11 +91,12 @@ async def main():
     except:
         dataset = pd.read_csv(eval_df_path, sep="\t")
     dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
-                                      "questions":"question", "answers":"answer", "contexts":"golden_context"})
+                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context","edit_functions":"golden_context"})
     dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
     dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
     
-    dataset = dataset.loc[dataset["golden_context"].str.len() > 0]
+    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 850) & (dataset["answer"].str.len() <= 850)]
+
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
     dataset["question"] = dataset["question"].apply(remove_html_tags)
@@ -98,24 +113,21 @@ async def main():
     else:
         print(f"Error: Unknown pipeline version '{pipeline_version}'")
         sys.exit(1)
-
+        
+    # MLflow setup
+    mlflow.set_tracking_uri(mlflow_uri)
+    mlflow.set_experiment(mlflow_exp)  
+      
     evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context", gpu_cleanup_every=10)
     try:
-        await evaluator.evaluate(verbose=True)
+        run_name = f"{pipeline_version}_{model_name.replace(':', '-')}"
+        await evaluator.evaluate(verbose=True,run_name = run_name)
     except Exception as e:
         print("-" * 50)
         print(f"[ERROR] Evaluation halted on an exception: {e}")
-        # Use traceback.print_exc() to print the full stack trace
         traceback.print_exc() 
         print("-" * 50)
 
-    #evaluator.print_summary()
     
-    df_with_eval = evaluator.df
-    # Save to same folder with _w_metrics.csv
-    base_path, _ = os.path.splitext(eval_df_path)
-    finish_time = time.time()
-    output_path = f"{base_path}_w_metrics_langgraph_{model_name.replace(':', '_')}_{finish_time}.csv"
-    df_with_eval.to_csv(output_path, index=False)
 if __name__ == "__main__":
     asyncio.run(main())

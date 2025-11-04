@@ -206,7 +206,7 @@ class AgenticRAGEvaluator:
         context_column: str = "edit_functions",
         gpu_cleanup_every: int | None = None,
     ):
-        self.df = df.copy()
+        self.df = df.reset_index(drop=True).copy()
         self.agentic_runner = agentic_runner
         self.k_values = k_values
         self.context_column = context_column
