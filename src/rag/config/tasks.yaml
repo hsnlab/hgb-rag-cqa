@@ -1,0 +1,60 @@
+qdrant_task:
+  description: >
+    Using the user query, perform dense semantic retrieval from Qdrant using vector similarity search.
+    Try different query phrasings to improve results.
+    Return documents and metadata in JSON format.
+  expected_output: >
+    A JSON array containing top-k Qdrant documents with fields:
+    {content, metadata, score}.
+  agent: qdrant_agent
+
+graph_task:
+  description: >
+    Query Neo4j to expand neighborhoods of functions, issues, or PRs related
+    to the query context.
+  expected_output: >
+    A JSON array of related graph nodes and relationships with metadata.
+  agent: graph_agent
+
+retrieval_orchestration_task:
+  description: >
+    Coordinate between the Qdrant and Neo4j retrievers.
+    Merge their results into a single structured JSON with metadata for reasoning.
+  expected_output: >
+    A unified JSON object with merged retrieval data, such as:
+    { "qdrant_docs": [...], "graph_nodes": [...], "merged_docs": [...] }.
+  agent: retrieval_orchestrator
+  context:
+    - qdrant_task
+    - graph_task
+
+reason_task:
+  description: >
+    Generate a factual, well-structured, and context-grounded answer to the user query
+    using the retrieved and merged data.
+  expected_output: >
+    A JSON object with two fields:
+    { "answer": "<natural language answer>", "citations": [...] }.
+  agent: reasoner_agent
+  context:
+    - retrieval_orchestration_task
+
+evaluate_task:
+  description: >
+    Assess the quality of the Reasoner’s output. Check for factual correctness,
+    completeness, and clarity. Provide an overall verdict.
+  expected_output: >
+    A JSON object containing both the Reasoner’s final answer and the evaluation report:
+    {
+      "answer": "<reasoner's answer>",
+      "evaluation": {
+        "factuality": "<High|Medium|Low>",
+        "completeness": "<High|Medium|Low>",
+        "clarity": "<High|Medium|Low>",
+        "verdict": "<PASS|FAIL>",
+        "notes": "<detailed reviewer comments>"
+      }
+    }
+  agent: evaluator_agent
+  context:
+    - reason_task

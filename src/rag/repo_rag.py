@@ -27,6 +27,8 @@ class RepositoryRAG(SimpleRAG):
         reranker=None,
         llm=None,
         llm_model: str = None,
+        classifier=None, 
+        classifier_model: str = None,
         neo4j_uri: str = None,
         neo4j_auth: Union[Tuple[str, str], str, None] = None,
     ):
@@ -39,14 +41,14 @@ class RepositoryRAG(SimpleRAG):
             llm: (optional) pre-initialized HuggingFace pipeline or model wrapper
             llm_model: (optional) name of LLM to pass to SimpleRAG initializer
         """
-        super().__init__(vectorstore=vectorstore, llm=llm, llm_model=llm_model,neo4j_auth=neo4j_auth, neo4j_uri=neo4j_uri)
+        super().__init__(vectorstore=vectorstore, llm=llm, llm_model=llm_model,neo4j_auth=neo4j_auth, neo4j_uri=neo4j_uri, classifier=classifier, classifier_model=classifier_model)
 
         # KG-specific components
         self.retriever = retriever
         self.deduplicator = deduplicator
         self.reranker = reranker
 
-    def _retrieve(self, query: str, config: PipelineConfig) -> Tuple[List[Document], str, Optional[List]]:
+    def _retrieve(self, query: str, query_type:str, config: PipelineConfig) -> Tuple[List[Document], str, Optional[List]]:
         """
         Repository retrieval.
 
@@ -69,8 +71,8 @@ class RepositoryRAG(SimpleRAG):
                 effective_k = config.top_k
             cap = getattr(config, "over_retrieve_cap", 200)
             effective_k = min(effective_k, cap)
-            docs, query_type = self.retriever.retrieve(query, top_k=effective_k)
-            return docs, query_type
+            docs, top_nodes = self.retriever.retrieve(query, top_k=effective_k, query_type=query_type)
+            return docs, top_nodes
 
         # Fallback: use SimpleRAG's vectorstore-based retrieval
-        return super()._retrieve(query, config)
+        return super()._retrieve(query,query_type, config)
