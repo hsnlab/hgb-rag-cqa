@@ -106,7 +106,8 @@ def main():
             qdrant_url=qdrant_config["url"],
             collection_name=qdrant_config["collection"],
             api_key=qdrant_config["api_key"],
-            distance_type=qdrant_config["distance"]
+            distance_type=qdrant_config["distance"],
+            kwargs=qdrant_config["kwargs"]
         )
         
     # Build LLM

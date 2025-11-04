@@ -1,24 +1,76 @@
-from src.rag.agentic_rag import AgenticRAG
+import asyncio
+import json
+import traceback
+import argparse
+from src.rag.agentic_langgraph import AgenticLangGraph
+from src.rag.agentic_langgraph_strict import StrictAgenticLangGraph
 
-def main():
-    rag = AgenticRAG()
-    crew = rag.crew()
-    try:
-        while True:
-            question = input("\nPlease enter your question (Ctrl+C to exit): ").strip()
-            if not question:
-                continue
 
-            print("\nRunning Agentic RAG pipeline...")
-            result = crew.kickoff(inputs={"query": question})
+async def interactive_mode():
+    """
+    Launch an interactive shell to manually test the AgenticLangGraph.
+    """
+    parser = argparse.ArgumentParser(description="Run LangGraph Agentic RAG.")
+    parser.add_argument(
+        "--model-name", "-ml",
+        default="gpt-oss:20b",
+        type=str,
+        help="Name of Ollama model to use for agents.",
+        required=False
+    )
+    parser.add_argument(
+        "--pipeline",
+        choices=["free", "strict"],
+        default="free",
+        type=str,
+        required=False,
+        help="Pipeline version to run: 'free' (src.rag.agentic_langgraph) or 'strict' (src.rag.agentic_langgraph_strict)."
+    )
 
-            print("\n=== Final Answer ===")
-            print(result["answer"])
-            print("\n=== Evaluation ===")
-            print(result.get("evaluation", "No evaluation available."))
+    args = parser.parse_args()
 
-    except (KeyboardInterrupt, EOFError):
-        print("\n\nExiting. Goodbye!")
+    model_name = args.model_name
+    pipeline_version = args.pipeline
+    if pipeline_version == "strict":
+        print("Initializing StrictAgenticLangGraph...")
+        agent = StrictAgenticLangGraph(model_name=model_name)
+    elif pipeline_version == "free":
+        print("Initializing AgenticLangGraph...")
+        agent = AgenticLangGraph(model_name=model_name)
+    else:
+        print("Pipeline version not recognized, falling back to 'free'")
+        agent = AgenticLangGraph(model_name=model_name)
+    
+
+    # Ensure the graph is initialized
+    await agent.setup_graph()
+
+    print("\n[READY] Agent initialized successfully.")
+    print("Type your query below (or 'exit' to quit).\n")
+
+    while True:
+        try:
+            query = input("User: ").strip()
+            if query.lower() in ["exit", "quit", "q"]:
+                print("Goodbye!")
+                break
+
+            print("\n[INFO] Processing query — please wait...\n")
+            result = await agent.run_async(query)
+
+            print(f"\n[ANSWER]: {result['answer']}")
+            #print(json.dumps(result, indent=2, ensure_ascii=False))
+            print(f"\n[RETRIEVED NODES]: {result['relevant_node_ids']}")
+            
+            print("\n--------------------------------------------\n")
+
+        except Exception as e:
+            print("[ERROR] Exception during run:")
+            traceback.print_exc()
+            print("\nRestarting interactive mode...\n")
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(interactive_mode())
+    except KeyboardInterrupt:
+        print("\nInterrupted by user.")

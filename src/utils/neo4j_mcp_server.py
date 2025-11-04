@@ -93,8 +93,8 @@ def get_node_info(node_id:str, field:str) -> str:
                     return ""
             else:
                 return ""
-        except:
-            print(f"[DEBUG] Failed to run get_node_info endpoint for node: {node_id}, field: {field}")
+        except Exception as e:
+            print(f"[DEBUG] Failed to run get_node_info endpoint for node: {node_id}, field: {field}:{e}")
             return ""
 
 @mcp.tool()

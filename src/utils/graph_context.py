@@ -61,7 +61,7 @@ def build_shortest_path_context(
         question_global_id = q_record["qid"]
         question_display_type = q_record["qtype"]  # e.g. "performance"
 
-        # --- Step 2: for each top node, get shortest path QUESTION → node
+        # --- Step 2: for each top node, get shortest path QUESTION -> node
         for node_id in top_nodes[:top_k_paths]:
             if node_id == question_global_id:
                 continue
@@ -134,7 +134,6 @@ def build_shortest_path_context(
                 question_display_type,
             )
 
-            # de-dupe whole-path strings across targets
             if path_text in seen_paths:
                 continue
             seen_paths.add(path_text)
@@ -159,12 +158,7 @@ def build_shortest_path_context(
 
             # avoid empty / degenerate cases
             if not node_numeric_ids:
-                if verbose:
-                    print(f"[DEBUG] Skipping doc fetch for path (no retrievable IDs).")
                 continue
-
-            if verbose:
-                print(f"[DEBUG] numeric_ids used for Qdrant: {node_numeric_ids}")
 
             q_filter = models.Filter(
                 must=[
@@ -194,10 +188,6 @@ def build_shortest_path_context(
                 top_k=top_k_docs_per_path,
                 filter=q_filter,
             )
-
-            if verbose:
-                print(f"[DEBUG] Added path documents with {len(path_docs)} docs.")
-
             context_docs.extend(path_docs)
 
     driver.close()

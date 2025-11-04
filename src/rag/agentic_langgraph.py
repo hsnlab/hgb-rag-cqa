@@ -279,9 +279,9 @@ def route_tools(state: AgenticRAGState):
     else:
         raise ValueError("No messages found in state")
     
-    if len(state.get("tool_log", [])) > 10:
-        print("[STOP] Too many tool calls; ending early.")
-        return END
+    #if len(state.get("tool_log", [])) > 10:
+    #    print("[STOP] Too many tool calls; ending early.")
+    #    return END
     
     if hasattr(ai_message, "tool_calls") and ai_message.tool_calls:
         return "tools"
