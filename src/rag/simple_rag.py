@@ -60,10 +60,7 @@ class SimpleRAG(BaseRAG):
         for d in docs:
             meta = d.metadata or {}
             node_id = meta.get("node_id")
-            node_type = meta.get("type")
-            if node_id and node_type:
-                gid = self._make_global_id(node_id, node_type)
-                top_nodes.append(gid)
+            top_nodes.append(node_id)
 
         # deduplicate
         top_nodes = list(set(top_nodes))
