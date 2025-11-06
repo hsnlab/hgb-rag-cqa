@@ -93,7 +93,7 @@ class KnowledgeGraphRetriever:
             func_docs_name = self.store.search(query, filter = index_filter, top_k=top_k)
             
             func_docs = func_docs_code + func_docs_name
-            func_global_ids = [self._make_global_id(d.metadata["node_id"], d.metadata["type"]) for d in func_docs]
+            func_global_ids = [d.metadata["node_id"] for d in func_docs]
             # Step 2: expand neighborhood in KG
             neighbors = self.expand_function_neighbors(func_global_ids, hops=2)
             top_node_ids = list(set(func_global_ids + neighbors))
@@ -109,7 +109,7 @@ class KnowledgeGraphRetriever:
                         ),
                         models.FieldCondition(
                             key="metadata.node_id",        
-                            match=models.MatchAny(any=[nid.split(":")[1] for nid in neighbors])
+                            match=models.MatchAny(any=neighbors)
                         )
                     ]
                 )
@@ -139,8 +139,8 @@ class KnowledgeGraphRetriever:
             pr_docs = self.store.search(query, filter = pr_filter, top_k=top_k)
 
             # Step 2: expand to functions linked to these issues/PRs
-            issue_global_ids = [self._make_global_id(d.metadata["node_id"], d.metadata["type"]) for d in issue_docs]
-            pr_global_ids = [self._make_global_id(d.metadata["node_id"], d.metadata["type"]) for d in pr_docs]
+            issue_global_ids = [d.metadata["node_id"] for d in issue_docs]
+            pr_global_ids = [d.metadata["node_id"] for d in pr_docs]
 
             func_ids = self.functions_linked_to_issues_prs(issue_global_ids, id_type="issue")
             func_ids += self.functions_linked_to_issues_prs(pr_global_ids, id_type="pr")
@@ -163,7 +163,7 @@ class KnowledgeGraphRetriever:
                         ),
                         models.FieldCondition(
                             key="metadata.node_id",        
-                            match=models.MatchAny(any=[nid.split(":")[1] for nid in target_ids])
+                            match=models.MatchAny(any=target_ids)
                         )
                     ]
                 )
@@ -182,7 +182,7 @@ class KnowledgeGraphRetriever:
                 models.FieldCondition(key="metadata.type", match=models.MatchValue(value="semantic_cluster"))
             ])
             cluster_docs = self.store.search(query, filter=cluster_filter, top_k=3)
-            cluster_global_ids = [self._make_global_id(d.metadata["node_id"], d.metadata["type"]) for d in cluster_docs]
+            cluster_global_ids = [d.metadata["node_id"] for d in cluster_docs]
 
             # Step 2: fetch linked functions
             func_results = self.graph.query("""
@@ -197,7 +197,7 @@ class KnowledgeGraphRetriever:
             func_filter = models.Filter(must=[
                 models.FieldCondition(
                     key="metadata.node_id",
-                    match=models.MatchAny(any=[nid.split(":")[1] for nid in func_ids])
+                    match=models.MatchAny(any=func_ids)
                 ),
                 models.FieldCondition(
                     key="metadata.type",
@@ -213,7 +213,7 @@ class KnowledgeGraphRetriever:
                 models.FieldCondition(key="metadata.type", match=models.MatchValue(value="semantic_cluster"))
             ])
             cluster_docs = self.store.search(query, filter=cluster_filter, top_k=5)
-            cluster_global_ids = [self._make_global_id(d.metadata["node_id"], d.metadata["type"]) for d in cluster_docs]
+            cluster_global_ids = [d.metadata["node_id"] for d in cluster_docs]
 
             # Step 2: get functions in clusters
             func_results = self.graph.query("""
@@ -230,7 +230,7 @@ class KnowledgeGraphRetriever:
             func_filter = models.Filter(must=[
                 models.FieldCondition(
                     key="metadata.node_id",
-                    match=models.MatchAny(any=[nid.split(":")[1] for nid in func_ids + cfg_neighbors])
+                    match=models.MatchAny(any= func_ids + cfg_neighbors)
                 ),
                 models.FieldCondition(
                     key="metadata.type",

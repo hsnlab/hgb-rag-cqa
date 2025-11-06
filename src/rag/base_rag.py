@@ -74,7 +74,7 @@ class BaseRAG(ABC):
         else:
             retrieved = retrieved[:top_k]    
 
-        top_nodes = self._align_top_nodes_with_docs(retrieved, top_k)
+        top_nodes = [d.metadata.get("node_id") for d in retrieved]
 
         if getattr(config, "use_shortest_path_context", True) and top_nodes:
             if hasattr(self, "neo4j_uri") and hasattr(self, "neo4j_auth") and hasattr(self, "vectorstore"):
@@ -140,27 +140,6 @@ class BaseRAG(ABC):
             "top_nodes": top_nodes,
             "query_type": query_type or "default",
         }
-    
-    def _align_top_nodes_with_docs(self, retrieved: List[Document], top_k: int) -> List[str]:
-        """
-        Build top_nodes directly from the final ranked documents.
-        Ensures node ordering and count match exactly what the model will see.
-
-        Returns:
-            List[str]: List of global_ids (e.g., FUNCTION:123) matching retrieved order.
-        """
-        if not retrieved:
-            return []
-
-        top_nodes = []
-        for d in retrieved:
-            node_id = d.metadata.get("node_id")
-            node_type = d.metadata.get("type")
-            if not node_id or not node_type:
-                continue
-            top_nodes.append(self._make_global_id(node_id, node_type))
-
-        return top_nodes[:top_k]
 
     @staticmethod
     def _make_global_id(node_id: str, node_type: str) -> str:

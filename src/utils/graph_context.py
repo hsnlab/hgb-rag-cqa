@@ -10,8 +10,18 @@ Q_MAP = {
     "default": "general",
 }
 
-# node labels that we consider to have retrievable text in Qdrant
-RETRIEVABLE_TYPES = {"FUNCTION", "ISSUE", "PR", "CLUSTER"}
+# Mapping of edge names to more human-readable forms
+EDGE_NAME_MAP = {
+    "QUESTION_CLUSTER": "related to cluster",
+    "CLUSTER_FUNCTION": "contains",
+    "ISSUE_PR": "links to",
+    "PR_FUNCTION": "modified",
+    "FUNCTION_FUNCTION": "calls",
+    "CLASS_FUNCTION": "defines",
+    "FILE_CLASS": "defined in",
+    "FILE_FUNCTION": "contains",
+    "IMPORT_FUNCTION": "imported by",
+}
 
 
 def build_shortest_path_context(
@@ -144,41 +154,17 @@ def build_shortest_path_context(
 
             # --- Step 4: retrieve docs from retrievable nodes on this path
             # collect numeric node IDs for retrievable node types only
-            node_pairs = [
-                (n["id"], n.get("type", "UNKNOWN"))
-                for n in path_nodes
-                if n.get("id") and ":" in n["id"]
-            ]
-
-            node_numeric_ids = [
-                str(gid.split(":")[1])
-                for gid, label in node_pairs
-                if label.upper() in RETRIEVABLE_TYPES
-            ]
+            node_ids = [node["id"] for node in path_nodes]
 
             # avoid empty / degenerate cases
-            if not node_numeric_ids:
+            if not node_ids:
                 continue
 
             q_filter = models.Filter(
                 must=[
                     models.FieldCondition(
                         key="metadata.node_id",
-                        match=models.MatchAny(any=node_numeric_ids),
-                    ),
-                    models.FieldCondition(
-                        key="metadata.type",
-                        match=models.MatchAny(
-                            any=[
-                                "function_code",
-                                "function_docstring",
-                                "issue_body",
-                                "issue_title",
-                                "pr_body",
-                                "pr_title",
-                                "semantic_cluster",
-                            ]
-                        ),
+                        match=models.MatchAny(any=node_ids),
                     ),
                 ]
             )
@@ -218,7 +204,7 @@ def _build_structural_path_text(
     for rel in rel_triplets:
         src_id = rel["src"]["id"]
         dst_id = rel["dst"]["id"]
-        rel_type = rel["rel_type"]
+        rel_type = EDGE_NAME_MAP[rel["rel_type"]]
 
         src_node = node_by_id.get(src_id)
         dst_node = node_by_id.get(dst_id)
