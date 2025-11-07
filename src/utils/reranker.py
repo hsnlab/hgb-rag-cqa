@@ -4,6 +4,7 @@ import torch
 from collections import Counter
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from langchain_core.documents import Document
+from neo4j import GraphDatabase
 
 class Reranker:
     def __init__(self, neo4j_config:dict=None, cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", device: str = "cpu"):
@@ -41,11 +42,11 @@ class Reranker:
         """
         node_id = metadata.get("node_id", None)
         if node_id:
-            query = """"
+            query = """
             MATCH (n) WHERE n.global_id = $node_id
             RETURN 
                 COUNT {(n)-[r]->()} AS out_degree,
-                COUNT {(m)-[r]->(n)} AS in_degree,
+                COUNT {(m)-[r]->(n)} AS in_degree
             """
             with driver.session() as session:
                 result = session.run(query, node_id=node_id).single()
@@ -146,7 +147,8 @@ class Reranker:
         scored_docs = []
         for doc, ce_score in zip(docs, cross_scores):
             if use_graph:
-                g_score = self.graph_score(doc.metadata)
+                driver = GraphDatabase.driver(self.neo4j_config["url"], auth=(self.neo4j_config["user"], self.neo4j_config["password"]))
+                g_score = self.graph_score(doc.metadata, driver)
                 final_score = alpha * ce_score + beta * g_score
             else:
                 final_score = ce_score
