@@ -82,7 +82,7 @@ class KnowledgeGraphRetriever:
                     match=models.MatchAny(any=["function_docstring", "function_code"])
                 )
             ])
-            func_docs_code = self.store.search(query, filter = index_filter, top_k=top_k)
+            func_docs_code = self.store.search_with_scores(query, filter = index_filter, top_k=top_k)
 
             index_filter = models.Filter(must=[
                 models.FieldCondition(
@@ -90,10 +90,10 @@ class KnowledgeGraphRetriever:
                     match=models.MatchAny(any=["function_name", "function_split_names"])
                 )
             ])
-            func_docs_name = self.store.search(query, filter = index_filter, top_k=top_k)
+            func_docs_name = self.store.search_with_scores(query, filter = index_filter, top_k=top_k)
             
             func_docs = func_docs_code + func_docs_name
-            func_global_ids = [d.metadata["node_id"] for d in func_docs]
+            func_global_ids = [d.metadata["node_id"] for d,_ in func_docs]
             # Step 2: expand neighborhood in KG
             neighbors = self.expand_function_neighbors(func_global_ids, hops=2)
             top_node_ids = list(set(func_global_ids + neighbors))
@@ -113,14 +113,16 @@ class KnowledgeGraphRetriever:
                         )
                     ]
                 )
-                neighbor_docs = self.store.search(
+                neighbor_docs = self.store.search_with_scores(
                     query,
                     top_k=len(neighbors),
                     filter=neighbor_filter,
                 )
-
-            return func_docs + neighbor_docs, top_node_ids
-
+            all_docs = func_docs + neighbor_docs
+            all_docs = sorted(all_docs, key=lambda x: x[1], reverse=True)
+#            all_docs = [d for d, _ in all_docs]
+            return all_docs, top_node_ids
+        
         elif query_type == "bug_report":
             # Step 1: retrieve issues + PRs
             issue_filter = models.Filter(must=[
@@ -129,18 +131,18 @@ class KnowledgeGraphRetriever:
                     match=models.MatchAny(any=["issue_body","issue_title"])
                 )
             ])
-            issue_docs = self.store.search(query, filter = issue_filter, top_k=top_k)
+            issue_docs = self.store.search_with_scores(query, filter = issue_filter, top_k=top_k)
             pr_filter = models.Filter(must=[
                 models.FieldCondition(
                     key="metadata.type",
                     match=models.MatchAny(any=["pr_body", "pr_title"])
                 )
             ])
-            pr_docs = self.store.search(query, filter = pr_filter, top_k=top_k)
+            pr_docs = self.store.search_with_scores(query, filter = pr_filter, top_k=top_k)
 
             # Step 2: expand to functions linked to these issues/PRs
-            issue_global_ids = [d.metadata["node_id"] for d in issue_docs]
-            pr_global_ids = [d.metadata["node_id"] for d in pr_docs]
+            issue_global_ids = [d.metadata["node_id"] for d,_ in issue_docs]
+            pr_global_ids = [d.metadata["node_id"] for d,_ in pr_docs]
 
             func_ids = self.functions_linked_to_issues_prs(issue_global_ids, id_type="issue")
             func_ids += self.functions_linked_to_issues_prs(pr_global_ids, id_type="pr")
@@ -167,13 +169,14 @@ class KnowledgeGraphRetriever:
                         )
                     ]
                 )
-                func_docs = self.store.search(
+                func_docs = self.store.search_with_scores(
                     query,
                     top_k=len(target_ids),
                     filter=filter,
                 )
                 all_docs += func_docs
-
+            all_docs = sorted(all_docs, key=lambda x: x[1], reverse=True)
+#            all_docs = [d for d, _ in all_docs]
             return all_docs, top_node_ids
 
         elif query_type == "feature_request":
@@ -181,8 +184,8 @@ class KnowledgeGraphRetriever:
             cluster_filter = models.Filter(must=[
                 models.FieldCondition(key="metadata.type", match=models.MatchValue(value="semantic_cluster"))
             ])
-            cluster_docs = self.store.search(query, filter=cluster_filter, top_k=3)
-            cluster_global_ids = [d.metadata["node_id"] for d in cluster_docs]
+            cluster_docs = self.store.search_with_scores(query, filter=cluster_filter, top_k=3)
+            cluster_global_ids = [d.metadata["node_id"] for d,_ in cluster_docs]
 
             # Step 2: fetch linked functions
             func_results = self.graph.query("""
@@ -204,7 +207,9 @@ class KnowledgeGraphRetriever:
                     match=models.MatchAny(any=["function_code", "function_docstring"])
                 )
             ]) if func_ids else None
-            func_docs = self.store.search(query, top_k=top_k, filter=func_filter)
+            func_docs = self.store.search_with_scores(query, top_k=top_k, filter=func_filter)
+            func_docs = sorted(func_docs, key=lambda x: x[1], reverse=True)
+#            func_docs = [d for d, _ in func_docs]
             return func_docs, top_node_ids
 
         elif query_type == "performance_issue":
@@ -212,8 +217,8 @@ class KnowledgeGraphRetriever:
             cluster_filter = models.Filter(must=[
                 models.FieldCondition(key="metadata.type", match=models.MatchValue(value="semantic_cluster"))
             ])
-            cluster_docs = self.store.search(query, filter=cluster_filter, top_k=5)
-            cluster_global_ids = [d.metadata["node_id"] for d in cluster_docs]
+            cluster_docs = self.store.search_with_scores(query, filter=cluster_filter, top_k=5)
+            cluster_global_ids = [d.metadata["node_id"] for d,_ in cluster_docs]
 
             # Step 2: get functions in clusters
             func_results = self.graph.query("""
@@ -237,7 +242,9 @@ class KnowledgeGraphRetriever:
                     match=models.MatchValue(value="function_code")
                 ),
             ]) if func_ids else None
-            func_docs = self.store.search(query, top_k=top_k, filter=func_filter)
+            func_docs = self.store.search_with_scores(query, top_k=top_k, filter=func_filter)
+            func_docs = sorted(func_docs, key=lambda x: x[1], reverse=True)
+#            func_docs = [d for d, _ in func_docs]
             return func_docs, top_node_ids
 
         else:

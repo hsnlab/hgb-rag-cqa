@@ -49,13 +49,14 @@ class BaseRAG(ABC):
 
         # optional deduplication
         if config.deduplicate and hasattr(self, "deduplicator"):
-            retrieved = self.deduplicator.deduplicate(
+            retrieved = self.deduplicator.deduplicate_scored(
                 retrieved,
                 use_minhash=config.dedup_use_minhash,
                 jaccard_threshold=config.dedup_jaccard_threshold,
                 use_semantic=config.dedup_use_semantic,
                 sim_threshold=config.dedup_sim_threshold,
             )
+            retrieved = [doc for doc, _ in retrieved]
             if config.verbose:
                 print(f"Deduplicated to {len(retrieved)} documents.")
 

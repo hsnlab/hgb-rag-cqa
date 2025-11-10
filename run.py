@@ -116,7 +116,7 @@ def main():
 
     kg_retriever = KnowledgeGraphRetriever(vector_store=vectorstore, neo4j_url =neo4j_config["url"], neo4j_username=neo4j_config["user"], neo4j_password =neo4j_config["password"], database= "neo4j")
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
-    reranker = Reranker()
+    reranker = Reranker(neo4j_config=neo4j_config)
 
     
     # Instantiate both RAG variants

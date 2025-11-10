@@ -4,7 +4,7 @@ from langchain_core.documents import Document
 
 Q_MAP = {
     "general_question": "general",
-    "bug_report": "bug report/issue/PR",
+    "bug_report": " bug report/issue/PR",
     "performance_issue": "performance",
     "feature_request": "feature request",
     "default": "general",
