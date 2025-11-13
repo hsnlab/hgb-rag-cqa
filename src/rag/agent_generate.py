@@ -1,8 +1,9 @@
 import datetime
 import logging
 from crewai import Agent, Task, Crew
+from crewai_tools import MCPServerAdapter
+from mcp import StdioServerParameters
 from src.rag.hf_llm_wrapper import HFLocalLLM
-from src.rag.retrieval_tool import RetrievalTool
 
 
 # -----------------------------
@@ -26,16 +27,16 @@ def run_agents(question: str, context, huggingface_apikey: str):
     llm = HFLocalLLM(context["gen"])
     print(f"[{_ts()}] LLM initialized successfully.")
 
-    # -----------------------------
-    # Step 2: Attach retrieval tool
-    # -----------------------------
-    retriever = context.get("retriever", None)
-    if retriever:
-        retrieval_tool = RetrievalTool(retriever)
-        print(f"[{_ts()}] Retrieval layer available. Tool will be attached to the Retriever.")
-    else:
-        retrieval_tool = None
-        print(f"[{_ts()}] ⚠️ No retriever found in context! Retrieval tool disabled.")
+    # =========================================================
+    # Step 2: Attach MCP Qdrant tools to existing CrewAI agents
+    # =========================================================
+    print("🔌 Connecting to external MCP Qdrant server @ http://localhost:8001/mcp")
+    mcp = MCPServerAdapter({
+        "transport": "sse",
+        "url": "http://localhost:8001/mcp",
+        "headers": {"accept": "text/event-stream"}
+    })
+    mcp_tools = mcp.get_tools()
 
     # -----------------------------
     # Step 3: Define agents
@@ -53,10 +54,10 @@ def run_agents(question: str, context, huggingface_apikey: str):
     retriever_agent = Agent(
         name="Retriever",
         role="Information Retriever",
-        goal="Use the retrieval tool multiple times if necessary to gather enough evidence from Neo4j and Qdrant.",
-        backstory="You have access to structured and unstructured sources. Use the retrieval tool to get information dynamically.",
+        goal="Query the Qdrant vector DB through MCP based on the Interpreter plan.",
+        backstory="Finds multiple relevant chunks via MCP Qdrant tools.",
         llm=llm,
-        tools=[retrieval_tool] if retrieval_tool else [],
+        tools=mcp_tools,
     )
 
     synthesizer_agent = Agent(
@@ -77,13 +78,13 @@ def run_agents(question: str, context, huggingface_apikey: str):
     interpret_task = Task(
         description=f"Analyze the question: '{question}' and decide what information must be retrieved.",
         agent=interpreter_agent,
-        expected_output="A clear plan of what to retrieve and which data sources may be relevant.",
+        expected_output="Plan for retrieval steps & query structure.",
     )
 
     retrieve_task = Task(
-        description=f"Using the retrieval tool, search the knowledge base (Neo4j/Qdrant) for data relevant to: '{question}'.",
+        description=f"Use MCP Qdrant tools to retrieve all relevant information about: '{question}'",
         agent=retriever_agent,
-        expected_output="A list of retrieved snippets, functions, or relationships relevant to the user's query.",
+        expected_output="Retrieved chunks / metadata useful to answer."
     )
 
     synthesize_task = Task(
