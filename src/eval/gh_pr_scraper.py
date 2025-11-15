@@ -6,10 +6,23 @@ import ast
 import hashlib
 import pandas as pd
 
-start_datetime = datetime(2025, 8, 5, 9, 30)
-TOKEN = "YOUR_TOKEN_HERE"
-REPO = "YOUR_REPO_HERE"
-PR_NUMS = 3
+# --- MODIFICATION: Define a date range ---
+# Dates must be timezone-aware (UTC) for the API search
+FROM_DATETIME = datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+TO_DATETIME = datetime(2021, 10, 25, 23, 59, 59, tzinfo=timezone.utc)
+# ---
+
+TOKEN = "TOKEN"
+REPO = "scikit-learn/scikit-learn"
+PR_NUMS = 1000
+
+OUTPUT_FILENAME = "collected_prs_5000-2.csv"
+
+
+def save(collected_prs):
+    df = pd.DataFrame(collected_prs)
+    df.to_csv(OUTPUT_FILENAME, index=False)
+
 
 class FunctionCollector(ast.NodeVisitor):
     def __init__(self, lines: List[str]):
@@ -41,10 +54,13 @@ class FunctionCollector(ast.NodeVisitor):
 
 
 class GitHubDataCollector:
-    def __init__(self, token: str, repo_name: str, after_date: datetime):
+    # --- MODIFICATION: Accept from_date and to_date ---
+    def __init__(self, token: str, repo_name: str, from_date: datetime, to_date: datetime):
         self.token = token
         self.repo_name = repo_name
-        self.after_date = after_date
+        self.from_date = from_date
+        self.to_date = to_date
+        # ---
 
         try:
             self.github_client = Github(self.token)
@@ -123,6 +139,22 @@ class GitHubDataCollector:
         except Exception as e:
             print(f"[Warning] Could not get file content for {path}@{ref}: {e}")
             return ""
+
+    def _clean_patch(self, patch_text: str) -> str:
+        """
+        Extracts only the added lines (green lines) from a patch
+        and removes the leading '+' marker.
+        """
+        if not patch_text:
+            return ""
+
+        cleaned_lines = []
+        for line in patch_text.splitlines():
+            # Keep lines that start with '+' but are not file headers '+++'
+            if line.startswith('+') and not line.startswith('+++'):
+                cleaned_lines.append(line[1:])  # Remove the leading '+'
+
+        return "\n".join(cleaned_lines)
 
     def extract_changed_functions_from_pr(self, pr) -> List[str]:
 
@@ -216,6 +248,19 @@ class GitHubDataCollector:
         pr_data['review_comments_count'] = pr.review_comments
         pr_data['commits_count'] = pr.commits
 
+        # Collect the diff/patch for each file
+        file_patches = {}
+        try:
+            for file in pr.get_files():
+                if file.patch:
+                    file_patches[file.filename] = self._clean_patch(file.patch)
+                else:
+                    file_patches[file.filename] = "[Patch not available]"
+            pr_data['patches'] = file_patches
+        except Exception as e:
+            print(f"[Warning] Failed to fetch file patches for PR #{pr.number}: {e}")
+            pr_data['patches'] = {}
+
         try:
             comments = pr.get_issue_comments()
             pr_data['comments'] = "\n".join([c.body for c in comments if c.user.type != "Bot"])
@@ -269,22 +314,31 @@ class GitHubDataCollector:
         filtered_prs = []
 
         try:
-            print(f"Fetching items from repo since {self.after_date.isoformat()}...")
-            all_closed_items = self.repo.get_issues(
-                state='closed',
+            # --- MODIFICATION: Use search_issues with a created date range ---
+            print(
+                f"Fetching items from repo created between {self.from_date.isoformat()} and {self.to_date.isoformat()}...")
+
+            # Format dates for GitHub search query (YYYY-MM-DDTHH:MM:SSZ)
+            from_iso = self.from_date.isoformat()
+            to_iso = self.to_date.isoformat()
+
+            query = f"repo:{self.repo_name} is:pr is:closed created:{from_iso}..{to_iso}"
+
+            print(f"Using search query: {query}")
+
+            all_closed_items = self.github_client.search_issues(
+                query=query,
                 sort='created',
-                direction='desc',
-                since=self.after_date
+                order='desc'  # Process newest first
             )
+            # ---
 
             for item in tqdm(all_closed_items, desc="Filtering and processing PRs..."):
                 if len(filtered_prs) >= pr_limit:
                     print(f"\nReached PR limit of {pr_limit}.")
                     break
 
-                if item.created_at.replace(tzinfo=timezone.utc) < self.after_date.replace(tzinfo=timezone.utc):
-                    print("\nReached items created before the start date.")
-                    break
+                # --- MODIFICATION: Removed the old date check, as the query handles it ---
 
                 if not item.pull_request:
                     continue
@@ -298,10 +352,11 @@ class GitHubDataCollector:
                         continue
                     else:
                         filtered_prs.append(pr_data)
+                        save(filtered_prs)
 
                 except RateLimitExceededException as e:
                     print(f"[Rate Limit] GitHub API rate limit exceeded: {e}")
-                    # save_progress(filtered_issues)
+                    print(f"Progress has been saved to {OUTPUT_FILENAME}.")
                     print("You may retry after the rate limit resets.")
                     print("Stopping collection due to rate limit.")
                     return filtered_prs
@@ -317,7 +372,7 @@ class GitHubDataCollector:
 
         except RateLimitExceededException as e:
             print(f"[Rate Limit] GitHub API rate limit exceeded: {e}")
-            # save_progress(filtered_issues)
+            print(f"Progress has been saved to {OUTPUT_FILENAME}.")
             print("You may retry after the rate limit resets.")
             return filtered_prs
         except GithubException as e:
@@ -330,15 +385,14 @@ class GitHubDataCollector:
 
 def main():
     print("Starting GitHub PR Scraper...")
-    ghdc = GitHubDataCollector(token=TOKEN, repo_name=REPO, after_date=start_datetime)
+
+    # --- MODIFICATION: Pass both dates to the collector ---
+    ghdc = GitHubDataCollector(token=TOKEN, repo_name=REPO, from_date=FROM_DATETIME, to_date=TO_DATETIME)
 
     collected_prs = ghdc.collect_pull_requests(pr_limit=PR_NUMS)
 
     if collected_prs:
-        df = pd.DataFrame(collected_prs)
-        output_filename = "collected_prs.csv"
-        df.to_csv(output_filename, index=False)
-        print(f"Data saved to {output_filename}")
+        print(f"\nCollection finished. Final data is saved to {OUTPUT_FILENAME}")
     else:
         print("No data was collected.")
 

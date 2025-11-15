@@ -205,12 +205,66 @@ def run_on_level(level: Level, docs: bool = False):
         sep='\t', encoding='utf-8', index=False, header=True)
 
 
+def so_dataparse(filename):
+    return pd.read_csv(filename)
+
+
+def so_datasave(savefilename, contexts, df):
+    df["Agentic_context"] = contexts
+    df.to_csv(savefilename, index=False)
+
+
+
+def stackowerflow_context_generation(dataframe):
+    contexts = []
+    agent = Agent(
+        role='Code Extractor',
+        goal='Extract function and class names from code snippets',
+        backstory=(
+            "You are an expert software engineer. Your only job is to "
+            "read text, identify code, and extract *only* the function and "
+            "class names. You are precise and provide data in the exact "
+            "format requested."
+        ),
+        verbose=False,
+        allow_delegation=False,
+        llm=llm
+    )
+    for idx, row in dataframe.iterrows():
+        task = Task(
+            description=(
+                "Analyze the following text from a Stack Overflow answer. "
+                f"Here is the text:\n\n---\n{row["answers"]}\n---\n\n"
+                "Extract all function names and class names."
+            ),
+            expected_output=(
+                "Respond *only* with a comma-separated list of the names "
+                "(e.g., my_function, MyClass, another_func). "
+                "If you find no names, respond with an empty string"
+            ),
+            agent=agent
+        )
+
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=True,
+        )
+        result = crew.kickoff()
+
+        contexts.append(task.output)
+    return contexts
+
 def main() -> None:
     start = time.perf_counter()
     # data_filtering()
-    run_on_level(Level.JUNIOR)
-    run_on_level(Level.MEDIOR)
-    run_on_level(Level.SENIOR)
+    # run_on_level(Level.JUNIOR)
+    # run_on_level(Level.MEDIOR)
+    # run_on_level(Level.SENIOR)
+    df = so_dataparse("stackowerQnA_lenFiltered.csv")
+    contexts = stackowerflow_context_generation(df)
+    so_datasave("stackowerQnA_lenFiltered_agentic.csv", contexts, df)
 
     end = time.perf_counter()
     elapsed = end - start
