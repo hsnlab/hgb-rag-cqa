@@ -146,7 +146,7 @@ def main():
         database="neo4j"
     )
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
-    reranker = Reranker()
+    reranker = Reranker(neo4j_config=neo4j_cfg)
 
     gen = build_llm(model_name)
 

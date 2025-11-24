@@ -56,10 +56,9 @@ class BaseRAG(ABC):
                 use_semantic=config.dedup_use_semantic,
                 sim_threshold=config.dedup_sim_threshold,
             )
-            retrieved = [doc for doc, _ in retrieved]
             if config.verbose:
                 print(f"Deduplicated to {len(retrieved)} documents.")
-
+        retrieved = [doc for doc, _ in retrieved]
 
         # optional rerank
         if config.rerank and hasattr(self, "reranker"):
