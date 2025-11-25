@@ -137,6 +137,7 @@ def main():
         collection_name=qdrant_cfg["collection"],
         api_key=qdrant_cfg["api_key"],
         distance_type=qdrant_cfg["distance"],
+        kwargs = qdrant_cfg["kwargs"]
     )
     kg_retriever = KnowledgeGraphRetriever(
         vector_store=vectorstore,
