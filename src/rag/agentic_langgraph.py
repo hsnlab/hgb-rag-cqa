@@ -146,15 +146,11 @@ class QdrantSearchWrapper:
         for doc in docs:
             meta = doc.metadata
             doc_type = meta.get("type", "").lower()
-            raw_id = meta.get("node_id")
+            global_id = meta.get("node_id")
 
-            if not doc_type or not raw_id:
+            if not doc_type or not global_id:
                 continue
-
-            # 1. Always extract the global_id from metadata
             try:
-                node_prefix = doc_type.split('_')[0].upper()
-                global_id = f"{node_prefix}:{raw_id}"
                 node_ids.add(global_id)
             except Exception:
                 print(f"[WARN] Could not parse global_id from doc_type: {doc_type}")
@@ -471,13 +467,11 @@ class AgenticLangGraph:
             if not isinstance(meta, dict):
                 continue
             doc_type = meta.get("type", "").lower()
-            raw_id = meta.get("node_id")
+            global_id = meta.get("node_id")
 
             # 2. If it's a function, create a task to get its name
-            if "function" in doc_type and raw_id:
+            if "function" in doc_type and global_id:
                 try:
-                    node_prefix = doc_type.split('_')[0].upper()
-                    global_id = f"{node_prefix}:{raw_id}"
                     function_tasks.append(get_function_name(global_id))
                 except Exception:
                     continue
