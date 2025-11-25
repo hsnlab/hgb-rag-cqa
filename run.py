@@ -88,7 +88,7 @@ def main():
     except json.JSONDecodeError:
         print(f"Error: Neo4j config file is not valid JSON: {neo4j_config_path}")
         
-    rag_config_path = "_/rag_config_full_context.json"
+    rag_config_path = "_/rag_config_full.json"
     try:
         with open(rag_config_path, "r") as f:
             rag_config = json.load(f)
