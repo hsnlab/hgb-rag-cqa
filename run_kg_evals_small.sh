@@ -3,7 +3,7 @@ set -e
 
 EVAL_PATH="./data/agentic_answercontext_reviewed.csv"
 VENV_PATH=".venv"
-QUESTION_LIMIT=10
+QUESTION_LIMIT=100
 SCRIPT="src.eval.kg_rag_eval"
 
 MLFLOW_ARTIFACTS="$HOME/Documents/git/hgb-rag-cqa/mlflow_data/artifacts"
