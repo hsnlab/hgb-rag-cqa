@@ -58,7 +58,8 @@ class BaseRAG(ABC):
             )
             if config.verbose:
                 print(f"Deduplicated to {len(retrieved)} documents.")
-        retrieved = [doc for doc, _ in retrieved]
+        if config.retriever == "kg" and hasattr(self, "retriever"):
+          retrieved = [doc for doc, _ in retrieved]
 
         # optional rerank
         if config.rerank and hasattr(self, "reranker"):
