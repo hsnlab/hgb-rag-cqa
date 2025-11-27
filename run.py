@@ -141,7 +141,7 @@ def main():
     reranker = Reranker()
 
     # Build LLM
-    llm_model = "mistralai/mistral-7b-instruct-v0.3"
+    llm_model = "Qwen/Qwen2.5-7B-Instruct"
     llm, tokenizer, gen = build_llm(llm_model,quantize=True,use_8bit=True)
     # Instantiate both RAG variants
 

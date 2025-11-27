@@ -11,11 +11,16 @@ from src.utils.qdrant_store import QdrantStore
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mcp_qdrant_server")
 
+with open("./_/drant_api_key.txt", "r") as f:
+    qdrant_api_key = f.read().strip()
+
 # Inicializáljuk a QdrantStore objektumot (ez belül létrehozza a QdrantClientet)
 store = QdrantStore(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_name="BAAI/bge-small-en-v1.5",
     qdrant_url="http://localhost:6333",
-    collection_name="rag_collection_codebert-base_cosine"
+    collection_name="rag_collection_bge_small",
+    api_key=qdrant_api_key,
+    distance_type="cosine",
 )
 
 # MCP + FastAPI
@@ -60,38 +65,9 @@ def qdrant_info():
 @app.get("/mcp")
 async def event_stream():
     async def event_generator():
-        # --- READY event (kell a CrewAI-nek) ---
-        yield "event: ready\ndata: {\"status\": \"ok\"}\n\n"
-
-        # --- MCP handshake ---
-        init_msg = {
-            "jsonrpc": "2.0",
-            "method": "session/initialized",
-            "params": {"protocol": "MCP/1.0"},
-        }
-        yield f"data: {json.dumps(init_msg)}\n\n"
-
-        # --- Tool lista ---
-        tools_data = {
-            "jsonrpc": "2.0",
-            "method": "tools/list",
-            "params": {
-                "tools": [
-                    {"name": name, "description": func.__doc__ or ""}
-                    for name, func in registered_tools.items()
-                ]
-            },
-        }
-        yield f"data: {json.dumps(tools_data)}\n\n"
-
         # --- Heartbeat ---
         while True:
-            heartbeat = {
-                "jsonrpc": "2.0",
-                "method": "notifications/heartbeat",
-                "params": {"status": "alive"},
-            }
-            yield f"data: {json.dumps(heartbeat)}\n\n"
+            yield ": keep-alive\n\n"
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -104,7 +80,14 @@ async def event_stream():
 async def mcp_call(request: Request):
     body = await request.json()
     method = body.get("method")
+    params = body.get("params", {})
     id_ = body.get("id")
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0",
+            "id": id_,
+            "result": {"protocolVersion": "1.0", "serverInfo": {"name": "Qdrant-MCP-Server", "version": "1.0.0"}, "capabilities": {"tools":{}}}}
 
     if method == "tools/list":
         return {
