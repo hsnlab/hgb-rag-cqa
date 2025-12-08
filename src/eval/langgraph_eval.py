@@ -90,12 +90,14 @@ async def main():
         dataset = pd.read_csv(eval_df_path)
     except:
         dataset = pd.read_csv(eval_df_path, sep="\t")
-    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
-                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context","edit_functions":"golden_context"})
-    dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
-    dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
+    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer", "filtered_classes": "class_context", "filtered_combined_names": "function_context",
+                                      "questions":"question", "answers":"answer", "contexts":"function_context","answer_contexts":"function_context","edit_functions":"function_context"})
+    dataset = dataset.dropna(subset=["question", "answer", "function_context"])
+    dataset["function_context"] = dataset["function_context"].apply(literal_eval)
+    if "class_context" in dataset.columns.tolist():
+        dataset["class_context"] = dataset["class_context"].apply(literal_eval)    
     
-    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 850) & (dataset["answer"].str.len() <= 850)]
+    dataset = dataset.loc[(dataset["function_context"].str.len() > 0)]
 
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
@@ -118,7 +120,7 @@ async def main():
     mlflow.set_tracking_uri(mlflow_uri)
     mlflow.set_experiment(mlflow_exp)  
       
-    evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], context_column="golden_context", gpu_cleanup_every=10)
+    evaluator = AgenticRAGEvaluator(df=dataset, agentic_runner=tool, k_values=[3, 5, 10], function_context_column="golden_context_functions",class_context_column="golden_context_classes", gpu_cleanup_every=10)
     try:
         run_name = f"{pipeline_version}_{model_name.replace(':', '-')}"
         await evaluator.evaluate(verbose=True,run_name = run_name)

@@ -183,16 +183,84 @@ Use the context below to answer the question. If unsure, say you don’t know.
             return []
 
         driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
-        func_names = []
+        name_map = {}
         with driver.session() as session:
             records = session.run(
                 """
                 MATCH (f:FUNCTION)
                 WHERE f.global_id IN $ids
-                RETURN DISTINCT f.combinedName AS name
+                RETURN f.global_id AS id, f.combinedName AS name
                 """,
                 ids=func_ids,
             )
-            func_names = [r["name"] for r in records if r["name"]]
+            for r in records:
+              if r["name"] is not None:
+                  name_map[r["id"]] = r["name"]
         driver.close()
-        return func_names
+        seen = set()
+        ordered_unique_names = []
+    
+        for nid in node_ids:
+            if nid in name_map:
+                name = name_map[nid]
+                if name not in seen:
+                    seen.add(name)
+                    ordered_unique_names.append(name)
+    
+        return ordered_unique_names
+        
+    def _get_class_names(self, node_ids: list[str]) -> list[str]:
+        """Return class names for certain node types in node_ids, preserving input order and removing duplicates."""
+        if not node_ids:
+            return []
+    
+        driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
+  
+        name_map = {}
+    
+        func_ids = [nid for nid in node_ids if nid.startswith("FUNCTION:")]
+        if func_ids:
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (f:FUNCTION)
+                    WHERE f.global_id IN $ids
+                    RETURN f.global_id AS id, f.class_name AS name
+                    """,
+                    ids=func_ids,
+                )
+                for r in result:
+                    if r["name"] is not None:
+                        name_map[r["id"]] = r["name"]
+    
+        class_config_ids = [nid for nid in node_ids
+                            if nid.startswith("CLASS:") or nid.startswith("CONFIG:")]
+        if class_config_ids:
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (n)
+                    WHERE n.global_id IN $ids
+                    RETURN n.global_id AS id, n.name AS name
+                    """,
+                    ids=class_config_ids,
+                )
+                for r in result:
+                    if r["name"] is not None:
+                        name_map[r["id"]] = r["name"]
+    
+        driver.close()
+  
+  
+        seen = set()
+        ordered_unique_names = []
+        
+        for nid in node_ids:
+            if nid in name_map:
+                name = name_map[nid]
+                if name not in seen:
+                    seen.add(name)
+                    ordered_unique_names.append(name)
+    
+        return ordered_unique_names
+    

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
-EVAL_PATH="./data/agentic_answercontext_reviewed.csv"
+EVAL_PATH="./data/so_qna_splitted_relevancefiltered.csv"
 VENV_PATH=".venv"
-QUESTION_LIMIT=100
+QUESTION_LIMIT=500
 SCRIPT="src.eval.kg_rag_eval"
 
 MLFLOW_ARTIFACTS="$HOME/Documents/git/hgb-rag-cqa/mlflow_data/artifacts"
 MLFLOW_DB="$HOME/Documents/git/hgb-rag-cqa/mlflow_data/db"
 MLFLOW_PORT=5000
 MLFLOW_URI="http://127.0.0.1:${MLFLOW_PORT}"
-MLFLOW_EXPERIMENT="mini_ablation_v2"
+MLFLOW_EXPERIMENT="edgecases_mid_1000"
 
 if [ -d "$VENV_PATH" ]; then
     source "$VENV_PATH/bin/activate"
@@ -24,17 +24,16 @@ COMMON_ARGS="--eval-path ${EVAL_PATH} -rc rag_config_full_context.json --questio
 
 CONFIGS=(
     "rag_config_simple.json"
-    "rag_config_no_dedup.json"
-    "rag_config_no_dedup_rerank.json"
     "rag_config_no_rerank.json"
-    "rag_config_no_overretrieve.json"
     "rag_config_no_overretrieve_rerank.json"
+    "rag_config_full_nocontext.json"
+    "rag_config_full_context.json"
 )
 MODELS=(
     "deepseek-coder-v2:16b"
     "gpt-oss:20b"
     "qwen3-coder:30b"
-    "mistral-small3.2:24b"
+    "mistral-small:22b"
 )
 COMMON_ARGS="--eval-path ${EVAL_PATH} --question-limit ${QUESTION_LIMIT} --mlflow-uri ${MLFLOW_URI} --mlflow-exp ${MLFLOW_EXPERIMENT}"
 
@@ -51,7 +50,7 @@ PIPELINES=(
     "strict"
     "free"
 )
-MLFLOW_EXPERIMENT="agentic_mid"
+MLFLOW_EXPERIMENT="agentic_mid_1000"
 for PIPELINE in "${PIPELINES[@]}"; do
     for MODEL in "${MODELS[@]}"; do
         echo "Running evaluation for model=$MODEL, pipeline=$PIPELINE"

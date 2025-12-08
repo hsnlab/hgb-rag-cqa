@@ -130,7 +130,13 @@ class BaseRAG(ABC):
                 top_function_names = self._get_function_names(top_nodes)
             except Exception as e:
                 print(f"[WARN] Failed to fetch function names: {e}")
-
+        
+        top_class_names = []
+        if hasattr(self, "_get_function_names"):
+            try:
+                top_class_names = self._get_class_names(top_nodes)
+            except Exception as e:
+                print(f"[WARN] Failed to fetch class names: {e}")
         # generation
         answer = self._generate_answer_from_docs(query, retrieved, config)
 
@@ -138,8 +144,10 @@ class BaseRAG(ABC):
             "answer": answer,
             "top_docs": retrieved,
             "top_functions": top_function_names,
+            "top_classes": top_class_names,
             "top_nodes": top_nodes,
             "query_type": query_type or "default",
+            "alt_queries": queries or [],
         }
 
     @staticmethod
