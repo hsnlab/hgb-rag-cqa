@@ -49,7 +49,7 @@ class BaseRAG(ABC):
 
         # optional deduplication
         if config.deduplicate and hasattr(self, "deduplicator"):
-            retrieved = self.deduplicator.deduplicate(
+            retrieved = self.deduplicator.deduplicate_scored(
                 retrieved,
                 use_minhash=config.dedup_use_minhash,
                 jaccard_threshold=config.dedup_jaccard_threshold,
@@ -58,7 +58,8 @@ class BaseRAG(ABC):
             )
             if config.verbose:
                 print(f"Deduplicated to {len(retrieved)} documents.")
-
+        if config.retriever == "kg" and hasattr(self, "retriever"):
+          retrieved = [doc for doc, _ in retrieved]
 
         # optional rerank
         if config.rerank and hasattr(self, "reranker"):
@@ -74,7 +75,7 @@ class BaseRAG(ABC):
         else:
             retrieved = retrieved[:top_k]    
 
-        top_nodes = self._align_top_nodes_with_docs(retrieved, top_k)
+        top_nodes = [d.metadata.get("node_id") for d in retrieved]
 
         if getattr(config, "use_shortest_path_context", True) and top_nodes:
             if hasattr(self, "neo4j_uri") and hasattr(self, "neo4j_auth") and hasattr(self, "vectorstore"):
@@ -129,7 +130,13 @@ class BaseRAG(ABC):
                 top_function_names = self._get_function_names(top_nodes)
             except Exception as e:
                 print(f"[WARN] Failed to fetch function names: {e}")
-
+        
+        top_class_names = []
+        if hasattr(self, "_get_function_names"):
+            try:
+                top_class_names = self._get_class_names(top_nodes)
+            except Exception as e:
+                print(f"[WARN] Failed to fetch class names: {e}")
         # generation
         answer = self._generate_answer_from_docs(query, retrieved, config)
 
@@ -137,30 +144,11 @@ class BaseRAG(ABC):
             "answer": answer,
             "top_docs": retrieved,
             "top_functions": top_function_names,
+            "top_classes": top_class_names,
             "top_nodes": top_nodes,
             "query_type": query_type or "default",
+            "alt_queries": queries or [],
         }
-    
-    def _align_top_nodes_with_docs(self, retrieved: List[Document], top_k: int) -> List[str]:
-        """
-        Build top_nodes directly from the final ranked documents.
-        Ensures node ordering and count match exactly what the model will see.
-
-        Returns:
-            List[str]: List of global_ids (e.g., FUNCTION:123) matching retrieved order.
-        """
-        if not retrieved:
-            return []
-
-        top_nodes = []
-        for d in retrieved:
-            node_id = d.metadata.get("node_id")
-            node_type = d.metadata.get("type")
-            if not node_id or not node_type:
-                continue
-            top_nodes.append(self._make_global_id(node_id, node_type))
-
-        return top_nodes[:top_k]
 
     @staticmethod
     def _make_global_id(node_id: str, node_type: str) -> str:

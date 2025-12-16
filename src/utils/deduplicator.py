@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from langchain_core.documents import Document
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -120,3 +120,111 @@ class Deduplicator:
             unique_docs = keep
 
         return unique_docs
+    
+    def deduplicate_scored(
+        self,
+        scored_docs: List[Tuple[Document, float]],
+        use_minhash: bool = False,
+        jaccard_threshold: float = 0.9,
+        use_semantic: bool = False,
+        sim_threshold: float = 0.95,
+    ) -> List[Tuple[Document, float]]:
+        """
+        Score-aware deduplication pipeline.
+        Input:  [(Document, score), ...]
+        Output: [(Document, score), ...] sorted by score desc
+        """
+
+        if not scored_docs:
+            return []
+
+        # -------------------------
+        # 1) Exact dedup (by content)
+        #    Keep highest-score document, tie → smaller chunk
+        # -------------------------
+        seen = {}
+        for doc, score in scored_docs:
+            key = doc.page_content.strip()
+            if key not in seen:
+                seen[key] = (doc, score)
+            else:
+                existing_doc, existing_score = seen[key]
+
+                # Prefer higher score
+                if score > existing_score:
+                    seen[key] = (doc, score)
+                # Tie → fallback to smaller chunk
+                elif score == existing_score and self.prefer_small_chunks:
+                    if doc.metadata.get("chunk_size", 9999) < existing_doc.metadata.get("chunk_size", 9999):
+                        seen[key] = (doc, score)
+
+        unique = list(seen.values())
+
+        # -------------------------
+        # 2) MinHash Jaccard dedup (optional)
+        #    Among similar hashes, keep highest score
+        # -------------------------
+        if use_minhash and len(unique) > 1:
+            from datasketch import MinHashLSH  # lazy import if not always used
+            lsh = MinHashLSH(threshold=jaccard_threshold, num_perm=128)
+            mh_map = {}
+            kept = []
+
+            for i, (doc, score) in enumerate(unique):
+                mh = self._compute_minhash(doc.page_content)
+                mh_map[i] = (mh, doc, score)
+
+                dup_indices = lsh.query(mh)
+
+                if dup_indices:
+                    # gather all conflict docs + the current one
+                    candidates = [(doc, score)] + [
+                        (unique[j][0], unique[j][1]) for j in dup_indices
+                    ]
+                    # choose best by score → tie by chunk size
+                    best_doc, best_score = max(
+                        candidates,
+                        key=lambda x: (x[1], -x[0].metadata.get("chunk_size", 9999))
+                    )
+                    # only keep if the current doc is the best representative
+                    if best_doc is doc:
+                        kept.append((doc, score))
+                else:
+                    kept.append((doc, score))
+
+                lsh.insert(i, mh)
+
+            unique = kept
+
+        # -------------------------
+        # 3) Semantic similarity dedup (optional)
+        #    Within similarity clusters, keep highest score
+        # -------------------------
+        if use_semantic and self.embedder is not None and len(unique) > 1:
+            docs, scores = zip(*unique)
+            embeddings = self.embedder.embed_documents([d.page_content for d in docs])
+
+            keep_flags = [True] * len(docs)
+            for i in range(len(docs)):
+                if not keep_flags[i]:
+                    continue
+                for j in range(i + 1, len(docs)):
+                    if not keep_flags[j]:
+                        continue
+                    sim = cosine_similarity([embeddings[i]], [embeddings[j]])[0][0]
+                    if sim >= sim_threshold:
+                        # keep the one with higher score
+                        if scores[j] > scores[i]:
+                            keep_flags[i] = False
+                            break
+                        else:
+                            keep_flags[j] = False
+
+            unique = [(doc, score) for (doc, score), keep in zip(unique, keep_flags) if keep]
+
+        # -------------------------
+        # 4) Final: sort by score desc
+        # -------------------------
+        unique.sort(key=lambda x: x[1], reverse=True)
+
+        return unique

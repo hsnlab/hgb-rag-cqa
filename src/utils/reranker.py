@@ -4,10 +4,12 @@ import torch
 from collections import Counter
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from langchain_core.documents import Document
+from neo4j import GraphDatabase
 
 class Reranker:
-    def __init__(self, cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", device: str = "cpu"):
+    def __init__(self, neo4j_config:dict=None, cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", device: str = "cpu"):
         # Load cross-encoder for reranking
+        self.neo4j_config = neo4j_config
         self.tokenizer = AutoTokenizer.from_pretrained(cross_encoder_model)
         self.model = AutoModelForSequenceClassification.from_pretrained(cross_encoder_model)
         self.model.to(device)
@@ -35,29 +37,27 @@ class Reranker:
     # --------------------
     # Graph-aware scoring
     # --------------------
-    def graph_score(self, metadata: dict) -> float:
+    def graph_score(self, metadata: dict, driver) -> float:
         """
-        Compute a score boost/penalty from graph properties.
-        Expected metadata keys:
-            - 'graph_distance' (int): distance from seed node
-            - 'edge_type' (str): type of edge, e.g. CALL, CLUSTER, ISSUE_LINK
-            - 'degree' (int): node degree in graph
         """
-        distance = metadata.get("graph_distance", 3)
-        edge_type = metadata.get("edge_type", "GENERIC")
-        degree = metadata.get("degree", 5)
-
-        # Inverse distance weighting (closer = better)
-        distance_score = 1.0 / (1 + distance)
-
-        # Edge type weight
-        edge_weights = {"CALL": 1.0, "CFG": 0.8, "CLUSTER": 0.6, "ISSUE_LINK": 1.2, "GENERIC": 0.5}
-        edge_score = edge_weights.get(edge_type, 0.5)
+        node_id = metadata.get("node_id", None)
+        if node_id:
+            query = """
+            MATCH (n) WHERE n.global_id = $node_id
+            RETURN 
+                COUNT {(n)-[r]->()} AS out_degree,
+                COUNT {(m)-[r]->(n)} AS in_degree
+            """
+            with driver.session() as session:
+                result = session.run(query, node_id=node_id).single()
+                out_degree = result["out_degree"]
+                in_degree = result["in_degree"]
+                total_degree = out_degree + in_degree
 
         # Degree penalty (hub nodes are less discriminative)
-        degree_score = 1.0 / (1 + np.log1p(degree))
+        degree_score = 1.0 / (1 + np.log1p(total_degree)) if total_degree > 0 else 1.0
 
-        return distance_score * edge_score * degree_score
+        return degree_score
     
     def popularity_score(
         self,
@@ -147,7 +147,8 @@ class Reranker:
         scored_docs = []
         for doc, ce_score in zip(docs, cross_scores):
             if use_graph:
-                g_score = self.graph_score(doc.metadata)
+                driver = GraphDatabase.driver(self.neo4j_config["url"], auth=(self.neo4j_config["user"], self.neo4j_config["password"]))
+                g_score = self.graph_score(doc.metadata, driver)
                 final_score = alpha * ce_score + beta * g_score
             else:
                 final_score = ce_score

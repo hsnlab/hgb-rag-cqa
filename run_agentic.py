@@ -4,6 +4,7 @@ import traceback
 import argparse
 from src.rag.agentic_langgraph import AgenticLangGraph
 from src.rag.agentic_langgraph_strict import StrictAgenticLangGraph
+from src.rag.agentic_langgraph_strict_v2 import StrictAgenticLangGraphV2
 
 
 async def interactive_mode():
@@ -20,7 +21,7 @@ async def interactive_mode():
     )
     parser.add_argument(
         "--pipeline",
-        choices=["free", "strict"],
+        choices=["free", "strict", "strict2"],
         default="free",
         type=str,
         required=False,
@@ -37,6 +38,9 @@ async def interactive_mode():
     elif pipeline_version == "free":
         print("Initializing AgenticLangGraph...")
         agent = AgenticLangGraph(model_name=model_name)
+    elif pipeline_version == "strict2":
+        print("Initializing AgenticLangGraph...")
+        agent = StrictAgenticLangGraphV2(model_name=model_name)
     else:
         print("Pipeline version not recognized, falling back to 'free'")
         agent = AgenticLangGraph(model_name=model_name)

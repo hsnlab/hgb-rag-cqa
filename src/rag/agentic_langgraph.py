@@ -146,15 +146,11 @@ class QdrantSearchWrapper:
         for doc in docs:
             meta = doc.metadata
             doc_type = meta.get("type", "").lower()
-            raw_id = meta.get("node_id")
+            global_id = meta.get("node_id")
 
-            if not doc_type or not raw_id:
+            if not doc_type or not global_id:
                 continue
-
-            # 1. Always extract the global_id from metadata
             try:
-                node_prefix = doc_type.split('_')[0].upper()
-                global_id = f"{node_prefix}:{raw_id}"
                 node_ids.add(global_id)
             except Exception:
                 print(f"[WARN] Could not parse global_id from doc_type: {doc_type}")
@@ -446,48 +442,122 @@ class AgenticLangGraph:
         print(self.graph.get_graph().draw_ascii())
 
     async def _enrich_functions_from_docs(self, docs: List[Document]) -> List[str]:
-        """Helper to get function names from docs (logic from V2)."""
+        """Extract function names from docs using Neo4j.
+        Preserves order of appearance and removes duplicates (first occurrence wins).
+        """
         if not self.get_node_info_tool:
             print("[WARN] get_node_info_tool not available. Cannot enrich functions.")
             return []
-
+    
         async def get_function_name(global_id: str):
-            """Async helper to safely call the tool."""
+            """Async helper to safely call the Neo4j node-info MCP tool."""
             try:
-                # Call the tool to get the combinedName
                 name = await self.get_node_info_tool.ainvoke({
                     "node_id": global_id,
-                    "field": "combinedName"
+                    "field": "combinedName",
                 })
-                return name.strip() if name else None
+                return name.strip() if isinstance(name, str) else None
             except Exception as e:
-                print(f"[WARN] get_node_info failed for {global_id}: {e}")
+                print(f"[WARN] get_node_info failed for function node {global_id}: {e}")
                 return None
-        
-        function_tasks = []
-
+    
+        lookup_tasks = []   # holds awaitables in doc order
+    
+        # collect tasks in DOCUMENT ORDER
         for doc in docs:
             meta = getattr(doc, "metadata", {}) or {}
             if not isinstance(meta, dict):
                 continue
+    
             doc_type = meta.get("type", "").lower()
-            raw_id = meta.get("node_id")
-
-            # 2. If it's a function, create a task to get its name
-            if "function" in doc_type and raw_id:
-                try:
-                    node_prefix = doc_type.split('_')[0].upper()
-                    global_id = f"{node_prefix}:{raw_id}"
-                    function_tasks.append(get_function_name(global_id))
-                except Exception:
-                    continue
-
-        # Run all function name lookups in parallel
-        function_names = await asyncio.gather(*function_tasks)
-        function_names = [f for f in function_names if isinstance(f, str)]
+            global_id = meta.get("node_id")
+    
+            # function nodes only
+            if "function" in doc_type and global_id:
+                lookup_tasks.append(get_function_name(global_id))
+    
+        # Run all tool calls concurrently
+        function_names = await asyncio.gather(*lookup_tasks)
+    
+        # Clean up: filter None and ensure strings
+        function_names = [name for name in function_names if isinstance(name, str) and name.strip()]
+    
+        # Deduplicate while preserving order
+        seen = set()
+        ordered_unique = []
+        for name in function_names:
+            if name not in seen:
+                seen.add(name)
+                ordered_unique.append(name)
+    
+        return ordered_unique
         
-        # Filter out None values and duplicates
-        return sorted(list(set(name for name in function_names if name)))
+        
+    async def _enrich_classes_from_docs(self, docs: List[Document]) -> List[str]:
+        """Extract class names from both class nodes and function nodes.
+        Preserves the order of appearance in docs and removes duplicates (first occurrence wins).
+        """
+        if not self.get_node_info_tool:
+            print("[WARN] get_node_info_tool not available. Cannot enrich classes.")
+            return []
+    
+        # --- Async wrappers for retrieving class names ---
+        async def get_class_name_from_class_node(global_id: str):
+            """Neo4j class nodes usually use field 'name'."""
+            try:
+                name = await self.get_node_info_tool.ainvoke({
+                    "node_id": global_id,
+                    "field": "name"
+                })
+                return name.strip() if isinstance(name, str) else None
+            except Exception as e:
+                print(f"[WARN] get_node_info failed for class node {global_id}: {e}")
+                return None
+    
+        async def get_class_name_from_function_node(global_id: str):
+            """Function nodes store class name under 'class_name'."""
+            try:
+                name = await self.get_node_info_tool.ainvoke({
+                    "node_id": global_id,
+                    "field": "class_name"
+                })
+                return name.strip() if isinstance(name, str) else None
+            except Exception as e:
+                print(f"[WARN] get_node_info failed for function node {global_id}: {e}")
+                return None
+    
+        tasks = []
+        for doc in docs:
+            meta = getattr(doc, "metadata", {}) or {}
+            if not isinstance(meta, dict):
+                continue
+    
+            doc_type = meta.get("type", "").lower()
+            global_id = meta.get("node_id")
+    
+            if not global_id:
+                continue
+
+            if "class" in doc_type or "config" in doctype:
+                tasks.append(get_class_name_from_class_node(global_id))
+                continue
+    
+            if "function" in doc_type:
+                tasks.append(get_class_name_from_function_node(global_id))
+                continue
+    
+        class_names = await asyncio.gather(*tasks)
+    
+        class_names = [c for c in class_names if isinstance(c, str) and c.strip()]
+    
+        seen = set()
+        ordered_unique = []
+        for name in class_names:
+            if name not in seen:
+                seen.add(name)
+                ordered_unique.append(name)
+    
+        return ordered_unique
     
     async def run_async(self, query: str,session_id:str=None) -> Dict[str, Any]:
         """Run the LangGraph pipeline for one query asynchronously."""
@@ -541,11 +611,13 @@ class AgenticLangGraph:
         tool_log = final_state.get("tool_log", [])
 
         functions = await self._enrich_functions_from_docs(docs)
+        classes = await self._enrich_classes_from_docs(docs)
 
         return {
             "answer": answer,
             "relevant_docs": serializable_docs,
             "relevant_functions": functions,
+            "relevant_classes": classes,
             "relevant_node_ids": node_ids,
             "tool_log": tool_log,
         }

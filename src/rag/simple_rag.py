@@ -60,10 +60,7 @@ class SimpleRAG(BaseRAG):
         for d in docs:
             meta = d.metadata or {}
             node_id = meta.get("node_id")
-            node_type = meta.get("type")
-            if node_id and node_type:
-                gid = self._make_global_id(node_id, node_type)
-                top_nodes.append(gid)
+            top_nodes.append(node_id)
 
         # deduplicate
         top_nodes = list(set(top_nodes))
@@ -98,28 +95,83 @@ Use the context below to answer the question. If unsure, say you don’t know.
 
     def _expand_query_with_llm(self, query: str, config: PipelineConfig) -> list[str]:
         """Use the existing LLM to produce a few alternative search queries."""
-        queries = []
+        n = getattr(config, "query_expansion_variants", 3)
         prompt = (
-            f"Generate {getattr(config, 'query_expansion_variants', 3)} concise alternative search queries "
-            f"to help retrieve relevant code snippets or technical documentation related to:\n\"{query}\"\n\n"
-            f"- Focus on code elements explicitly mentioned (functions, classes, APIs, variables, libraries).\n"
-            f"- Keep each query under 8 words.\n"
-            f"- Prefer specific identifiers over generic terms.\n"
-            f"- Return each query on a new line, without numbering or punctuation."
+            "You are a code search assistant that expands developer queries into concise, code-focused alternatives.\n\n"
+            f"Generate EXACTLY {n} alternative search queries that could match code identifiers, functions, classes, "
+            "variables, or technical symbols relevant to the user's intent.\n\n"
+            "Follow these strict rules:\n"
+            "1. Focus on actual code elements and identifiers — functions, methods, classes, constants, modules, filenames, configs, etc.\n"
+            "2. Use terms already present in the user query or clear canonical equivalents. Never introduce unrelated technologies or libraries.\n"
+            "3. Keep each line concise — ideally 2–6 tokens. Prefer patterns like:\n"
+            "   - ClassName.method()\n"
+            "   - module.function_name\n"
+            "   - object.attribute\n"
+            "   - VariableName or CONSTANT_NAME\n"
+            "4. Avoid generic or verbose text (e.g., 'example', 'tutorial', 'how to', 'guide', 'repo', 'documentation').\n"
+            "5. Do not number or bullet the lines. No quotes or backticks.\n"
+            "6. Output only the alternative queries, one per line.\n\n"
+            "Good outputs:\n"
+            "  TransformerLayer.forward\n"
+            "  config.load_yaml\n"
+            "  database.connect\n"
+            "  user_authenticate\n"
+            "  HttpClient.send_request\n"
+            "Bad outputs:\n"
+            "  Example of how TransformerLayer.forward works\n"
+            "  Guide for connecting to database\n"
+            "  Documentation for HttpClient\n\n"
+            f"User query:\n{query}\n\n"
+            "Now output the alternative search queries:"
         )
+
         try:
             response = self.llm.invoke(prompt)
-            text = response.content.strip()
-            variants = [ln.strip("-• ").strip() for ln in text.split("\n") if ln.strip()]
-            variants = [v for v in variants if len(v.split()) > 1]
-            queries.extend(variants)
+            text = (response.content or "").strip()
+
+            raw = [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+            def _clean(s: str) -> str:
+                s = s.lstrip("0123456789.-) ").strip()
+                s = s.strip("`'\"")
+                return s
+
+            candidates = [_clean(s) for s in raw]
+
+            forbid = {
+                "repo", "project", "example", "examples", "tutorial", "explanation",
+                "details", "how to", "guide", "overview", "documentation", "docs"
+            }
+
+            def _ok(s: str) -> bool:
+                low = s.lower()
+                if any(w in low for w in forbid):
+                    return False
+                if len(s.split()) < 1 or len(s.split()) > 6:
+                    return False
+                # looks code-ish
+                return any(ch in s for ch in "._()/") or any(t[0].isupper() for t in s.split())
+
+            variants = [s for s in candidates if _ok(s)]
+
+            if len(variants) > n:
+                variants = variants[:n]
+            elif len(variants) < n:
+                if len(query.split()) <= 6:
+                    variants.append(query.strip())
+                variants = variants[:n]
+
+            deduped = list(dict.fromkeys(variants))
+
             if config.verbose:
-                print(f"[DEBUG] Query expansion generated: {variants}")
+                print(f"[DEBUG] Query expansion generated: {deduped}")
+
+            return deduped or [query]
+
         except Exception as e:
             if config.verbose:
                 print(f"[WARN] Query expansion failed: {e}")
             return [query]
-        return list(dict.fromkeys(queries))
 
     def _get_function_names(self, node_ids: list[str]) -> list[str]:
         """Return combinedName values for FUNCTION nodes in node_ids."""
@@ -131,16 +183,84 @@ Use the context below to answer the question. If unsure, say you don’t know.
             return []
 
         driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
-        func_names = []
+        name_map = {}
         with driver.session() as session:
             records = session.run(
                 """
                 MATCH (f:FUNCTION)
                 WHERE f.global_id IN $ids
-                RETURN DISTINCT f.combinedName AS name
+                RETURN f.global_id AS id, f.combinedName AS name
                 """,
                 ids=func_ids,
             )
-            func_names = [r["name"] for r in records if r["name"]]
+            for r in records:
+              if r["name"] is not None:
+                  name_map[r["id"]] = r["name"]
         driver.close()
-        return func_names
+        seen = set()
+        ordered_unique_names = []
+    
+        for nid in node_ids:
+            if nid in name_map:
+                name = name_map[nid]
+                if name not in seen:
+                    seen.add(name)
+                    ordered_unique_names.append(name)
+    
+        return ordered_unique_names
+        
+    def _get_class_names(self, node_ids: list[str]) -> list[str]:
+        """Return class names for certain node types in node_ids, preserving input order and removing duplicates."""
+        if not node_ids:
+            return []
+    
+        driver = GraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
+  
+        name_map = {}
+    
+        func_ids = [nid for nid in node_ids if nid.startswith("FUNCTION:")]
+        if func_ids:
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (f:FUNCTION)
+                    WHERE f.global_id IN $ids
+                    RETURN f.global_id AS id, f.class_name AS name
+                    """,
+                    ids=func_ids,
+                )
+                for r in result:
+                    if r["name"] is not None:
+                        name_map[r["id"]] = r["name"]
+    
+        class_config_ids = [nid for nid in node_ids
+                            if nid.startswith("CLASS:") or nid.startswith("CONFIG:")]
+        if class_config_ids:
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (n)
+                    WHERE n.global_id IN $ids
+                    RETURN n.global_id AS id, n.name AS name
+                    """,
+                    ids=class_config_ids,
+                )
+                for r in result:
+                    if r["name"] is not None:
+                        name_map[r["id"]] = r["name"]
+    
+        driver.close()
+  
+  
+        seen = set()
+        ordered_unique_names = []
+        
+        for nid in node_ids:
+            if nid in name_map:
+                name = name_map[nid]
+                if name not in seen:
+                    seen.add(name)
+                    ordered_unique_names.append(name)
+    
+        return ordered_unique_names
+    

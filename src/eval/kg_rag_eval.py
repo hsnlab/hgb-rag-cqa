@@ -111,12 +111,14 @@ def main():
         dataset = pd.read_csv(eval_df_path)
     except:
         dataset = pd.read_csv(eval_df_path, sep="\t")
-    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer",
-                                      "questions":"question", "answers":"answer", "contexts":"golden_context","answer_contexts":"golden_context","edit_functions":"golden_context"})
-    dataset = dataset.dropna(subset=["question", "answer", "golden_context"])
-    dataset["golden_context"] = dataset["golden_context"].apply(literal_eval)
+    dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer", "filtered_classes": "class_context", "filtered_combined_names": "function_context",
+                                      "questions":"question", "answers":"answer", "contexts":"function_context","answer_contexts":"function_context","edit_functions":"function_context"})
+    dataset = dataset.dropna(subset=["question", "answer", "function_context"])
+    dataset["function_context"] = dataset["function_context"].apply(literal_eval)
+    if "class_context" in dataset.columns.tolist():
+        dataset["class_context"] = dataset["class_context"].apply(literal_eval)    
     
-    dataset = dataset.loc[(dataset["golden_context"].str.len() > 0) & (dataset["question"].str.len() <= 850) & (dataset["answer"].str.len() <= 850)]
+    dataset = dataset.loc[(dataset["function_context"].str.len() > 0)]
 
     if q_limit:
         dataset = dataset.iloc[:min(q_limit,len(dataset))]
@@ -137,6 +139,7 @@ def main():
         collection_name=qdrant_cfg["collection"],
         api_key=qdrant_cfg["api_key"],
         distance_type=qdrant_cfg["distance"],
+        kwargs = qdrant_cfg["kwargs"]
     )
     kg_retriever = KnowledgeGraphRetriever(
         vector_store=vectorstore,
@@ -146,7 +149,7 @@ def main():
         database="neo4j"
     )
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
-    reranker = Reranker()
+    reranker = Reranker(neo4j_config=neo4j_cfg)
 
     gen = build_llm(model_name)
 
@@ -165,7 +168,7 @@ def main():
     mlflow.set_tracking_uri(mlflow_uri)
     mlflow.set_experiment(mlflow_exp)
 
-    evaluator = RAGEvaluator(dataset, rag, k_values=[3, 5, 10])
+    evaluator = RAGEvaluator(dataset, rag, k_values=[3, 5, 10],class_context_column="class_context",function_context_column="function_context")
     try:
         config_base = os.path.splitext(os.path.basename(rag_config_name))[0]
         run_name = f"{config_base}_{model_name.replace(':', '-')}"
