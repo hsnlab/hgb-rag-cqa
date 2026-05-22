@@ -114,9 +114,20 @@ def main():
     dataset = dataset.rename(columns={"LLM_questions": "question", "LLM_answers": "answer", "filtered_classes": "class_context", "filtered_combined_names": "function_context",
                                       "questions":"question", "answers":"answer", "contexts":"function_context","answer_contexts":"function_context","edit_functions":"function_context"})
     dataset = dataset.dropna(subset=["question", "answer", "function_context"])
-    dataset["function_context"] = dataset["function_context"].apply(literal_eval)
+
+    def parse_context(val):
+        s = str(val).strip()
+        if not s or s == "nan":
+            return []
+        try:
+            result = literal_eval(s)
+            return result if isinstance(result, list) else [result]
+        except (ValueError, SyntaxError):
+            return [s]
+
+    dataset["function_context"] = dataset["function_context"].apply(parse_context)
     if "class_context" in dataset.columns.tolist():
-        dataset["class_context"] = dataset["class_context"].apply(literal_eval)    
+        dataset["class_context"] = dataset["class_context"].apply(parse_context)
     
     dataset = dataset.loc[(dataset["function_context"].str.len() > 0)]
 
@@ -149,7 +160,11 @@ def main():
         database="neo4j"
     )
     deduplicator = Deduplicator(embedder=vectorstore.embeddings)
-    reranker = Reranker(neo4j_config=neo4j_cfg)
+    reranker = Reranker(
+        neo4j_config=neo4j_cfg,
+        gnn_projector_path=getattr(rag_config, "gnn_projector_path", None),
+        gnn_encoder_model=getattr(rag_config, "gnn_encoder_model", "intfloat/e5-large-v2"),
+    )
 
     gen = build_llm(model_name)
 

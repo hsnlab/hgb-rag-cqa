@@ -67,6 +67,8 @@ class BaseRAG(ABC):
                 query,
                 retrieved,
                 use_graph=config.rerank_use_graph,
+                use_gnn=config.rerank_use_gnn,
+                gamma=config.rerank_gamma,
                 use_popularity=config.rerank_use_popularity,
             )
             # reranked is list[(doc,score)]
@@ -75,7 +77,11 @@ class BaseRAG(ABC):
         else:
             retrieved = retrieved[:top_k]    
 
-        top_nodes = [d.metadata.get("node_id") for d in retrieved]
+        top_nodes = [
+            self._make_global_id(str(d.metadata["node_id"]), d.metadata.get("type", ""))
+            for d in retrieved
+            if d.metadata.get("node_id") is not None
+        ]
 
         if getattr(config, "use_shortest_path_context", True) and top_nodes:
             if hasattr(self, "neo4j_uri") and hasattr(self, "neo4j_auth") and hasattr(self, "vectorstore"):

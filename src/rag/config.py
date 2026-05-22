@@ -16,6 +16,10 @@ class PipelineConfig:
     rerank: bool = False
     rerank_use_graph: bool = False
     rerank_use_popularity: bool = False
+    rerank_use_gnn: bool = False
+    rerank_gamma: float = 0.2
+    gnn_projector_path: Optional[str] = None
+    gnn_encoder_model: str = "intfloat/e5-large-v2"
     top_k: int = 10
     llm_max_tokens: int = 200
     over_retrieve: bool = True               

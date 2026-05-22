@@ -7,13 +7,26 @@ from langchain_core.documents import Document
 from neo4j import GraphDatabase
 
 class Reranker:
-    def __init__(self, neo4j_config:dict=None, cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", device: str = "cpu"):
+    def __init__(
+        self,
+        neo4j_config: dict = None,
+        cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        device: str = "cpu",
+        gnn_projector_path: str = None,
+        gnn_encoder_model: str = "intfloat/e5-large-v2",
+    ):
         # Load cross-encoder for reranking
         self.neo4j_config = neo4j_config
         self.tokenizer = AutoTokenizer.from_pretrained(cross_encoder_model)
         self.model = AutoModelForSequenceClassification.from_pretrained(cross_encoder_model)
         self.model.to(device)
         self.device = device
+
+        # Lazily-loaded GNN reranking components
+        self.gnn_projector_path = gnn_projector_path
+        self.gnn_encoder_model = gnn_encoder_model
+        self._projector = None
+        self._gnn_encoder = None
 
     # --------------------
     # Cross-encoder scoring
@@ -112,6 +125,76 @@ class Reranker:
         scored_all = sorted(scored_all, key=lambda x: x[1], reverse=True)
         return scored_all
     # --------------------
+    # GNN-aware scoring
+    # --------------------
+    def _ensure_gnn_components(self):
+        """Lazy-load the projector and the e5 encoder used to project queries."""
+        if self._projector is not None and self._gnn_encoder is not None:
+            return
+        if not self.gnn_projector_path:
+            raise RuntimeError("gnn_projector_path was not provided to Reranker; cannot use GNN scoring.")
+        from .query_projector import load_projector
+        from langchain_huggingface import HuggingFaceEmbeddings
+        self._projector = load_projector(self.gnn_projector_path, device=self.device)
+        self._gnn_encoder = HuggingFaceEmbeddings(
+            model_name=self.gnn_encoder_model,
+            model_kwargs={"device": self.device},
+        )
+
+    def _compute_gnn_scores(self, query: str, docs: List[Document]) -> List[float]:
+        """Project the query into GNN space and score each doc by cosine similarity.
+
+        Embeddings are fetched from Neo4j in a single batched query for speed.
+        Docs whose nodes have no `gnn_embedding` property receive a score of 0.
+        """
+        self._ensure_gnn_components()
+
+        q_vec = self._gnn_encoder.embed_query(query)
+        q_tensor = torch.tensor(q_vec, dtype=torch.float, device=self.device).unsqueeze(0)
+        with torch.no_grad():
+            q_proj = self._projector(q_tensor).squeeze(0).cpu().numpy()
+
+        def _make_gid(doc):
+            nid = doc.metadata.get("node_id")
+            ntype = doc.metadata.get("type", "")
+            if nid is None or not ntype:
+                return None
+            prefix = ntype.split("_")[0].upper()
+            return f"{prefix}:{nid}"
+
+        gids = [_make_gid(d) for d in docs]
+        valid_ids = [g for g in gids if g is not None]
+        if not valid_ids:
+            return [0.0] * len(docs)
+
+        driver = GraphDatabase.driver(
+            self.neo4j_config["url"],
+            auth=(self.neo4j_config["user"], self.neo4j_config["password"]),
+        )
+        emb_map = {}
+        with driver.session() as session:
+            result = session.run(
+                "UNWIND $ids AS gid "
+                "MATCH (n) WHERE n.global_id = gid AND n.gnn_embedding IS NOT NULL "
+                "RETURN gid, n.gnn_embedding AS emb",
+                ids=valid_ids,
+            )
+            for r in result:
+                arr = np.array(r["emb"], dtype=np.float32)
+                norm = np.linalg.norm(arr)
+                emb_map[r["gid"]] = arr / norm if norm > 0 else arr
+        driver.close()
+
+        scores = []
+        for gid in gids:
+            emb = emb_map.get(gid) if gid is not None else None
+            if emb is None:
+                scores.append(0.0)
+            else:
+                scores.append(float(np.dot(q_proj, emb)))
+        return scores
+
+    # --------------------
     # Combined reranking
     # --------------------
     def rerank(
@@ -120,7 +203,9 @@ class Reranker:
         docs: List[Document],
         alpha: float = 0.7,
         beta: float = 0.3,
+        gamma: float = 0.0,
         use_graph: bool = False,
+        use_gnn: bool = False,
         use_popularity: bool = True,
     ) -> List[Tuple[Document, float]]:
         """
@@ -143,19 +228,28 @@ class Reranker:
         # 1. cross-encoder scores
         cross_scores = self.cross_encoder_score(query, docs)
 
-        # 2. combine with graph scores (if enabled)
+        # 2. optional GNN cosine scores (batched once for all docs)
+        gnn_scores = None
+        if use_gnn:
+            try:
+                gnn_scores = self._compute_gnn_scores(query, docs)
+            except Exception as e:
+                print(f"[WARN] GNN scoring failed, falling back without it: {e}")
+                gnn_scores = None
+
+        # 3. combine with graph and GNN scores
         scored_docs = []
-        for doc, ce_score in zip(docs, cross_scores):
+        for i, (doc, ce_score) in enumerate(zip(docs, cross_scores)):
+            final_score = alpha * ce_score
             if use_graph:
                 driver = GraphDatabase.driver(self.neo4j_config["url"], auth=(self.neo4j_config["user"], self.neo4j_config["password"]))
-                g_score = self.graph_score(doc.metadata, driver)
-                final_score = alpha * ce_score + beta * g_score
-            else:
-                final_score = ce_score
+                final_score += beta * self.graph_score(doc.metadata, driver)
+            if gnn_scores is not None:
+                final_score += gamma * gnn_scores[i]
             scored_docs.append((doc, float(final_score)))
 
         scored_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)
-        # 3. apply popularity reweighting (if enabled)
+        # 4. apply popularity reweighting (if enabled)
         if use_popularity:
             scored_docs = self.popularity_score(scored_docs)
 
